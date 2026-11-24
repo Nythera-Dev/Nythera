@@ -214,24 +214,17 @@
       "loading": "Завантаження попереднього перегляду…",
       "text-title": "Запис текстового буфера обміну",
       "truncated": "… скорочено"
-    },
-    "title": "Буфер обміну"
+    }
   },
   "common": {
-    "actions": {
-      "apply": "Застосувати",
-      "cancel": "Скасувати"
-    },
     "minimize": "Згорнути",
     "minimized": "Згорнуто",
     "minimized-count": "{count} згорнуто",
     "restore": "Відновити",
     "states": {
-      "auto": "Авто",
       "custom": "Користувацький",
       "inherit": "Успадкувати",
       "inherit-value": "Успадкувати ({value})",
-      "off": "Вимк.",
       "on": "Увімкнено"
     }
   },
@@ -285,10 +278,6 @@
       "visible": "Видимість пристроям поблизу"
     },
     "calendar": {
-      "all-day": "Весь день",
-      "events": "Події",
-      "no-events": "Подій немає.",
-      "today": "Сьогодні",
       "toggle-events-card": "Список подій"
     },
     "display": {
@@ -902,8 +891,6 @@
       "calendar-reminder-open": "Відкрити",
       "calendar-reminder-untitled": "Подія без назви",
       "calendar-reminder-with-location": "",
-      "config-migration-body": "Оновіть {path} у вихідному файлі. Nythera застосовує цю заміну лише тимчасово. Виконайте команду \"nythera config validate\", щоб переглянути всі необхідні зміни.",
-      "config-migration-title": "Потрібно оновити конфігурацію",
       "dbus-disabled": "Сповіщення DBus вимкнено",
       "desktop-widgets-editor": "Редактор віджетів",
       "desktop-widgets-editor-enabled": "Редактор віджетів робочого столу увімкнено. Перейди на порожній робочий простір, щоб побачити оверлей редактора.",
@@ -917,11 +904,6 @@
       "greeter-sync-timeout": "Синхронізація з екраном входу все ще очікує на авторизацію. Перевірте, чи є запит polkit у TTY або консолі, увімкніть агент polkit у налаштуваннях безпеки або виконайте команду pkexec вручну.",
       "greeter-sync-timeout-manual": "Для синхронізації через автентифікований застарілий механізм усе ще потрібне підтвердження адміністратора. Запустіть допоміжну команду застосування з позиційними аргументами в терміналі та збережіть значення NYTHERA_GREETER_STATE_DIR, якщо використовуєте власний шлях.",
       "greeter-sync-timeout-manual-pkexec": "Для синхронізації з екраном входу все ще потрібна авторизація. Виконайте в терміналі: pkexec nythera-greeter-apply-appearance --sync \"/run/user/$(id -u)/nythera-greeter-sync\"",
-      "keybind-app": "Nythera",
-      "keybind-invalid-modifier": "Це поєднання клавіш приймає одну клавішу без модифікаторів.",
-      "keybind-invalid-printable": "Клавіші з друкованими символами (літери, цифри тощо) працюватимуть лише з модифікатором, як-от Ctrl або Alt.",
-      "keybind-invalid-super": "Клавіша Super/Windows не може бути використана у прив'язках клавіш оболонки.",
-      "keybind-invalid-title": "Прив'язка клавіш не дозволена",
       "launcher-usage-reset": "Запускач",
       "launcher-usage-reset-success": "Історію видалено.",
       "lockscreen-widgets-editor": "Редактор віджетів екрана блокування",
@@ -1132,7 +1114,6 @@
         "delete-confirm-desc": "Цю створену у GUI панель буде видалено з settings.toml.",
         "delete-confirm-title": "Видалити «{name}»?",
         "id-placeholder": "ID Bar",
-        "label": "Панель: {name}",
         "management": "Панель",
         "move-down": "Перемістити вниз",
         "move-up": "Перемістити вгору",
@@ -1490,41 +1471,12 @@
       }
     },
     "options": {
-      "accordion-direction": {
-        "end": "Після першого віджета",
-        "start": "Перед першим віджетом"
-      },
       "bar": {
         "auto-hide": {
           "off": "Вимк.",
           "on": "Увімк.",
           "smart": "Розумне"
         }
-      },
-      "clipboard": {
-        "auto-paste": {
-          "ctrl-shift-v": "Ctrl+Shift+V",
-          "ctrl-v": "Ctrl+V",
-          "shift-insert": "Shift+Insert"
-        }
-      },
-      "control-center": {
-        "sidebar": {
-          "compact": "Компактний",
-          "full": "Повний",
-          "none": "Немає"
-        }
-      },
-      "dock-launcher-position": {
-        "end": "Кінець",
-        "none": "Немає",
-        "start": "Почати"
-      },
-      "edge": {
-        "bottom": "Внизу",
-        "left": "Ліворуч",
-        "right": "Праворуч",
-        "top": "Зверху"
       },
       "font-weight": {
         "bold": "Жирний",
@@ -1552,21 +1504,6 @@
         "overlay": "Накладка",
         "top": "Зверху"
       },
-      "lockscreen": {
-        "transition": {
-          "diamond": "Діамант",
-          "disc": "Диск",
-          "fade": "Поява з поступовим проявленням",
-          "golden": "Золотий переріз",
-          "honeycomb": "Стільники",
-          "melt": "Розплавлення",
-          "pixel": "Пікселі",
-          "stripes": "Смуги",
-          "vortex": "Вихор",
-          "wipe": "Витирання",
-          "zoom": "Масштабування"
-        }
-      },
       "notification-urgency": {
         "critical": "Критичний",
         "low": "Низький",
@@ -1579,13 +1516,6 @@
       "panel-position": {
         "auto": "Біля панелі"
       },
-      "plugins": {
-        "auto-update": {
-          "all": "Усі",
-          "none": "Немає",
-          "official": "Офіційні"
-        }
-      },
       "screen-position": {
         "bottom-center": "Унизу посередині",
         "bottom-left": "Унизу ліворуч",
@@ -1597,88 +1527,9 @@
         "top-left": "Угорі ліворуч",
         "top-right": "Угорі праворуч"
       },
-      "shell": {
-        "launcher-default-view": {
-          "all": "Усі",
-          "categories": "Категорії",
-          "pinned": "Закріплені",
-          "recent": "Нещодавні"
-        },
-        "launcher-layout": {
-          "full": "Повний",
-          "simple": "Простий"
-        },
-        "launcher-search-position": {
-          "bottom": "Знизу",
-          "top": "Вгорі"
-        },
-        "panel-placement": {
-          "attached": "Прикріплений",
-          "floating": "Плаваюча"
-        },
-        "panel-transparency": {
-          "glass": "Скло",
-          "soft": "М'який",
-          "solid": "Суцільний"
-        },
-        "password-style": {
-          "filled-circles": "Заповнені кола",
-          "random-icons": "Випадкові іконки"
-        },
-        "shadow-direction": {
-          "center": "Центр",
-          "down": "Вниз",
-          "down-left": "Внизу ліворуч",
-          "down-right": "Внизу праворуч",
-          "left": "Ліворуч",
-          "right": "Праворуч",
-          "up": "Активно",
-          "up-left": "Вгору ліворуч",
-          "up-right": "Вгору праворуч"
-        }
-      },
-      "theme": {
-        "mode": {
-          "dark": "Темний",
-          "light": "Світлий"
-        },
-        "source": {
-          "built-in": "Вбудована",
-          "community": "Від спільноти",
-          "custom": "Власна",
-          "wallpaper": "Тло екрана"
-        }
-      },
       "theme-role": {
         "custom": "Власне",
         "default": "Типово"
-      },
-      "wallpaper": {
-        "fill": {
-          "center": "Центрувати",
-          "crop": "Обрізати",
-          "fit": "Заповнити",
-          "repeat": "Розмножити",
-          "span": "Розділити",
-          "stretch": "Розтягнути"
-        },
-        "order": {
-          "alphabetical": "Алфавітний",
-          "random": "Довільний"
-        },
-        "transition": {
-          "diamond": "Діамант",
-          "disc": "Круг",
-          "fade": "Проступання",
-          "golden": "Золотий переріз",
-          "honeycomb": "Стільники",
-          "melt": "Розплавлення",
-          "pixel": "Пікселі",
-          "stripes": "Смуги",
-          "vortex": "Вихор",
-          "wipe": "Штора",
-          "zoom": "Наближення"
-        }
       },
       "weather": {
         "unit": {
@@ -3110,14 +2961,6 @@
       "label-field": "Мітка",
       "label-placeholder": "Необов'язковий текст кнопки",
       "shortcut-label": "Комбінація клавіш",
-      "variant": {
-        "default": "Типово",
-        "destructive": "Деструктивна",
-        "ghost": "Без контуру й заповнення",
-        "outline": "Outline",
-        "primary": "Основний",
-        "secondary": "Другорядний"
-      },
       "variant-label": "Стиль кнопки"
     },
     "templates": {
@@ -3704,32 +3547,11 @@
   },
   "time": {
     "duration": {
-      "less-than-day": "менше, ніж 1 д",
-      "less-than-minute": "< 1 хв",
-      "three-parts": "{first} {second} {third}",
-      "two-parts": "{first} {second}"
-    },
-    "file": {
-      "unknown": "Невідомо"
-    },
-    "relative": {
-      "days-ago": "{count} день тому",
-      "days-ago-plural": "{count} днів тому",
-      "hours-ago": "{count} год тому",
-      "hours-ago-plural": "{count} год тому",
-      "just-now": "щойно",
-      "minutes-ago": "{count} хв тому",
-      "minutes-ago-plural": "{count} хв тому"
+      "less-than-day": "менше, ніж 1 д"
     },
     "units": {
-      "day": "{count} д",
-      "day-plural": "{count} д",
-      "hour": "{count} год",
       "hour-compact": "{count} год",
-      "hour-plural": "{count} год",
-      "minute": "{count} хв",
       "minute-compact": "{count} хв",
-      "minute-plural": "{count} хв",
       "month": "{count} міс",
       "month-plural": "{count} міс",
       "year": "{count} р",
@@ -3741,53 +3563,6 @@
       "empty": "Немає пунктів меню…",
       "pin": "Закріпити",
       "unpin": "Відкріпити"
-    }
-  },
-  "ui": {
-    "controls": {
-      "search-picker": {
-        "empty": "Немає результатів",
-        "placeholder": "Пошук…"
-      },
-      "select": {
-        "placeholder": "Обери опцію"
-      }
-    },
-    "dialogs": {
-      "color-picker": {
-        "title": "Колір"
-      },
-      "file": {
-        "actions": {
-          "open": "Відкрити",
-          "save": "Зберегти",
-          "select-folder": "Вибрати теку"
-        },
-        "empty-filtered": "Жодного файлу не відповідає поточному фільтру",
-        "entry": {
-          "folder": "Папка"
-        },
-        "filename-placeholder": "Ім'я файлу",
-        "filter-placeholder": "Фільтр…",
-        "sort": {
-          "ascending": "Вгору",
-          "date": "Дата",
-          "descending": "Розгорнути",
-          "name": "Ім'я",
-          "size": "Розмір"
-        },
-        "title": {
-          "default": "Діалог файлів",
-          "open": "Відкрити файл",
-          "save": "Зберегти файл",
-          "select-folder": "Вибрати теку"
-        }
-      },
-      "glyph-picker": {
-        "all-categories": "Усі",
-        "search-placeholder": "Пошук символів…",
-        "title": "Обери іконку"
-      }
     }
   },
   "wallpaper": {

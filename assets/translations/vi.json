@@ -214,20 +214,13 @@
       "loading": "Đang tải bản xem trước...",
       "text-title": "Bộ nhớ văn bản",
       "truncated": "… đã rút gọn"
-    },
-    "title": "Bộ nhớ tạm"
+    }
   },
   "common": {
-    "actions": {
-      "apply": "Áp dụng",
-      "cancel": "Hủy"
-    },
     "states": {
-      "auto": "Tự động",
       "custom": "Tùy chỉnh",
       "inherit": "Kế thừa",
       "inherit-value": "Kế thừa ({value})",
-      "off": "Tắt",
       "on": "Bật"
     }
   },
@@ -281,10 +274,6 @@
       "visible": "Hiển thị với thiết bị lân cận"
     },
     "calendar": {
-      "all-day": "Cả ngày",
-      "events": "Sự kiện",
-      "no-events": "Không có sự kiện.",
-      "today": "Hôm nay",
       "toggle-events-card": "Hiện/ẩn thẻ sự kiện"
     },
     "display": {
@@ -898,8 +887,6 @@
       "calendar-reminder-open": "Mở",
       "calendar-reminder-untitled": "Sự kiện không có tiêu đề",
       "calendar-reminder-with-location": "{when}\n{location}",
-      "config-migration-body": "Cấu hình cũ, bao gồm {path}, đang được chuyển đổi tạm thời trong bộ nhớ. Hãy cập nhật cấu hình gốc; Cài đặt và nythera config validate sẽ hiển thị cấu hình thay thế cần dùng.",
-      "config-migration-title": "Cần cập nhật cấu hình",
       "dbus-disabled": "Thông báo DBus đã tắt",
       "desktop-widgets-editor": "Trình chỉnh sửa tiện ích",
       "desktop-widgets-editor-enabled": "Trình chỉnh sửa tiện ích màn hình nền đang bật. Chuyển sang một không gian làm việc trống để xem Overlay trình chỉnh sửa.",
@@ -913,11 +900,6 @@
       "greeter-sync-timeout": "Đồng bộ hóa màn hình chào vẫn đang chờ quyền phê duyệt của quản trị viên. Hãy kiểm tra TTY hoặc bảng điều khiển để tìm yêu cầu từ polkit, bật tác nhân polkit trong phần cài đặt Bảo mật hoặc tự chạy pkexec thủ công.",
       "greeter-sync-timeout-manual": "Đồng bộ hóa màn hình chào vẫn cần quyền phê duyệt của quản trị viên. Hãy chạy lệnh sau trong Terminal: pkexec nythera-greeter-apply-appearance \"$XDG_RUNTIME_DIR/nythera-greeter-sync\"",
       "greeter-sync-timeout-manual-pkexec": "Việc đồng bộ hóa màn hình chào vẫn cần được xác thực. Hãy chạy trong cửa sổ dòng lệnh: pkexec nythera-greeter-apply-appearance --sync \"/run/user/$(id -u)/nythera-greeter-sync\"",
-      "keybind-app": "Nythera",
-      "keybind-invalid-modifier": "Phím tắt này nhận một phím không kèm phím bổ trợ.",
-      "keybind-invalid-printable": "Các phím ký tự (chữ cái, số, ký hiệu) cần một phím bổ trợ như Ctrl hoặc Alt.",
-      "keybind-invalid-super": "Không thể dùng phím Super/Windows trong các phím tắt của shell.",
-      "keybind-invalid-title": "Phím tắt không được phép",
       "launcher-usage-reset": "Trình khởi chạy",
       "launcher-usage-reset-success": "Đã xóa toàn bộ dữ liệu sử dụng.",
       "lockscreen-widgets-editor": "Trình chỉnh sửa tiện ích màn hình khóa",
@@ -1126,7 +1108,6 @@
         "delete-confirm-desc": "Thanh được tạo bằng GUI này sẽ được gỡ bỏ khỏi settings.toml.",
         "delete-confirm-title": "Xóa \"{name}\"?",
         "id-placeholder": "ID thanh",
-        "label": "Thanh: {name}",
         "management": "Thanh",
         "move-down": "Di chuyển xuống",
         "move-up": "Di chuyển lên",
@@ -1481,41 +1462,12 @@
       }
     },
     "options": {
-      "accordion-direction": {
-        "end": "Trước widget đầu tiên",
-        "start": "Sau widget đầu tiên"
-      },
       "bar": {
         "auto-hide": {
           "off": "Tắt",
           "on": "Bật",
           "smart": "Thông minh"
         }
-      },
-      "clipboard": {
-        "auto-paste": {
-          "ctrl-shift-v": "Ctrl+Shift+V",
-          "ctrl-v": "Ctrl+V",
-          "shift-insert": "Shift+Insert"
-        }
-      },
-      "control-center": {
-        "sidebar": {
-          "compact": "Gọn",
-          "full": "Toàn bộ",
-          "none": "Không có"
-        }
-      },
-      "dock-launcher-position": {
-        "end": "Kết thúc",
-        "none": "Không có",
-        "start": "Bắt đầu"
-      },
-      "edge": {
-        "bottom": "Dưới cùng",
-        "left": "Trái",
-        "right": "Phải",
-        "top": "Trên"
       },
       "font-weight": {
         "bold": "In đậm",
@@ -1543,15 +1495,6 @@
         "overlay": "Overlay",
         "top": "Trên"
       },
-      "lockscreen": {
-        "transition": {
-          "diamond": "Kim cương",
-          "golden": "Hoàng kim",
-          "melt": "Tan chảy",
-          "pixel": "Pixel",
-          "stripes": "Sọc"
-        }
-      },
       "notification-urgency": {
         "critical": "Nghiêm trọng",
         "low": "Thấp",
@@ -1564,13 +1507,6 @@
       "panel-position": {
         "auto": "Theo Bar"
       },
-      "plugins": {
-        "auto-update": {
-          "all": "Tất cả",
-          "none": "Không",
-          "official": "Chính thức"
-        }
-      },
       "screen-position": {
         "bottom-center": "Giữa dưới",
         "bottom-left": "Góc dưới bên trái",
@@ -1582,104 +1518,9 @@
         "top-left": "Góc trên bên trái",
         "top-right": "Trên cùng bên phải"
       },
-      "screenshot": {
-        "region-modifier": {
-          "alt": "Alt",
-          "ctrl": "Ctrl",
-          "none": "Không",
-          "shift": "Shift",
-          "super": "Super"
-        }
-      },
-      "shell": {
-        "launcher-default-view": {
-          "all": "Tất cả",
-          "categories": "Danh mục",
-          "pinned": "Đã ghim",
-          "recent": "Gần đây"
-        },
-        "launcher-layout": {
-          "full": "Đầy đủ",
-          "simple": "Đơn giản"
-        },
-        "launcher-search-position": {
-          "bottom": "Dưới cùng",
-          "top": "Trên cùng"
-        },
-        "panel-placement": {
-          "attached": "Gắn vào",
-          "floating": "Nổi"
-        },
-        "panel-transparency": {
-          "glass": "Kính",
-          "soft": "Dịu",
-          "solid": "Đặc"
-        },
-        "password-style": {
-          "filled-circles": "Hình tròn đặc",
-          "random-icons": "Biểu tượng ngẫu nhiên"
-        },
-        "shadow-direction": {
-          "center": "Giữa",
-          "down": "Xuống",
-          "down-left": "Dưới Trái",
-          "down-right": "Dưới phải",
-          "left": "Trái",
-          "right": "Phải",
-          "up": "Hoạt động",
-          "up-left": "Trên Trái",
-          "up-right": "Trên bên phải"
-        },
-        "window-switcher-style": {
-          "carousel": "Băng chuyền",
-          "compact": "Thu gọn"
-        }
-      },
-      "theme": {
-        "mode": {
-          "dark": "Tối",
-          "light": "Sáng"
-        },
-        "shell-mode": {
-          "follow": "Theo hình nền"
-        },
-        "source": {
-          "built-in": "Tích hợp sẵn",
-          "community": "Cộng đồng",
-          "custom": "Tùy chỉnh",
-          "wallpaper": "Hình nền"
-        }
-      },
       "theme-role": {
         "custom": "Tùy chỉnh…",
         "default": "Mặc định"
-      },
-      "wallpaper": {
-        "fill": {
-          "center": "Giữa",
-          "crop": "Cắt",
-          "fit": "Vừa",
-          "repeat": "Lặp lại",
-          "span": "Phủ",
-          "stretch": "Kéo giãn"
-        },
-        "order": {
-          "alphabetical": "Theo ABC",
-          "random": "Ngẫu nhiên"
-        },
-        "transition": {
-          "diamond": "Kim cương",
-          "disc": "Ổ đĩa",
-          "fade": "Mờ dần",
-          "golden": "Hoàng kim",
-          "honeycomb": "Tổ ong",
-          "melt": "Tan chảy",
-          "pixel": "Pixel",
-          "stripes": "Sọc",
-          "vortex": "Dòng xoáy",
-          "wipe": "Xóa",
-          "zoom": "Thu phóng"
-        }
       },
       "weather": {
         "unit": {
@@ -3231,14 +3072,6 @@
       "label-field": "Nhãn",
       "label-placeholder": "Văn bản nút tùy chọn",
       "shortcut-label": "Phím tắt",
-      "variant": {
-        "default": "Mặc định",
-        "destructive": "Nguy hiểm",
-        "ghost": "Ghost",
-        "outline": "Outline",
-        "primary": "Chính",
-        "secondary": "Phụ"
-      },
       "variant-label": "Kiểu nút"
     },
     "widgets": {
@@ -3854,75 +3687,11 @@
       "vibrant": "Rực rỡ"
     }
   },
-  "time": {
-    "duration": {
-      "less-than-minute": "1 phút"
-    },
-    "file": {
-      "unknown": "Không xác định"
-    },
-    "relative": {
-      "days-ago": "{count} ngày trước",
-      "days-ago-plural": "{count} ngày trước",
-      "hours-ago": "{count} giờ trước",
-      "hours-ago-plural": "{count} giờ trước",
-      "just-now": "vừa mới",
-      "minutes-ago": "{count} phút trước",
-      "minutes-ago-plural": "{count} phút trước"
-    }
-  },
   "tray": {
     "menu": {
       "empty": "Không có mục menu nào...",
       "pin": "Ghim",
       "unpin": "Bỏ ghim"
-    }
-  },
-  "ui": {
-    "controls": {
-      "search-picker": {
-        "empty": "Không có kết quả",
-        "placeholder": "Tìm kiếm..."
-      },
-      "select": {
-        "placeholder": "Chọn một tùy chọn"
-      }
-    },
-    "dialogs": {
-      "color-picker": {
-        "title": "Màu sắc"
-      },
-      "file": {
-        "actions": {
-          "open": "Mở",
-          "save": "Lưu",
-          "select-folder": "Chọn thư mục"
-        },
-        "empty-filtered": "Không có tệp nào khớp với bộ lọc hiện tại",
-        "entry": {
-          "folder": "Thư mục"
-        },
-        "filename-placeholder": "Tên tệp",
-        "filter-placeholder": "Lọc...",
-        "sort": {
-          "ascending": "Lên",
-          "date": "Ngày",
-          "descending": "↓",
-          "name": "Tên",
-          "size": "Kích thước"
-        },
-        "title": {
-          "default": "Hộp thoại tệp",
-          "open": "Mở tệp",
-          "save": "Lưu tệp",
-          "select-folder": "Chọn thư mục"
-        }
-      },
-      "glyph-picker": {
-        "all-categories": "Tất cả",
-        "search-placeholder": "Tìm kiếm ký tự…",
-        "title": "Chọn biểu tượng"
-      }
     }
   },
   "wallpaper": {

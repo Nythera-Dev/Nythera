@@ -147,19 +147,12 @@
       "loading": "Cargando a vista previa...",
       "text-title": "Entrada de texto do portapapeis",
       "truncated": "… truncado"
-    },
-    "title": "Portapapeis"
+    }
   },
   "common": {
-    "actions": {
-      "apply": "Aplicar",
-      "cancel": "Cancelar"
-    },
     "states": {
-      "auto": "Automático",
       "custom": "Personalizado",
-      "inherit": "Herdado",
-      "off": "Desactivado"
+      "inherit": "Herdado"
     }
   },
   "control-center": {
@@ -209,10 +202,6 @@
       "visible": "Descubrible por dispositivos próximos"
     },
     "calendar": {
-      "all-day": "Todo o día",
-      "events": "Eventos",
-      "no-events": "Non hai eventos.",
-      "today": "Hoxe",
       "toggle-events-card": "Alternar a tarxeta de eventos"
     },
     "display": {
@@ -682,8 +671,6 @@
       "calendar-google-connect-start-failed": "Non se puido iniciar a autorización de Google. Revisa a conexión de rede e téntao de novo.",
       "calendar-google-connect-start-http": "Non se puido iniciar a autorización de Google. O broker OAuth devolveu HTTP {status}.",
       "calendar-google-connect-timeout": "A autorización de Google esgotou o tempo de espera. Inicia a conexión de novo cando esteas listo para iniciar sesión.",
-      "config-migration-body": "A configuración antiga estase migrando na memoria, incluído {path}. Actualiza a configuración de orixe; Configuración e nythera config validate mostran a substitución requirida.",
-      "config-migration-title": "Cómpre actualizar a configuración",
       "dbus-disabled": "Notificacións DBus desactivadas",
       "desktop-widgets-editor": "Editor de widgets do escritorio",
       "desktop-widgets-editor-enabled": "O editor de widgets do escritorio está activado. Cambia a un espazo de traballo baleiro para ver a capa do editor.",
@@ -694,11 +681,6 @@
       "greeter-sync-success": "A aparencia sincronizouse. Os cambios aplicaranse na próxima pantalla de inicio de sesión.",
       "greeter-sync-timeout": "A sincronización do Greeter segue agardando pola aprobación do administrador. Revisa se hai unha solicitude de polkit nunha TTY ou consola, activa o axente de polkit nos axustes de Seguridade ou executa pkexec manualmente.",
       "greeter-sync-timeout-manual": "A sincronización do Greeter segue precisando aprobación do administrador. Executa nun terminal: pkexec nythera-greeter-apply-appearance \"$XDG_RUNTIME_DIR/nythera-greeter-sync\"",
-      "keybind-app": "Nythera",
-      "keybind-invalid-modifier": "Este atallo acepta unha soa tecla sen modificadores.",
-      "keybind-invalid-printable": "As teclas imprimibles (letras, números e símbolos) requiren un modificador como Ctrl ou Alt.",
-      "keybind-invalid-super": "A tecla Super/Windows non se pode usar nos atallos da shell.",
-      "keybind-invalid-title": "Atallo non permitido",
       "launcher-usage-reset": "Launcher",
       "launcher-usage-reset-success": "Datos de uso borrados.",
       "lockscreen-widgets-editor": "Editor de widgets da pantalla de bloqueo",
@@ -881,7 +863,6 @@
         "delete-confirm-desc": "Esta barra creada desde a interface eliminarase de settings.toml.",
         "delete-confirm-title": "Eliminar \"{name}\"?",
         "id-placeholder": "ID da barra",
-        "label": "Barra: {name}",
         "management": "Barra",
         "move-down": "Mover abaixo",
         "move-up": "Mover arriba",
@@ -1202,31 +1183,6 @@
           "smart": "Intelixente"
         }
       },
-      "clipboard": {
-        "auto-paste": {
-          "ctrl-shift-v": "Ctrl+Shift+V",
-          "ctrl-v": "Ctrl+V",
-          "shift-insert": "Shift+Insert"
-        }
-      },
-      "control-center": {
-        "sidebar": {
-          "compact": "Compacta",
-          "full": "Completa",
-          "none": "Ningunha"
-        }
-      },
-      "dock-launcher-position": {
-        "end": "Final",
-        "none": "Ningunha",
-        "start": "Inicio"
-      },
-      "edge": {
-        "bottom": "Abaixo",
-        "left": "Esquerda",
-        "right": "Dereita",
-        "top": "Arriba"
-      },
       "font-weight": {
         "bold": "Negriña",
         "book": "Book",
@@ -1276,69 +1232,9 @@
         "top-left": "Arriba á esquerda",
         "top-right": "Arriba á dereita"
       },
-      "shell": {
-        "panel-placement": {
-          "attached": "Anexado",
-          "floating": "Flotante"
-        },
-        "panel-transparency": {
-          "glass": "Vidro",
-          "soft": "Suave",
-          "solid": "Sólida"
-        },
-        "password-style": {
-          "filled-circles": "Círculos recheos",
-          "random-icons": "Iconas aleatorias"
-        },
-        "shadow-direction": {
-          "center": "Centro",
-          "down": "Abaixo",
-          "down-left": "Abaixo á esquerda",
-          "down-right": "Abaixo á dereita",
-          "left": "Esquerda",
-          "right": "Dereita",
-          "up": "Arriba",
-          "up-left": "Arriba á esquerda",
-          "up-right": "Arriba á dereita"
-        }
-      },
-      "theme": {
-        "mode": {
-          "dark": "Escuro",
-          "light": "Claro"
-        },
-        "source": {
-          "built-in": "Integrada",
-          "community": "Comunidade",
-          "custom": "Personalizada",
-          "wallpaper": "Fondo de pantalla"
-        }
-      },
       "theme-role": {
         "custom": "Personalizada…",
         "default": "Predeterminada"
-      },
-      "wallpaper": {
-        "fill": {
-          "center": "Centrar",
-          "crop": "Recortar",
-          "fit": "Axustar",
-          "repeat": "Repetir",
-          "span": "Estender",
-          "stretch": "Estirar"
-        },
-        "order": {
-          "alphabetical": "Alfabética",
-          "random": "Aleatoria"
-        },
-        "transition": {
-          "disc": "Disco",
-          "fade": "Esvaecemento",
-          "honeycomb": "Panal",
-          "stripes": "Raias",
-          "wipe": "Varrido",
-          "zoom": "Zoom"
-        }
       },
       "weather": {
         "unit": {
@@ -2788,14 +2684,6 @@
       "label-field": "Etiqueta",
       "label-placeholder": "Texto opcional do botón",
       "shortcut-label": "Atallo",
-      "variant": {
-        "default": "Predeterminado",
-        "destructive": "Destrutivo",
-        "ghost": "Fantasma",
-        "outline": "Contorno",
-        "primary": "Primario",
-        "secondary": "Secundario"
-      },
       "variant-label": "Estilo do botón"
     },
     "widgets": {
@@ -3389,30 +3277,9 @@
   },
   "time": {
     "duration": {
-      "less-than-day": "menos de 1 día",
-      "less-than-minute": "<1m",
-      "three-parts": "{first} {second} {third}",
-      "two-parts": "{first} {second}"
-    },
-    "file": {
-      "unknown": "Descoñecido"
-    },
-    "relative": {
-      "days-ago": "hai {count} día",
-      "days-ago-plural": "hai {count} días",
-      "hours-ago": "hai {count} h",
-      "hours-ago-plural": "hai {count} h",
-      "just-now": "agora mesmo",
-      "minutes-ago": "hai {count} min",
-      "minutes-ago-plural": "hai {count} min"
+      "less-than-day": "menos de 1 día"
     },
     "units": {
-      "day": "{count} día",
-      "day-plural": "{count} días",
-      "hour": "{count} hora",
-      "hour-plural": "{count} horas",
-      "minute": "{count} minuto",
-      "minute-plural": "{count} minutos",
       "month": "{count} mes",
       "month-plural": "{count} meses",
       "year": "{count} ano",
@@ -3424,53 +3291,6 @@
       "empty": "Non hai elementos no menú...",
       "pin": "Fixar",
       "unpin": "Desfixar"
-    }
-  },
-  "ui": {
-    "controls": {
-      "search-picker": {
-        "empty": "Non hai resultados",
-        "placeholder": "Buscar..."
-      },
-      "select": {
-        "placeholder": "Selecciona unha opción"
-      }
-    },
-    "dialogs": {
-      "color-picker": {
-        "title": "Cor"
-      },
-      "file": {
-        "actions": {
-          "open": "Abrir",
-          "save": "Gardar",
-          "select-folder": "Seleccionar cartafol"
-        },
-        "empty-filtered": "Ningún ficheiro coincide co filtro actual",
-        "entry": {
-          "folder": "Cartafol"
-        },
-        "filename-placeholder": "Nome do ficheiro",
-        "filter-placeholder": "Filtrar...",
-        "sort": {
-          "ascending": "↑",
-          "date": "Data",
-          "descending": "↓",
-          "name": "Nome",
-          "size": "Tamaño"
-        },
-        "title": {
-          "default": "Diálogo de ficheiros",
-          "open": "Abrir ficheiro",
-          "save": "Gardar ficheiro",
-          "select-folder": "Seleccionar cartafol"
-        }
-      },
-      "glyph-picker": {
-        "all-categories": "Todos",
-        "search-placeholder": "Buscar glifos…",
-        "title": "Escoller un glifo"
-      }
     }
   },
   "wallpaper": {

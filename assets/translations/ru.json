@@ -259,24 +259,17 @@
       "loading": "Загрузка предварительного просмотра…",
       "text-title": "Текст из буфера обмена",
       "truncated": "… сокращено"
-    },
-    "title": "Буфер обмена"
+    }
   },
   "common": {
-    "actions": {
-      "apply": "Применить",
-      "cancel": "Отменить"
-    },
     "minimize": "Свернуть",
     "minimized": "Свёрнуто",
     "minimized-count": "{count} свёрнуто",
     "restore": "Восстановить",
     "states": {
-      "auto": "Авто",
       "custom": "Пользовательский",
       "inherit": "Наследовать",
       "inherit-value": "Наследовать ({value})",
-      "off": "Выкл.",
       "on": "Вкл."
     }
   },
@@ -330,14 +323,6 @@
       "visible": "Доступно для устройств поблизости"
     },
     "calendar": {
-      "all-day": "Весь день",
-      "events": "События",
-      "hide-past-events": "Скрыть прошлые события: {count}",
-      "hide-past-events-plural": "Скрыть прошлые события: {count}",
-      "no-events": "Нет событий.",
-      "show-past-events": "Показать прошлые события: {count}",
-      "show-past-events-plural": "Показать прошлые события: {count}",
-      "today": "Сегодня",
       "toggle-events-card": "Переключить карту событий"
     },
     "display": {
@@ -960,8 +945,6 @@
       "calendar-reminder-open": "Открыть",
       "calendar-reminder-untitled": "Событие без названия",
       "calendar-reminder-with-location": "{when}\n{location}",
-      "config-migration-body": "Обновите {path} в исходном файле. Nythera применяет эту замену временно. Выполните «nythera config validate», чтобы просмотреть список всех необходимых изменений.",
-      "config-migration-title": "Требуется обновление конфигурации",
       "dbus-disabled": "DBus-уведомления отключены",
       "desktop-widgets-editor": "Редактор виджетов",
       "desktop-widgets-editor-enabled": "Редактор виджетов рабочего стола включён. Переключитесь на пустое рабочее пространство, чтобы открытые окна не перекрывали редактор.",
@@ -975,11 +958,6 @@
       "greeter-sync-timeout": "Синхронизация с экраном входа всё ещё ожидает авторизации. Проверьте TTY или консоль на наличие запроса polkit, включите агент polkit в разделе «Безопасность» или выполните pkexec вручную.",
       "greeter-sync-timeout-manual": "Для устаревшей синхронизации с аутентификацией по-прежнему требуется подтверждение администратора. Запустите позиционный вспомогательный инструмент применения (apply helper) в терминале, сохранив переменную NYTHERA_GREETER_STATE_DIR, если вы используете нестандартный путь.",
       "greeter-sync-timeout-manual-pkexec": "Синхронизация с экраном входа всё ещё требует авторизации. Выполните в терминале: pkexec nythera-greeter-apply-appearance --sync \"/run/user/$(id -u)/nythera-greeter-sync\"",
-      "keybind-app": "Nythera",
-      "keybind-invalid-modifier": "Это сочетание клавиш принимает одну клавишу без модификаторов.",
-      "keybind-invalid-printable": "Печатные клавиши (буквы, цифры, символы) требуют модификатор, например Ctrl или Alt.",
-      "keybind-invalid-super": "Клавишу Super/Windows нельзя использовать в сочетаниях клавиш командной строки.",
-      "keybind-invalid-title": "Недопустимое сочетание клавиш",
       "launcher-usage-reset": "Лаунчер",
       "launcher-usage-reset-success": "Данные об использовании очищены.",
       "lockscreen-widgets-editor": "Редактор виджетов экрана блокировки",
@@ -1190,7 +1168,6 @@
         "delete-confirm-desc": "Эта панель, созданная в GUI, будет удалена из settings.toml.",
         "delete-confirm-title": "Удалить \"{name}\"?",
         "id-placeholder": "ID панели",
-        "label": "Панель: {name}",
         "management": "Панель",
         "move-down": "Вниз",
         "move-up": "Вверх",
@@ -1553,41 +1530,12 @@
       }
     },
     "options": {
-      "accordion-direction": {
-        "end": "После первого виджета",
-        "start": "Перед первым виджетом"
-      },
       "bar": {
         "auto-hide": {
           "off": "Выкл",
           "on": "Вкл",
           "smart": "Умное"
         }
-      },
-      "clipboard": {
-        "auto-paste": {
-          "ctrl-shift-v": "Ctrl+Shift+V",
-          "ctrl-v": "Ctrl+V",
-          "shift-insert": "Shift+Insert"
-        }
-      },
-      "control-center": {
-        "sidebar": {
-          "compact": "Компактная",
-          "full": "Полная",
-          "none": "Нет"
-        }
-      },
-      "dock-launcher-position": {
-        "end": "В конце",
-        "none": "Нет",
-        "start": "В начале"
-      },
-      "edge": {
-        "bottom": "Снизу",
-        "left": "Слева",
-        "right": "Справа",
-        "top": "Сверху"
       },
       "font-weight": {
         "bold": "Полужирный",
@@ -1615,21 +1563,6 @@
         "overlay": "Оверлей",
         "top": "Сверху"
       },
-      "lockscreen": {
-        "transition": {
-          "diamond": "Алмаз",
-          "disc": "Диск",
-          "fade": "Плавное исчезновение",
-          "golden": "Золотой",
-          "honeycomb": "Соты",
-          "melt": "Растопить",
-          "pixel": "Пиксель",
-          "stripes": "Полосы",
-          "vortex": "Вихрь",
-          "wipe": "Шторка",
-          "zoom": "Масштабирование"
-        }
-      },
       "notification-urgency": {
         "critical": "Критическая",
         "low": "Низкая",
@@ -1642,13 +1575,6 @@
       "panel-position": {
         "auto": "Следовать за панелью"
       },
-      "plugins": {
-        "auto-update": {
-          "all": "Все",
-          "none": "Нет",
-          "official": "Официальные"
-        }
-      },
       "screen-position": {
         "bottom-center": "Внизу по центру",
         "bottom-left": "Внизу слева",
@@ -1660,110 +1586,9 @@
         "top-left": "Вверху слева",
         "top-right": "Вверху справа"
       },
-      "screenshot": {
-        "format": {
-          "jpeg": "JPEG",
-          "jxl": "JPEG XL",
-          "png": "PNG",
-          "webp": "WebP"
-        },
-        "region-modifier": {
-          "alt": "Alt",
-          "ctrl": "Ctrl",
-          "none": "Ничего",
-          "shift": "Shift",
-          "super": "Super"
-        }
-      },
-      "shell": {
-        "launcher-default-view": {
-          "all": "Все",
-          "categories": "Категорий",
-          "pinned": "Закреплено",
-          "recent": "Недавние"
-        },
-        "launcher-layout": {
-          "full": "Расширенный",
-          "simple": "Простой"
-        },
-        "launcher-search-position": {
-          "bottom": "Снизу",
-          "top": "Сверху"
-        },
-        "panel-placement": {
-          "attached": "Прикреплённая",
-          "floating": "Плавающая"
-        },
-        "panel-transparency": {
-          "glass": "Стекло",
-          "soft": "Мягкая",
-          "solid": "Сплошная"
-        },
-        "password-style": {
-          "filled-circles": "Заполненные круги",
-          "random-icons": "Случайные значки"
-        },
-        "shadow-direction": {
-          "center": "По центру",
-          "down": "Вниз",
-          "down-left": "Вниз влево",
-          "down-right": "Вниз вправо",
-          "left": "Влево",
-          "right": "Вправо",
-          "up": "Вверх",
-          "up-left": "Вверх влево",
-          "up-right": "Вверх вправо"
-        },
-        "window-switcher-style": {
-          "carousel": "Карусель",
-          "compact": "Компактный"
-        }
-      },
-      "theme": {
-        "mode": {
-          "dark": "Тёмная",
-          "light": "Светлая"
-        },
-        "shell-mode": {
-          "follow": "Следовать"
-        },
-        "source": {
-          "built-in": "Встроенная",
-          "community": "Сообщество",
-          "custom": "Пользовательская",
-          "wallpaper": "Обои"
-        }
-      },
       "theme-role": {
         "custom": "Пользовательская",
         "default": "По умолчанию"
-      },
-      "wallpaper": {
-        "fill": {
-          "center": "По центру",
-          "crop": "Обрезка",
-          "fit": "Вписать",
-          "repeat": "Повтор",
-          "span": "Охватить",
-          "stretch": "Растянуть"
-        },
-        "order": {
-          "alphabetical": "По алфавиту",
-          "random": "Случайно"
-        },
-        "transition": {
-          "diamond": "Алмаз",
-          "disc": "Диск",
-          "fade": "Плавное исчезновение",
-          "golden": "Золотой",
-          "honeycomb": "Соты",
-          "melt": "Растопить",
-          "pixel": "Пиксель",
-          "stripes": "Полосы",
-          "vortex": "Вихрь",
-          "wipe": "Шторка",
-          "zoom": "Масштабирование"
-        }
       },
       "weather": {
         "unit": {
@@ -3862,14 +3687,6 @@
       "label-placeholder": "Дополнительный текст кнопки",
       "lockscreen-shortcut-label": "Сочетание клавиш для блокировки экрана",
       "shortcut-label": "Сочетание клавиш",
-      "variant": {
-        "default": "По умолчанию",
-        "destructive": "Опасная",
-        "ghost": "Призрак",
-        "outline": "Контур",
-        "primary": "Основная",
-        "secondary": "Вторичная"
-      },
       "variant-label": "Стиль кнопки"
     },
     "storage-recovery": {
@@ -5214,32 +5031,11 @@
   },
   "time": {
     "duration": {
-      "less-than-day": "меньше дня",
-      "less-than-minute": "<1 мин",
-      "three-parts": "{first} {second} {third}",
-      "two-parts": "{first} {second}"
-    },
-    "file": {
-      "unknown": "Неизвестный"
-    },
-    "relative": {
-      "days-ago": "{count} дн. назад",
-      "days-ago-plural": "{count} дн. назад",
-      "hours-ago": "{count} ч назад",
-      "hours-ago-plural": "{count} ч назад",
-      "just-now": "только что",
-      "minutes-ago": "{count} мин назад",
-      "minutes-ago-plural": "{count} мин назад"
+      "less-than-day": "меньше дня"
     },
     "units": {
-      "day": "{count} день",
-      "day-plural": "{count} дней",
-      "hour": "{count} час",
       "hour-compact": "{count}ч",
-      "hour-plural": "{count} часов",
-      "minute": "{count} минута",
       "minute-compact": "{count}м",
-      "minute-plural": "{count} минут",
       "month": "{count} месяц",
       "month-plural": "{count} месяцев",
       "year": "{count} год",
@@ -5251,72 +5047,6 @@
       "empty": "Нет пунктов меню…",
       "pin": "Закрепить",
       "unpin": "Открепить"
-    }
-  },
-  "ui": {
-    "controls": {
-      "key-names": {
-        "backspace": "Backspace",
-        "delete": "Удалить",
-        "down": "Вниз",
-        "end": "Конец",
-        "enter": "Ввод",
-        "escape": "Escape",
-        "home": "Начало",
-        "insert": "Insert",
-        "left": "Влево",
-        "numpad-enter": "Enter на цифровом блоке",
-        "page-down": "Страница вниз",
-        "page-up": "Страница вверх",
-        "right": "Вправо",
-        "space": "Пробел",
-        "tab": "Tab",
-        "up": "Вверх"
-      },
-      "search-picker": {
-        "empty": "Нет результатов",
-        "placeholder": "Поиск…"
-      },
-      "select": {
-        "placeholder": "Выберите вариант"
-      }
-    },
-    "dialogs": {
-      "color-picker": {
-        "copy": "Скопировать цветовой код в текущем формате",
-        "title": "Цвет"
-      },
-      "file": {
-        "actions": {
-          "open": "Открыть",
-          "save": "Сохранить",
-          "select-folder": "Выбрать папку"
-        },
-        "empty-filtered": "Нет файлов, соответствующих текущему фильтру",
-        "entry": {
-          "folder": "Папка"
-        },
-        "filename-placeholder": "Имя файла",
-        "filter-placeholder": "Фильтр…",
-        "sort": {
-          "ascending": "↑",
-          "date": "Дата",
-          "descending": "↓",
-          "name": "Имя",
-          "size": "Размер"
-        },
-        "title": {
-          "default": "Диалоговое окно файла",
-          "open": "Открыть файл",
-          "save": "Сохранить файл",
-          "select-folder": "Выбрать папку"
-        }
-      },
-      "glyph-picker": {
-        "all-categories": "Все",
-        "search-placeholder": "Поиск глифов…",
-        "title": "Выбрать глиф"
-      }
     }
   },
   "wallpaper": {

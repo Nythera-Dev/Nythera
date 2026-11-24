@@ -165,19 +165,12 @@
       "loading": "טוען תצוגה מקדימה…",
       "text-title": "רשומת טקסט בלוח",
       "truncated": "… קוצץ"
-    },
-    "title": "לוח"
+    }
   },
   "common": {
-    "actions": {
-      "apply": "החל",
-      "cancel": "ביטול"
-    },
     "states": {
-      "auto": "אוטומטי",
       "custom": "מותאם אישית",
-      "inherit": "ירושה",
-      "off": "כבוי"
+      "inherit": "ירושה"
     }
   },
   "control-center": {
@@ -229,10 +222,6 @@
       "visible": "ניתן לגילוי על ידי התקנים קרובים"
     },
     "calendar": {
-      "all-day": "כל היום",
-      "events": "אירועים",
-      "no-events": "אין אירועים.",
-      "today": "היום",
       "toggle-events-card": "הצג/הסתר כרטיס אירועים"
     },
     "display": {
@@ -763,8 +752,6 @@
       "calendar-google-connect-start-failed": "לא ניתן היה להתחיל את אימות Google. נא לבדוק את חיבור הרשת ולנסות שוב.",
       "calendar-google-connect-start-http": "לא ניתן להתחיל את אימות Google. מתווך ה-OAuth החזיר HTTP {status}.",
       "calendar-google-connect-timeout": "פג תוקף האישור של Google. התחל את החיבור מחדש כשתהיה מוכן להתחבר.",
-      "config-migration-body": "יש לעדכן את {path} בקובץ המקור. Nythera מיישמת החלפה זו באופן זמני בלבד. יש להריץ את nythera config validate כדי להציג רשימה של כל השינויים הנדרשים.",
-      "config-migration-title": "נדרש עדכון תצורה",
       "dbus-disabled": "התראות DBus מושבתות",
       "desktop-widgets-editor": "עורך וידג'טים",
       "desktop-widgets-editor-enabled": "עורך הווידג'טים של שולחן העבודה מופעל. מומלץ לעבור לסביבת עבודה ריקה כדי שחלונות פתוחים לא יסתירו את העורך.",
@@ -775,11 +762,6 @@
       "greeter-sync-success": "המראה סונכרן. השינויים יחולו במסך הכניסה הבא.",
       "greeter-sync-timeout": "סנכרון ה-Greeter עדיין ממתין לאישור מנהל. בדוק ב-TTY או בקונסולה להנחיית polkit, הפעל את סוכן ה-polkit ב'הגדרות אבטחה', או הרץ את pkexec באופן ידני.",
       "greeter-sync-timeout-manual": "סנכרון ה-Greeter עדיין דורש אישור מנהל. הרץ בטרמינל: pkexec nythera-greeter-apply-appearance \"$XDG_RUNTIME_DIR/nythera-greeter-sync\"",
-      "keybind-app": "Nythera",
-      "keybind-invalid-modifier": "קיצור דרך זה מקבל מקש בודד ללא מקשי צירוף.",
-      "keybind-invalid-printable": "מקשים הניתנים להדפסה (אותיות, מספרים, סמלים) דורשים מקש שינוי כגון Ctrl או Alt.",
-      "keybind-invalid-super": "לא ניתן להשתמש במקש Super/Windows בקיצורי המקשים של המעטפת.",
-      "keybind-invalid-title": "קיצור מקשים לא מורשה",
       "launcher-usage-reset": "משגר",
       "launcher-usage-reset-success": "נתוני השימוש נוקו.",
       "lockscreen-widgets-editor": "עורך וידג'טים למסך הנעילה",
@@ -976,7 +958,6 @@
         "delete-confirm-desc": "הסרגל שנוצר דרך הממשק הגרפי יוסר מ-settings.toml.",
         "delete-confirm-title": "למחוק את \"{name}\"?",
         "id-placeholder": "מזהה סרגל",
-        "label": "סרגל: {name}",
         "management": "סרגל",
         "move-down": "הזז למטה",
         "move-up": "הזז למעלה",
@@ -1314,41 +1295,12 @@
       }
     },
     "options": {
-      "accordion-direction": {
-        "end": "אחרי הוידג'ט הראשון",
-        "start": "לפני הווידג'ט הראשון"
-      },
       "bar": {
         "auto-hide": {
           "off": "כבוי",
           "on": "מופעל",
           "smart": "חכם"
         }
-      },
-      "clipboard": {
-        "auto-paste": {
-          "ctrl-shift-v": "Ctrl+Shift+V",
-          "ctrl-v": "Ctrl+V",
-          "shift-insert": "Shift+Insert"
-        }
-      },
-      "control-center": {
-        "sidebar": {
-          "compact": "קומפקטי",
-          "full": "מלא",
-          "none": "אין"
-        }
-      },
-      "dock-launcher-position": {
-        "end": "סוף",
-        "none": "ללא",
-        "start": "התחל"
-      },
-      "edge": {
-        "bottom": "תחתון",
-        "left": "שמאל",
-        "right": "ימין",
-        "top": "עליון"
       },
       "font-weight": {
         "bold": "מודגש",
@@ -1388,13 +1340,6 @@
       "panel-position": {
         "auto": "עקוב אחר הסרגל"
       },
-      "plugins": {
-        "auto-update": {
-          "all": "כל המקורות",
-          "none": "ללא",
-          "official": "רשמי בלבד"
-        }
-      },
       "screen-position": {
         "bottom-center": "מרכז תחתון",
         "bottom-left": "שמאל תחתון",
@@ -1406,69 +1351,9 @@
         "top-left": "שמאל למעלה",
         "top-right": "ימין למעלה"
       },
-      "shell": {
-        "panel-placement": {
-          "attached": "צמוד",
-          "floating": "צף"
-        },
-        "panel-transparency": {
-          "glass": "זכוכית",
-          "soft": "רך",
-          "solid": "אחיד"
-        },
-        "password-style": {
-          "filled-circles": "עיגולים מלאים",
-          "random-icons": "סמלים אקראיים"
-        },
-        "shadow-direction": {
-          "center": "מרכז",
-          "down": "למטה",
-          "down-left": "שמאל למטה",
-          "down-right": "למטה ימין",
-          "left": "שמאל",
-          "right": "ימין",
-          "up": "פעיל",
-          "up-left": "למעלה שמאל",
-          "up-right": "ימין עליון"
-        }
-      },
-      "theme": {
-        "mode": {
-          "dark": "כהה",
-          "light": "בהיר"
-        },
-        "source": {
-          "built-in": "מובנה",
-          "community": "קהילה",
-          "custom": "מותאם אישית",
-          "wallpaper": "טפט"
-        }
-      },
       "theme-role": {
         "custom": "מותאם אישית",
         "default": "ברירת מחדל"
-      },
-      "wallpaper": {
-        "fill": {
-          "center": "מרכז",
-          "crop": "חיתוך",
-          "fit": "התאם",
-          "repeat": "חזרה",
-          "span": "טווח",
-          "stretch": "מתיחה"
-        },
-        "order": {
-          "alphabetical": "אלפביתי",
-          "random": "אקראי"
-        },
-        "transition": {
-          "disc": "דיסק",
-          "fade": "דעיכה",
-          "honeycomb": "חלת דבש",
-          "stripes": "פסים",
-          "wipe": "מחק",
-          "zoom": "זום"
-        }
       },
       "weather": {
         "unit": {
@@ -3180,14 +3065,6 @@
       "label-field": "תווית",
       "label-placeholder": "טקסט כפתור אופציונלי",
       "shortcut-label": "קיצור דרך",
-      "variant": {
-        "default": "ברירת מחדל",
-        "destructive": "הרסני",
-        "ghost": "Ghost",
-        "outline": "קו מתאר",
-        "primary": "ראשי",
-        "secondary": "משני"
-      },
       "variant-label": "סגנון כפתור"
     },
     "storage-recovery": {
@@ -3999,32 +3876,11 @@
   },
   "time": {
     "duration": {
-      "less-than-day": "פחות מיום אחד",
-      "less-than-minute": "<1דקה",
-      "three-parts": "{first} {second} {third}",
-      "two-parts": "{first} {second}"
-    },
-    "file": {
-      "unknown": "לא ידוע"
-    },
-    "relative": {
-      "days-ago": "לפני {count} ימים",
-      "days-ago-plural": "לפני {count} ימים",
-      "hours-ago": "לפני {count} שעות",
-      "hours-ago-plural": "לפני {count} שעות",
-      "just-now": "ממש עכשיו",
-      "minutes-ago": "לפני {count} דקות",
-      "minutes-ago-plural": "לפני {count} דקות"
+      "less-than-day": "פחות מיום אחד"
     },
     "units": {
-      "day": "{count} יום",
-      "day-plural": "{count} ימים",
-      "hour": "{count} שעות",
       "hour-compact": "{count}שעות",
-      "hour-plural": "{count} שעות",
-      "minute": "{count} דקות",
       "minute-compact": "{count}ד",
-      "minute-plural": "{count} דקות",
       "month": "{count} חודשים",
       "month-plural": "{count} חודשים",
       "year": "{count} שנה",
@@ -4036,53 +3892,6 @@
       "empty": "אין פריטי תפריט…",
       "pin": "הצמד",
       "unpin": "בטל הצמדה"
-    }
-  },
-  "ui": {
-    "controls": {
-      "search-picker": {
-        "empty": "אין תוצאות",
-        "placeholder": "חיפוש…"
-      },
-      "select": {
-        "placeholder": "בחר אפשרות"
-      }
-    },
-    "dialogs": {
-      "color-picker": {
-        "title": "צבע"
-      },
-      "file": {
-        "actions": {
-          "open": "פתח",
-          "save": "שמור",
-          "select-folder": "בחר תיקייה"
-        },
-        "empty-filtered": "אין קבצים התואמים למסנן הנוכחי",
-        "entry": {
-          "folder": "תיקייה"
-        },
-        "filename-placeholder": "שם קובץ",
-        "filter-placeholder": "סינון…",
-        "sort": {
-          "ascending": "↑",
-          "date": "תאריך",
-          "descending": "↓",
-          "name": "שם",
-          "size": "גודל"
-        },
-        "title": {
-          "default": "תיבת דו-שיח של קבצים",
-          "open": "פתח קובץ",
-          "save": "שמור קובץ",
-          "select-folder": "בחר תיקייה"
-        }
-      },
-      "glyph-picker": {
-        "all-categories": "הכל",
-        "search-placeholder": "חיפוש גליפים…",
-        "title": "בחר גליף"
-      }
     }
   },
   "wallpaper": {

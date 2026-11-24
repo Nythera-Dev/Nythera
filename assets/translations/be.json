@@ -259,24 +259,17 @@
       "loading": "Загрузка перадпрагляду…",
       "text-title": "Тэкст у буферы абмену",
       "truncated": "... няпоўны"
-    },
-    "title": "Буфер абмену"
+    }
   },
   "common": {
-    "actions": {
-      "apply": "Прымяніць",
-      "cancel": "Скасаваць"
-    },
     "minimize": "Згарнуць",
     "minimized": "Згорнута",
     "minimized-count": "{count} згорнута",
     "restore": "Аднавіць",
     "states": {
-      "auto": "Аўтаматычна",
       "custom": "Уласны",
       "inherit": "Узяць з налад",
       "inherit-value": "Узяць з налад ({value})",
-      "off": "Выкл",
       "on": "Укл"
     }
   },
@@ -330,14 +323,6 @@
       "visible": "Бачны прыладам паблізу"
     },
     "calendar": {
-      "all-day": "Увесь дзень",
-      "events": "Падзеі",
-      "hide-past-events": "Схаваць {count} мінулую падзею",
-      "hide-past-events-plural": "Схаваць {count} мінулых падзей",
-      "no-events": "Падзей няма.",
-      "show-past-events": "Паказаць {count} мінулую падзею",
-      "show-past-events-plural": "Паказаць {count} мінулых падзей",
-      "today": "Сёння",
       "toggle-events-card": "Пераключыць картку з падзеямі"
     },
     "display": {
@@ -959,8 +944,6 @@
       "calendar-reminder-open": "Адкрыць",
       "calendar-reminder-untitled": "Падзея без назвы",
       "calendar-reminder-with-location": "{when}\n{location}",
-      "config-migration-body": "Абнавіце {path} у зыходным файле. Nythera толькі тэрмінова прымяняе гэтую замену. Выканайце nythera config validate, каб убачыць усе патрэбныя змены.",
-      "config-migration-title": "Патрабуецца абнаўленне канфігурацыі",
       "dbus-disabled": "Апавяшчэнні DBus выключаныя",
       "desktop-widgets-editor": "Рэдактар віджэтаў",
       "desktop-widgets-editor-enabled": "Рэдактар віджэтаў працоўнага стала ўключаны. Пераключыцеся на пустую прастору, каб вокны не перакрывалі рэдактар.",
@@ -974,11 +957,6 @@
       "greeter-sync-timeout": "Сінхранізацыя Greeter усё яшчэ чакае ухвалення адміністратара. Праверце TTY або кансоль на прадмет запыту polkit, уключыце агент polkit у наладах бяспекі, або ўласнаручна выканайце pkexec.",
       "greeter-sync-timeout-manual": "Сінхранізацыя Greeter усё яшчэ патрабуе ухвалення адміністратарам. Выканайце ў тэрмінале каманду: pkexec nythera-greeter-apply-appearance \"$XDG_RUNTIME_DIR/nythera-greeter-sync\"",
       "greeter-sync-timeout-manual-pkexec": "Сінхранізацыя Greeter усё яшчэ патрабуе аўтарызацыі. Выканайце ў тэрмінале: pkexec nythera-greeter-apply-appearance --sync \"/run/user/$(id -u)/nythera-greeter-sync\"",
-      "keybind-app": "Nythera",
-      "keybind-invalid-modifier": "Гэта спалучэнне можа быць адной клавішай без мадыфікатараў.",
-      "keybind-invalid-printable": "Клавішам-сімвалам (літарам, лічбам, пунктуацыі і інш.) патрабуюцца мадыфікатары, такія як Ctrl або Alt.",
-      "keybind-invalid-super": "Клавіша Super/Windows не можа быць выкарыстана ў спалучэннях клавішаў абалонкі.",
-      "keybind-invalid-title": "Недапушчальнае спалучэнне клавішаў",
       "launcher-usage-reset": "Меню запуску",
       "launcher-usage-reset-success": "Дадзеныя аб выкарыстанні ачышчаны.",
       "lockscreen-widgets-editor": "Рэдактар віджэтаў экрана блакіроўкі",
@@ -1189,7 +1167,6 @@
         "delete-confirm-desc": "Гэта графічная панэль будзе выдалена з файла settings.toml.",
         "delete-confirm-title": "Выдаліць «{name}»?",
         "id-placeholder": "Ідэнтыфікатар панэлі",
-        "label": "Панэль: {name}",
         "management": "Панэль",
         "move-down": "Перамясціць уніз",
         "move-up": "Перамясціць уверх",
@@ -1549,41 +1526,12 @@
       }
     },
     "options": {
-      "accordion-direction": {
-        "end": "Пасля першага віджэту",
-        "start": "Перад першым віджэтам"
-      },
       "bar": {
         "auto-hide": {
           "off": "Выкл",
           "on": "Укл",
           "smart": "Разумна"
         }
-      },
-      "clipboard": {
-        "auto-paste": {
-          "ctrl-shift-v": "Ctrl+Shift+V",
-          "ctrl-v": "Ctrl+V",
-          "shift-insert": "Shift+Insert"
-        }
-      },
-      "control-center": {
-        "sidebar": {
-          "compact": "Кампактны",
-          "full": "Поўны",
-          "none": "Выключаны"
-        }
-      },
-      "dock-launcher-position": {
-        "end": "Канец",
-        "none": "Выключана",
-        "start": "Пачатак"
-      },
-      "edge": {
-        "bottom": "Унізе",
-        "left": "Злева",
-        "right": "Справа",
-        "top": "Наверсе"
       },
       "font-weight": {
         "bold": "Тлусты",
@@ -1611,21 +1559,6 @@
         "overlay": "Накладка",
         "top": "Верх"
       },
-      "lockscreen": {
-        "transition": {
-          "diamond": "Ромб",
-          "disc": "Дыск",
-          "fade": "Затуханне",
-          "golden": "Залаты",
-          "honeycomb": "Соты",
-          "melt": "Раставанне",
-          "pixel": "Пікселі",
-          "stripes": "Палосы",
-          "vortex": "Віхор",
-          "wipe": "Сціранне",
-          "zoom": "Маштабаванне"
-        }
-      },
       "notification-urgency": {
         "critical": "Крытычная",
         "low": "Нізкая",
@@ -1638,13 +1571,6 @@
       "panel-position": {
         "auto": "Кіравацца панэлі"
       },
-      "plugins": {
-        "auto-update": {
-          "all": "Усе",
-          "none": "Нічога",
-          "official": "Афіцыйныя"
-        }
-      },
       "screen-position": {
         "bottom-center": "Унізе па цэнтры",
         "bottom-left": "Унізе злева",
@@ -1656,110 +1582,9 @@
         "top-left": "Зверху злева",
         "top-right": "Зверху справа"
       },
-      "screenshot": {
-        "format": {
-          "jpeg": "JPEG",
-          "jxl": "JPEG XL",
-          "png": "PNG",
-          "webp": "WebP"
-        },
-        "region-modifier": {
-          "alt": "Alt",
-          "ctrl": "Ctrl",
-          "none": "Няма",
-          "shift": "Shift",
-          "super": "Super"
-        }
-      },
-      "shell": {
-        "launcher-default-view": {
-          "all": "Усе",
-          "categories": "Катэгорыі",
-          "pinned": "Замацаваныя",
-          "recent": "Нядаўнія"
-        },
-        "launcher-layout": {
-          "full": "Поўны",
-          "simple": "Просты"
-        },
-        "launcher-search-position": {
-          "bottom": "Унізе",
-          "top": "Наверсе"
-        },
-        "panel-placement": {
-          "attached": "Прымацавана",
-          "floating": "Нефіксаваная"
-        },
-        "panel-transparency": {
-          "glass": "Шкляная",
-          "soft": "Мяккая",
-          "solid": "Цвёрдая"
-        },
-        "password-style": {
-          "filled-circles": "Запоўненыя кругі",
-          "random-icons": "Выпадковыя значкі"
-        },
-        "shadow-direction": {
-          "center": "Па цэнтры",
-          "down": "Уніз",
-          "down-left": "Уніз налева",
-          "down-right": "Уніз направа",
-          "left": "Налева",
-          "right": "Направа",
-          "up": "Уверх",
-          "up-left": "Уверх налева",
-          "up-right": "Уверх направа"
-        },
-        "window-switcher-style": {
-          "carousel": "Карусель",
-          "compact": "Кампактны"
-        }
-      },
-      "theme": {
-        "mode": {
-          "dark": "Цёмная ",
-          "light": "Светлая "
-        },
-        "shell-mode": {
-          "follow": "Як у абалонцы"
-        },
-        "source": {
-          "built-in": "Убудаваныя",
-          "community": "Супольныя",
-          "custom": "Карыстальніцкiя",
-          "wallpaper": "Шпалеры"
-        }
-      },
       "theme-role": {
         "custom": "Карыстальніцкiя",
         "default": "Прадвызначана"
-      },
-      "wallpaper": {
-        "fill": {
-          "center": "Цэнтраванне",
-          "crop": "Абрэзка",
-          "fit": "Уцісканне",
-          "repeat": "Паўтарэнне",
-          "span": "Запаўненне",
-          "stretch": "Расцягванне"
-        },
-        "order": {
-          "alphabetical": "Алфавітная",
-          "random": "Выпадковая"
-        },
-        "transition": {
-          "diamond": "Ромб",
-          "disc": "Дыск",
-          "fade": "Затуханне",
-          "golden": "Залаты",
-          "honeycomb": "Соты",
-          "melt": "Раставанне",
-          "pixel": "Пікселі",
-          "stripes": "Палосы",
-          "vortex": "Віхор",
-          "wipe": "Сціранне",
-          "zoom": "Маштабаванне"
-        }
       },
       "weather": {
         "unit": {
@@ -3206,14 +3031,6 @@
       "label-field": "Подпіс",
       "label-placeholder": "Неабавязковы тэкст кнопкі",
       "shortcut-label": "Спалучэнне",
-      "variant": {
-        "default": "Прадвызначаны",
-        "destructive": "Разбуральны",
-        "ghost": "Прывід",
-        "outline": "Контур",
-        "primary": "Першасны",
-        "secondary": "Другасны"
-      },
       "variant-label": "Стыль кнопкі"
     },
     "storage-recovery": {
@@ -4538,32 +4355,11 @@
   },
   "time": {
     "duration": {
-      "less-than-day": "менш за 1 дзень",
-      "less-than-minute": "<1 хв.",
-      "three-parts": "{first} {second} {third}",
-      "two-parts": "{first} {second}"
-    },
-    "file": {
-      "unknown": "Невядома"
-    },
-    "relative": {
-      "days-ago": "{count} дзень таму",
-      "days-ago-plural": "{count} дзён таму",
-      "hours-ago": "{count} гадз. таму",
-      "hours-ago-plural": "{count} гадз. таму",
-      "just-now": "толькі што",
-      "minutes-ago": "{count} хв. таму",
-      "minutes-ago-plural": "{count} хв. таму"
+      "less-than-day": "менш за 1 дзень"
     },
     "units": {
-      "day": "{count} дзень",
-      "day-plural": "{count} дзён",
-      "hour": "{count} гадзіна",
       "hour-compact": "{count} г.",
-      "hour-plural": "{count} гадзін",
-      "minute": "{count} хвіліна",
       "minute-compact": "{count} хв.",
-      "minute-plural": "{count} хвілін",
       "month": "{count} месяц",
       "month-plural": "{count} месяцаў",
       "year": "{count} год",
@@ -4575,53 +4371,6 @@
       "empty": "Няма пунктаў меню…",
       "pin": "Замацаваць",
       "unpin": "Адмацаваць"
-    }
-  },
-  "ui": {
-    "controls": {
-      "search-picker": {
-        "empty": "Няма вынікаў",
-        "placeholder": "Пошук…"
-      },
-      "select": {
-        "placeholder": "Выберыце варыянт"
-      }
-    },
-    "dialogs": {
-      "color-picker": {
-        "title": "Колер"
-      },
-      "file": {
-        "actions": {
-          "open": "Адкрыць",
-          "save": "Захаваць",
-          "select-folder": "Выбраць папку"
-        },
-        "empty-filtered": "Няма файлаў, якія адпавядаюць бягучаму фільтру",
-        "entry": {
-          "folder": "Папка"
-        },
-        "filename-placeholder": "Назва файла",
-        "filter-placeholder": "Фільтр…",
-        "sort": {
-          "ascending": "↑",
-          "date": "Дата",
-          "descending": "↓",
-          "name": "Назва",
-          "size": "Памер"
-        },
-        "title": {
-          "default": "Дыялог файла",
-          "open": "Адкрыць файл",
-          "save": "Захаваць файл",
-          "select-folder": "Выбраць папку"
-        }
-      },
-      "glyph-picker": {
-        "all-categories": "Усе",
-        "search-placeholder": "Пошук гліфаў…",
-        "title": "Выбар гліфа"
-      }
     }
   },
   "wallpaper": {

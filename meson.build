@@ -109,25 +109,15 @@ nythera_lib_dep = dependency('nythera-lib', method: 'pkg-config',
   version: ['>=0.1.0', '<0.2.0'], static: false, allow_fallback: false)
 wayland_client_dep  = dependency('wayland-client')
 wayland_protos_dep  = dependency('wayland-protocols')
-#egl_dep             = dependency('egl')
-#glesv2_dep          = dependency('glesv2')
-wayland_egl_dep     = dependency('wayland-egl')
-freetype2_dep       = dependency('freetype2')
-fontconfig_dep      = dependency('fontconfig')
 cairo_dep           = dependency('cairo')
-cairo_ft_dep        = dependency('cairo-ft')
 pango_dep           = dependency('pango', version: '>=1.50')
 pangocairo_dep      = dependency('pangocairo')
-pangoft2_dep        = dependency('pangoft2')
-harfbuzz_dep        = dependency('harfbuzz')
-librsvg_dep         = dependency('librsvg-2.0')
 xkbcommon_dep       = dependency('xkbcommon')
 glib_dep            = dependency('glib-2.0')
 gobject_dep         = dependency('gobject-2.0')
 gio_dep             = dependency('gio-2.0')
 polkit_gobject_dep  = dependency('polkit-gobject-1')
 curl_dep            = dependency('libcurl')
-md4c_dep            = dependency('md4c')
 nlohmann_dep        = dependency('nlohmann_json')
 tomlplusplus_dep    = dependency('tomlplusplus')
 dl_dep              = cpp.find_library('dl', required: false)
@@ -149,34 +139,8 @@ if is_glibc
   endif
 endif
 
-egl_dep = dependency('egl', required: false)
-gles2_dep = dependency('glesv2', required: false)
-
-
-if not egl_dep.found()
-  egl_dep = dependency('wayland-egl', required: false)
-endif
-
-if not egl_dep.found()
-  egl_dep = dependency('epoxy')
-endif
-
-if not gles2_dep.found()
-  gles2_dep = dependency('epoxy')
-endif
-
-# Shell also uses stb_image_write for screenshot output.
-if not cc.has_header('stb/stb_image_write.h')
-  error('stb/stb_image_write.h not found')
-endif
-
-# ── System: libwebp (WebP decode; thumbnail and screenshot encode; demux for animations) ─
+# ── System: libwebp (notification history WebP encoding) ──────────────────────
 libwebp_dep       = dependency('libwebp', required: true)
-libwebpdemux_dep  = dependency('libwebpdemux', required: true)
-
-# ── System: libjxl (JPEG XL decode and screenshot encode) ─────────────────────
-libjxl_dep          = dependency('libjxl', required: true)
-libjxl_threads_dep  = dependency('libjxl_threads', required: true)
 
 # Luau remains a Shell dependency and keeps its existing system option.
 if get_option('system_libraries')
@@ -798,31 +762,17 @@ _nythera_inc = [
 _nythera_system_dependencies = [
   nythera_lib_dep,
   wayland_client_dep,
-  egl_dep,
-  gles2_dep,
-  wayland_egl_dep,
-  freetype2_dep,
-  fontconfig_dep,
   cairo_dep,
-  cairo_ft_dep,
   pango_dep,
   pangocairo_dep,
-  pangoft2_dep,
-  harfbuzz_dep,
-  librsvg_dep,
   xkbcommon_dep,
   glib_dep,
   gobject_dep,
   gio_dep,
-  dependency('gio-unix-2.0'),
   curl_dep,
   nlohmann_dep,
   tomlplusplus_dep,
-  md4c_dep,
   libwebp_dep,
-  libwebpdemux_dep,
-  libjxl_dep,
-  libjxl_threads_dep,
 ] + jemalloc_deps + (dl_dep.found() ? [dl_dep] : [])
 
 _nythera_shell_only_dependencies = [
@@ -966,9 +916,7 @@ if build_tests
   _cpp_test_names = [
     'annotation_document',
     'annotation_raster',
-    'animation_manager',
     'surface_haze',
-    'surface_haze_render',
     'app_identity',
     'audio_glyphs',
     'audio_media_class',
@@ -977,30 +925,19 @@ if build_tests
     'battery_hook_state',
     'battery_warning_threshold',
     'bluetooth_uuid_names',
-    'button_layout',
-    'cairo_text_renderer',
-    'cairo_glyph_renderer',
     'caldav_client',
     'calendar_cache_permissions',
     'calendar_credential_store',
     'calendar_discovery_state',
     'calendar_reminder_monitor',
     'calendar_reminders',
-    'calendar_view_passed_event',
     'capsule_group_lane_override',
-    'capsule_group_reconcile',
     'capsule_group_style_persist',
-    'cli_help',
-    'cli_parse',
-    'cli_schema',
     'clipboard_service',
     'clipboard_storage_permissions',
-    'config_migration',
     'config_override_mutation',
-    'config_path_resolution',
     'config_schema_roundtrip',
     'config_wallpaper_precedence',
-    'config_widget',
     'context_menu_popup',
     'cpu_freq',
     'cpu_stat',
@@ -1018,56 +955,34 @@ if build_tests
     'event_merge',
     'ext_toplevel_capture_target',
     'fcitx_status',
-    'file_entry_row_layout',
     'format_units',
-    'freedesktop_key_file',
     'firefox_theme_manifest',
-    'fixed_palette_json',
     'font_family_catalog',
     'google_client_calendar_list',
     'google_client_reminders',
     'greeter_appearance_sync',
-    'grid_item_cursor',
     'gtk_extensions',
     'hook_manager',
     'hyprland_workspace_backend',
-    'i18n_language_tag',
     'i18n_supported_languages',
     'ical_parser',
-    'ico_decoder',
-    'icon_resolver',
-    'image_file_loader_data_uri',
     'image_orientation',
-    'image_source_log',
-    'inotify',
-    'input_area',
-    'input_bidi',
-    'input_dispatcher',
-    'input_password_mode',
-    'input_readline_shortcuts',
-    'input_read_only',
-    'search_picker_selection',
     'ipc_service',
     'iwd_diagnostics',
     'job_progress',
-    'jxl_decoder',
     'kde_color_scheme',
     'keyboard_layout_label',
-    'wayland_seat_keyboard',
     'labwc_occupancy',
     'lane_selection_token',
     'legacy_profile_migration',
     'launcher_category_state',
     'location_service',
     'lockscreen_session_actions',
-    'log',
     'math_provider',
-    'monitor_selector',
     'network_display',
     'network_manager_security',
     'niri_workspace_backend',
     'notification_dnd',
-    'notification_filter',
     'notification_history_dismiss',
     'notification_history_encryption',
     'notification_history_image_bounds',
@@ -1091,19 +1006,13 @@ if build_tests
     'plugin_source_locks',
     'plugin_source_paths',
     'pixel_stream_client',
-    'process',
-    'scheme',
     'screenshot_region_badge',
     'screenshot_ipc_request',
     'screenshot_backdrop',
-    'scrollbar_geometry',
     'screen_wrap_geometry',
     'dynamic_island',
     'secret_store',
     'security_primitives',
-    'state_store',
-    'string_utils',
-    'surface_blur_region',
     'sway_workspace_backend',
     'system_monitor_service',
     'taskbar_widget',
@@ -1111,9 +1020,6 @@ if build_tests
     'template_apply_shutdown',
     'template_hook_async',
     'template_hook_runner',
-    'theme_shell_mode',
-    'time_format',
-    'thumbnail_service',
     'toplevel_thumbnail_capture',
     'tray_identifier',
     'tray_theme_path_index',
@@ -1124,12 +1030,9 @@ if build_tests
     'upstream_plugin_source',
     'v4l2_camera',
     'vdir_reader',
-    'virtual_grid_view_gesture',
     'wallpaper_scan_symlink',
     'wallpaper_shuffle_state',
-    'wayland_output_scale',
     'wayland_toplevels_identity',
-    'webp_decoder',
     'widget_action',
     'widget_definition',
     'widget_settings_schema',
@@ -1155,14 +1058,10 @@ if build_tests
       override_options: ['b_ndebug=false'],
     )
     test_args = []
-    if test_name in ['desktop_entry_localization', 'file_entry_row_layout']
+    if test_name == 'desktop_entry_localization'
       test_args = [meson.project_source_root() / 'assets']
     elif test_name == 'i18n_supported_languages'
       test_args = [meson.project_source_root() / 'assets' / 'translations']
-    elif test_name == 'cairo_glyph_renderer'
-      test_args = [meson.project_source_root() / 'assets' / 'fonts' / 'nythera-tabler.ttf',
-                   meson.project_source_root() / 'assets' / 'fonts' / 'NytheraDisplay-Regular.ttf',
-                   meson.project_source_root() / 'assets' / 'fonts' / 'tabler.json']
     endif
     test(test_name, test_exe, args: test_args)
     if test_name == 'plugin_recommendations' and git_program.found()
@@ -1225,14 +1124,6 @@ if build_tests
     override_options: ['b_ndebug=false'],
   )
   dbus_run_session = find_program('dbus-run-session', required: false)
-  if dbus_run_session.found()
-    url_open_test_exe = executable('url_open_test',
-      sources: files('tests/url_open_test.cpp'),
-      dependencies: nythera_core_dep,
-      override_options: ['b_ndebug=false'],
-    )
-    test('url_open', dbus_run_session, args: ['--', url_open_test_exe])
-  endif
   if dbus_run_session.found()
     test('upower_charge_limit_integration',
       dbus_run_session,
@@ -1334,33 +1225,6 @@ if build_tests
       env: {'NYTHERA_TEST_PRIVATE_DBUS': '1'},
       timeout: 30,
     )
-  endif
-
-  tooltip_manager_test_exe = executable('tooltip_manager_test',
-    sources: files('tests/tooltip_manager_test.cpp'),
-    dependencies: nythera_core_dep,
-    override_options: ['b_ndebug=false'],
-  )
-  test('tooltip_manager', tooltip_manager_test_exe, timeout: 10)
-
-  native_data_transfer_test_exe = executable('native_data_transfer_test',
-    sources: files('tests/native_data_transfer_test.cpp'),
-    dependencies: [nythera_lib_dep, wayland_client_dep, wayland_server_dep],
-    include_directories: include_directories('src'),
-    override_options: ['b_ndebug=false'],
-  )
-  test('native_data_transfer', native_data_transfer_test_exe, timeout: 15)
-
-  wlroots_test_dep = dependency('wlroots-0.20', required: false)
-  if wlroots_test_dep.found()
-    native_data_transfer_wlroots_test_exe = executable('native_data_transfer_wlroots_test',
-      sources: files('tests/native_data_transfer_wlroots_test.cpp'),
-      dependencies: [nythera_lib_dep, wayland_client_dep, wayland_server_dep, wlroots_test_dep],
-      include_directories: include_directories('src'),
-      cpp_args: ['-DWLR_USE_UNSTABLE'],
-      override_options: ['b_ndebug=false'],
-    )
-    test('native_data_transfer_wlroots', native_data_transfer_wlroots_test_exe, timeout: 15)
   endif
 
   executable('job_progress_demo',

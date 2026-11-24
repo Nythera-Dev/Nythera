@@ -161,18 +161,11 @@
     "filter-placeholder": "歷史紀錄搜尋...",
     "preview": {
       "loading": "正在載入預覽..."
-    },
-    "title": "剪貼簿"
+    }
   },
   "common": {
-    "actions": {
-      "apply": "應用",
-      "cancel": "取消"
-    },
     "states": {
-      "auto": "自動",
-      "custom": "自訂",
-      "off": "關閉"
+      "custom": "自訂"
     }
   },
   "control-center": {
@@ -224,10 +217,6 @@
       "visible": "可被附近裝置發現"
     },
     "calendar": {
-      "all-day": "全天",
-      "events": "事件",
-      "no-events": "無事件。",
-      "today": "今天",
       "toggle-events-card": "切換事件卡片"
     },
     "display": {
@@ -715,7 +704,6 @@
       "battery-low-title": "電量不足",
       "calendar": "行事曆",
       "calendar-google-connect-browser-failed": "未找到可用於 Google 授權的瀏覽器。請檢查預設瀏覽器或 xdg-open 配置。",
-      "config-migration-title": "需要更新配置",
       "dbus-disabled": "DBus 通知已停用",
       "desktop-widgets-editor": "桌面小工具編輯器",
       "desktop-widgets-editor-enabled": "桌面小工具編輯器已開啟。請切換至空閒桌面，避免開啟的視窗遮擋編輯器。",
@@ -725,11 +713,6 @@
       "greeter-sync-success": "外觀已同步。變更將在下次登入時生效。",
       "greeter-sync-timeout": "登入介面仍在等待系統管理員授權。請檢查終端機或控制台中 Polkit 提示，在\"安全\"設定中啟用 Polkit 代理，或手動執行 pkexec。",
       "greeter-sync-timeout-manual": "登入介面同步仍需要系統管理員授權。請在終端機中執行：pkexec nythera-greeter-apply-appearance \"$XDG_RUNTIME_DIR/nythera-greeter-sync\"",
-      "keybind-app": "Nythera",
-      "keybind-invalid-modifier": "此快捷鍵僅接受單一按鍵，不可與修飾鍵(Ctrl, Alt或Super等)並用。",
-      "keybind-invalid-printable": "字母、數字及符號健需要配合修飾鍵 ( Ctrl 或是 Alt ) 使用。",
-      "keybind-invalid-super": "Super/Windows 鍵無法用於 Shell 快捷鍵。",
-      "keybind-invalid-title": "不允許的快捷鍵",
       "launcher-usage-reset": "啟動器",
       "launcher-usage-reset-success": "使用數據已清除。",
       "lockscreen-widgets-editor": "螢幕鎖定小工具編輯器",
@@ -925,7 +908,6 @@
         "delete-confirm-desc": "此從圖形介面所創建的狀態列將由 settings.toml 中刪除。",
         "delete-confirm-title": "確認刪除 \"{name}\"?",
         "id-placeholder": "狀態列 ID",
-        "label": "狀態列：{name}",
         "management": "狀態列",
         "move-down": "下移",
         "move-up": "上移",

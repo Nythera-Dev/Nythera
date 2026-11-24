@@ -165,19 +165,12 @@
       "loading": "S'està carregant la previsualització…",
       "text-title": "Entrada de text del porta-retalls",
       "truncated": "… truncat"
-    },
-    "title": "Porta-retalls"
+    }
   },
   "common": {
-    "actions": {
-      "apply": "Aplica",
-      "cancel": "Cancel·la"
-    },
     "states": {
-      "auto": "Auto",
       "custom": "Personalitzat",
-      "inherit": "Hereta",
-      "off": "Desactivat"
+      "inherit": "Hereta"
     }
   },
   "control-center": {
@@ -228,10 +221,6 @@
       "visible": "Visible per a dispositius propers"
     },
     "calendar": {
-      "all-day": "Tot el dia",
-      "events": "Esdeveniments",
-      "no-events": "No hi ha esdeveniments.",
-      "today": "Avui",
       "toggle-events-card": "Mostra/oculta la targeta d'esdeveniments"
     },
     "display": {
@@ -746,8 +735,6 @@
       "calendar-google-connect-start-failed": "No s'ha pogut iniciar l'autorització de Google. Comprova la connexió de xarxa i torna-ho a provar.",
       "calendar-google-connect-start-http": "No s'ha pogut iniciar l'autorització de Google. El broker OAuth ha retornat HTTP {status}.",
       "calendar-google-connect-timeout": "L'autorització de Google ha superat el temps d'espera. Torna a iniciar la connexió quan estiguis preparat per iniciar sessió.",
-      "config-migration-body": "Actualitza {path} al fitxer font. Nythera només aplica aquest canvi temporalment. Executa nythera config validate per veure tots els canvis necessaris.",
-      "config-migration-title": "Cal actualitzar la configuració",
       "dbus-disabled": "Notificacions DBus desactivades",
       "desktop-widgets-editor": "Editor de widgets",
       "desktop-widgets-editor-enabled": "L'editor de ginys d'escriptori està activat. Canvia a un espai de treball buit perquè les finestres obertes no cobreixin l'editor.",
@@ -758,11 +745,6 @@
       "greeter-sync-success": "Aparença sincronitzada. Els canvis s'apliquen a la següent pantalla d'inici de sessió.",
       "greeter-sync-timeout": "La sincronització amb el greeter continua a l'espera d'autorització. Busca una sol·licitud de polkit en una TTY o consola, activa l'agent de polkit als ajustos de Seguretat, o executa pkexec manualment.",
       "greeter-sync-timeout-manual": "La sincronització heretada autenticada encara necessita l'aprovació de l'administrador. Executa l'assistent d'aplicació posicional en una terminal i conserva NYTHERA_GREETER_STATE_DIR si fas servir una ruta personalitzada.",
-      "keybind-app": "Nythera",
-      "keybind-invalid-modifier": "Aquesta drecera accepta una sola tecla sense modificadors.",
-      "keybind-invalid-printable": "Les tecles imprimibles (lletres, números, símbols) requereixen un modificador com Ctrl o Alt.",
-      "keybind-invalid-super": "La tecla Super/Windows no es pot utilitzar a les dreceres del shell.",
-      "keybind-invalid-title": "Drecera no permesa",
       "launcher-usage-reset": "Launcher",
       "launcher-usage-reset-success": "Dades d'ús esborrades.",
       "lockscreen-widgets-editor": "Editor de widgets de la pantalla de bloqueig",
@@ -959,7 +941,6 @@
         "delete-confirm-desc": "Aquesta barra creada per la GUI s'eliminarà de settings.toml.",
         "delete-confirm-title": "Vols eliminar «{name}»?",
         "id-placeholder": "ID de la barra",
-        "label": "Barra: {name}",
         "management": "Barra",
         "move-down": "Mou avall",
         "move-up": "Mou amunt",
@@ -1297,41 +1278,12 @@
       }
     },
     "options": {
-      "accordion-direction": {
-        "end": "Després del primer giny",
-        "start": "Abans del primer giny"
-      },
       "bar": {
         "auto-hide": {
           "off": "Desactivat",
           "on": "Activat",
           "smart": "Intel·ligent"
         }
-      },
-      "clipboard": {
-        "auto-paste": {
-          "ctrl-shift-v": "Ctrl+Maj+V",
-          "ctrl-v": "Ctrl+V",
-          "shift-insert": "Maj+Insert"
-        }
-      },
-      "control-center": {
-        "sidebar": {
-          "compact": "Compacte",
-          "full": "Complet",
-          "none": "Cap"
-        }
-      },
-      "dock-launcher-position": {
-        "end": "Final",
-        "none": "Cap",
-        "start": "Inici"
-      },
-      "edge": {
-        "bottom": "Inferior",
-        "left": "Esquerra",
-        "right": "Dreta",
-        "top": "Superior"
       },
       "font-weight": {
         "bold": "Negreta",
@@ -1382,69 +1334,9 @@
         "top-left": "Superior esquerra",
         "top-right": "Superior dreta"
       },
-      "shell": {
-        "panel-placement": {
-          "attached": "Adjunt",
-          "floating": "Flotant"
-        },
-        "panel-transparency": {
-          "glass": "Vidre",
-          "soft": "Suau",
-          "solid": "Sòlid"
-        },
-        "password-style": {
-          "filled-circles": "Cercles plens",
-          "random-icons": "Icones aleatòries"
-        },
-        "shadow-direction": {
-          "center": "Centre",
-          "down": "Avall",
-          "down-left": "Avall esquerra",
-          "down-right": "Avall dreta",
-          "left": "Esquerra",
-          "right": "Dreta",
-          "up": "Amunt",
-          "up-left": "Amunt esquerra",
-          "up-right": "Amunt dreta"
-        }
-      },
-      "theme": {
-        "mode": {
-          "dark": "Fosc",
-          "light": "Clar"
-        },
-        "source": {
-          "built-in": "Integrat",
-          "community": "Comunitat",
-          "custom": "Personalitzat",
-          "wallpaper": "Fons de pantalla"
-        }
-      },
       "theme-role": {
         "custom": "Personalitzat",
         "default": "Per defecte"
-      },
-      "wallpaper": {
-        "fill": {
-          "center": "Centre",
-          "crop": "Retalla",
-          "fit": "Ajusta",
-          "repeat": "Repeteix",
-          "span": "Estesa",
-          "stretch": "Estira"
-        },
-        "order": {
-          "alphabetical": "Alfabètic",
-          "random": "Aleatori"
-        },
-        "transition": {
-          "disc": "Disc",
-          "fade": "Esvaeix",
-          "honeycomb": "Panell",
-          "stripes": "Ratlles",
-          "wipe": "Escombra",
-          "zoom": "Zoom"
-        }
       },
       "weather": {
         "unit": {
@@ -3152,14 +3044,6 @@
       "label-field": "Etiqueta",
       "label-placeholder": "Text del botó opcional",
       "shortcut-label": "Drecera",
-      "variant": {
-        "default": "Per defecte",
-        "destructive": "Destructiu",
-        "ghost": "Ghost",
-        "outline": "Outline",
-        "primary": "Primari",
-        "secondary": "Secundari"
-      },
       "variant-label": "Estil del botó"
     },
     "storage-recovery": {
@@ -3963,32 +3847,11 @@
   },
   "time": {
     "duration": {
-      "less-than-day": "menys d'1 dia",
-      "less-than-minute": "<1m",
-      "three-parts": "{first} {second} {third}",
-      "two-parts": "{first} {second}"
-    },
-    "file": {
-      "unknown": "Desconegut"
-    },
-    "relative": {
-      "days-ago": "Fa {count} dia",
-      "days-ago-plural": "Fa {count} dies",
-      "hours-ago": "Fa {count} h",
-      "hours-ago-plural": "Fa {count} h",
-      "just-now": "ara mateix",
-      "minutes-ago": "Fa {count} min",
-      "minutes-ago-plural": "Fa {count} min"
+      "less-than-day": "menys d'1 dia"
     },
     "units": {
-      "day": "{count} dia",
-      "day-plural": "{count} dies",
-      "hour": "{count} hora",
       "hour-compact": "{count}h",
-      "hour-plural": "{count} hores",
-      "minute": "{count} minut",
       "minute-compact": "{count}m",
-      "minute-plural": "{count} minuts",
       "month": "{count} mes",
       "month-plural": "{count} mesos",
       "year": "{count} any",
@@ -4000,53 +3863,6 @@
       "empty": "No hi ha elements del menú…",
       "pin": "Fixa",
       "unpin": "Desfixa"
-    }
-  },
-  "ui": {
-    "controls": {
-      "search-picker": {
-        "empty": "No hi ha resultats",
-        "placeholder": "Cerca…"
-      },
-      "select": {
-        "placeholder": "Selecciona una opció"
-      }
-    },
-    "dialogs": {
-      "color-picker": {
-        "title": "Color"
-      },
-      "file": {
-        "actions": {
-          "open": "Obre",
-          "save": "Desa",
-          "select-folder": "Selecciona una carpeta"
-        },
-        "empty-filtered": "No hi ha fitxers que coincideixin amb el filtre",
-        "entry": {
-          "folder": "Carpeta"
-        },
-        "filename-placeholder": "Nom del fitxer",
-        "filter-placeholder": "Filtra…",
-        "sort": {
-          "ascending": "↑",
-          "date": "Data",
-          "descending": "↓",
-          "name": "Nom",
-          "size": "Mida"
-        },
-        "title": {
-          "default": "Diàleg de fitxer",
-          "open": "Obre un fitxer",
-          "save": "Desa un fitxer",
-          "select-folder": "Selecciona una carpeta"
-        }
-      },
-      "glyph-picker": {
-        "all-categories": "Totes",
-        "search-placeholder": "Cerca glifs…",
-        "title": "Tria un glif"
-      }
     }
   },
   "wallpaper": {

@@ -214,20 +214,13 @@
       "loading": "Caricamento anteprima...",
       "text-title": "Testo negli appunti",
       "truncated": "... troncato"
-    },
-    "title": "Appunti"
+    }
   },
   "common": {
-    "actions": {
-      "apply": "Applica",
-      "cancel": "Annulla"
-    },
     "states": {
-      "auto": "Automatico",
       "custom": "Personalizzato",
       "inherit": "Eredita",
       "inherit-value": "Eredita ({value})",
-      "off": "Disattivato",
       "on": "On"
     }
   },
@@ -281,10 +274,6 @@
       "visible": "Rilevabile dai dispositivi vicini"
     },
     "calendar": {
-      "all-day": "Tutto il giorno",
-      "events": "Eventi",
-      "no-events": "Nessun evento.",
-      "today": "Oggi",
       "toggle-events-card": "Attiva/disattiva la scheda eventi"
     },
     "display": {
@@ -899,8 +888,6 @@
       "calendar-reminder-open": "Apri",
       "calendar-reminder-untitled": "Evento senza titolo",
       "calendar-reminder-with-location": "{when}\n{location}",
-      "config-migration-body": "Aggiorna {path} nel source file. Nythera applica questa sostituzione solo temporaneamente. Esegui nythera config validate per elencare tutte le modifiche richieste.",
-      "config-migration-title": "È necessario l'aggiornamento della configurazione",
       "dbus-disabled": "Notifiche DBus disabilitate",
       "desktop-widgets-editor": "Editor widget",
       "desktop-widgets-editor-enabled": "L'editor dei widget desktop è attivo. Passa a un'area di lavoro vuota in modo che le finestre aperte non coprano l'editor.",
@@ -914,11 +901,6 @@
       "greeter-sync-timeout": "La sincronizzazione del greeter è ancora in attesa di autorizzazione. Controlla un terminale TTY o una console per visualizzare il prompt del polkit, abilita l'agente polkit nelle impostazioni di sicurezza oppure esegui pkexec manualmente.",
       "greeter-sync-timeout-manual": "La sincronizzazione legacy autenticata richiede comunque l'approvazione dell'amministratore. Eseguire lo strumento di supporto per l'applicazione posizionale in un terminale e mantenere NYTHERA_GREETER_STATE_DIR se si utilizza un percorso personalizzato.",
       "greeter-sync-timeout-manual-pkexec": "La sincronizzazione di Greeter richiede ancora l'autorizzazione. Esegui il comando in un terminale: pkexec nythera-greeter-apply-appearance --sync \"/run/user/$(id -u)/nythera-greeter-sync\"",
-      "keybind-app": "Nythera",
-      "keybind-invalid-modifier": "Questa scorciatoia accetta un singolo tasto senza modificatori.",
-      "keybind-invalid-printable": "I tasti stampabili (lettere, numeri, simboli) richiedono un modificatore come Ctrl o Alt.",
-      "keybind-invalid-super": "Il tasto Super/Windows non può essere usato nelle scorciatoie della shell.",
-      "keybind-invalid-title": "Scorciatoia non consentita",
       "launcher-usage-reset": "Launcher",
       "launcher-usage-reset-success": "Dati di utilizzo cancellati.",
       "lockscreen-widgets-editor": "Editor widget blocco schermo",
@@ -1129,7 +1111,6 @@
         "delete-confirm-desc": "Questa barra creata dalla GUI verrà rimossa da settings.toml.",
         "delete-confirm-title": "Eliminare \"{name}\"?",
         "id-placeholder": "ID barra",
-        "label": "Barra: {name}",
         "management": "Barra",
         "move-down": "Sposta giù",
         "move-up": "Sposta su",
@@ -1485,41 +1466,12 @@
       }
     },
     "options": {
-      "accordion-direction": {
-        "end": "Dopo il primo widget",
-        "start": "Prima del primo widget"
-      },
       "bar": {
         "auto-hide": {
           "off": "Off",
           "on": "On",
           "smart": "Smart"
         }
-      },
-      "clipboard": {
-        "auto-paste": {
-          "ctrl-shift-v": "Ctrl+Shift+V",
-          "ctrl-v": "Ctrl+V",
-          "shift-insert": "Shift+Insert"
-        }
-      },
-      "control-center": {
-        "sidebar": {
-          "compact": "Compatta",
-          "full": "Completa",
-          "none": "Nessuna"
-        }
-      },
-      "dock-launcher-position": {
-        "end": "Fine",
-        "none": "Nessuna",
-        "start": "Inizio"
-      },
-      "edge": {
-        "bottom": "Basso",
-        "left": "Sinistra",
-        "right": "Destra",
-        "top": "Alto"
       },
       "font-weight": {
         "bold": "Grassetto",
@@ -1547,21 +1499,6 @@
         "overlay": "Overlay",
         "top": "In alto"
       },
-      "lockscreen": {
-        "transition": {
-          "diamond": "Diamond",
-          "disc": "Disco",
-          "fade": "Dissolvenza",
-          "golden": "Golden",
-          "honeycomb": "Nido d'ape",
-          "melt": "Melt",
-          "pixel": "Pixel",
-          "stripes": "Strisce",
-          "vortex": "Vortex",
-          "wipe": "Wipe",
-          "zoom": "Zoom"
-        }
-      },
       "notification-urgency": {
         "critical": "Critica",
         "low": "Bassa",
@@ -1574,13 +1511,6 @@
       "panel-position": {
         "auto": "Segui la barra"
       },
-      "plugins": {
-        "auto-update": {
-          "all": "Tutti",
-          "none": "Nessuno",
-          "official": "Ufficiali"
-        }
-      },
       "screen-position": {
         "bottom-center": "Basso centro",
         "bottom-left": "Basso sinistra",
@@ -1592,104 +1522,9 @@
         "top-left": "Alto sinistra",
         "top-right": "Alto destra"
       },
-      "screenshot": {
-        "region-modifier": {
-          "alt": "Alt",
-          "ctrl": "Ctrl",
-          "none": "Nessuno",
-          "shift": "Shift",
-          "super": "Super"
-        }
-      },
-      "shell": {
-        "launcher-default-view": {
-          "all": "Tutto",
-          "categories": "Categorie",
-          "pinned": "Fissate",
-          "recent": "Recenti"
-        },
-        "launcher-layout": {
-          "full": "Completo",
-          "simple": "Semplice"
-        },
-        "launcher-search-position": {
-          "bottom": "Basso",
-          "top": "Alto"
-        },
-        "panel-placement": {
-          "attached": "Attaccato",
-          "floating": "Flottante"
-        },
-        "panel-transparency": {
-          "glass": "Vetro",
-          "soft": "Morbida",
-          "solid": "Solida"
-        },
-        "password-style": {
-          "filled-circles": "Cerchi pieni",
-          "random-icons": "Icone casuali"
-        },
-        "shadow-direction": {
-          "center": "Al Centro",
-          "down": "In basso",
-          "down-left": "In basso a sinistra",
-          "down-right": "In basso a destra",
-          "left": "Sinistra",
-          "right": "Destra",
-          "up": "In alto",
-          "up-left": "In alto a sinistra",
-          "up-right": "In alto a destra"
-        },
-        "window-switcher-style": {
-          "carousel": "Carosello",
-          "compact": "Compatto"
-        }
-      },
-      "theme": {
-        "mode": {
-          "dark": "Scuro",
-          "light": "Chiaro"
-        },
-        "shell-mode": {
-          "follow": "Segui"
-        },
-        "source": {
-          "built-in": "Integrata",
-          "community": "Community",
-          "custom": "Personalizzata",
-          "wallpaper": "Sfondo"
-        }
-      },
       "theme-role": {
         "custom": "Personalizzato",
         "default": "Predefinito"
-      },
-      "wallpaper": {
-        "fill": {
-          "center": "Centra",
-          "crop": "Ritaglia",
-          "fit": "Adatta",
-          "repeat": "Ripeti",
-          "span": "Distribuisci",
-          "stretch": "Allunga"
-        },
-        "order": {
-          "alphabetical": "Alfabetico",
-          "random": "Casuale"
-        },
-        "transition": {
-          "diamond": "Diamond",
-          "disc": "Disco",
-          "fade": "Dissolvenza",
-          "golden": "Golden",
-          "honeycomb": "Nido d'ape",
-          "melt": "Melt",
-          "pixel": "Pixel",
-          "stripes": "Strisce",
-          "vortex": "Vortex",
-          "wipe": "Tendina",
-          "zoom": "Zoom"
-        }
       },
       "weather": {
         "unit": {
@@ -3721,14 +3556,6 @@
       "label-field": "Etichetta",
       "label-placeholder": "Testo pulsante opzionale",
       "shortcut-label": "Scorciatoia",
-      "variant": {
-        "default": "Predefinito",
-        "destructive": "Distruttivo",
-        "ghost": "Fantasma",
-        "outline": "Contorno",
-        "primary": "Colore primario",
-        "secondary": "Colore secondario"
-      },
       "variant-label": "Stile pulsante"
     },
     "storage-recovery": {
@@ -5053,32 +4880,11 @@
   },
   "time": {
     "duration": {
-      "less-than-day": "meno di 1 giorno",
-      "less-than-minute": "<1m",
-      "three-parts": "{first} {second} {third}",
-      "two-parts": "{first} {second}"
-    },
-    "file": {
-      "unknown": "Sconosciuto"
-    },
-    "relative": {
-      "days-ago": "{count} giorno fa",
-      "days-ago-plural": "{count} giorni fa",
-      "hours-ago": "{count} ora fa",
-      "hours-ago-plural": "{count} ore fa",
-      "just-now": "proprio ora",
-      "minutes-ago": "{count} min fa",
-      "minutes-ago-plural": "{count} min fa"
+      "less-than-day": "meno di 1 giorno"
     },
     "units": {
-      "day": "{count} giorno",
-      "day-plural": "{count} giorni",
-      "hour": "{count} ora",
       "hour-compact": "{count}h",
-      "hour-plural": "{count} ore",
-      "minute": "{count} minuto",
       "minute-compact": "{count}m",
-      "minute-plural": "{count} minuti",
       "month": "{count} mese",
       "month-plural": "{count} mesi",
       "year": "{count} anno",
@@ -5090,53 +4896,6 @@
       "empty": "Nessuna voce menu...",
       "pin": "Fissa",
       "unpin": "Rimuovi"
-    }
-  },
-  "ui": {
-    "controls": {
-      "search-picker": {
-        "empty": "Nessun risultato",
-        "placeholder": "Cerca..."
-      },
-      "select": {
-        "placeholder": "Seleziona un'opzione"
-      }
-    },
-    "dialogs": {
-      "color-picker": {
-        "title": "Colore"
-      },
-      "file": {
-        "actions": {
-          "open": "Apri",
-          "save": "Salva",
-          "select-folder": "Seleziona cartella"
-        },
-        "empty-filtered": "Nessun file corrisponde al filtro corrente",
-        "entry": {
-          "folder": "Cartella"
-        },
-        "filename-placeholder": "Nome file",
-        "filter-placeholder": "Filtra...",
-        "sort": {
-          "ascending": "↑",
-          "date": "Data",
-          "descending": "↓",
-          "name": "Nome",
-          "size": "Dimensione"
-        },
-        "title": {
-          "default": "Dialogo file",
-          "open": "Apri file",
-          "save": "Salva file",
-          "select-folder": "Seleziona cartella"
-        }
-      },
-      "glyph-picker": {
-        "all-categories": "Tutte",
-        "search-placeholder": "Cerca glifi...",
-        "title": "Scegli un glifo"
-      }
     }
   },
   "wallpaper": {

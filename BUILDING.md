@@ -150,7 +150,7 @@ meson setup --reconfigure --clearcache build-debug -Dpkg_config_path="$HOME/.loc
 meson compile -C build-debug nythera
 ```
 
-For a fresh build directory, omit `--reconfigure --clearcache`. Meson records the library directory in the development binaries' RUNPATH. Keep the installed library available at that path for subsequent launches. Rebuild `nythera-shell` whenever NytheraLib public headers, inline/template implementations, or ABI-affecting build options change, and restart `nythera` to load reinstalled `.cpp`-only library updates. The application install prefix and data directory still control asset lookup.
+For a fresh build directory, omit `--reconfigure --clearcache`. Meson records the library directory in the development binaries' RUNPATH. Keep the installed library available at that path for subsequent launches. Rebuild `nythera-shell` whenever NytheraLib public headers, inline/template implementations, or ABI-affecting build options change, and restart `nythera` to load reinstalled `.cpp`-only library updates. The application install prefix and data directory still control Shell-specific asset lookup, while shared fonts, Tabler glyph metadata, and shared library translations are supplied by NytheraLib (`share/nythera-lib/assets/`).
 
 ### Release build
 

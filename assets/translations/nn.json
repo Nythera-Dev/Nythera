@@ -189,19 +189,12 @@
       "loading": "Lastar inn førebilete ...",
       "text-title": "Tekstoppføring",
       "truncated": "... samankrept"
-    },
-    "title": "Utklippstavla"
+    }
   },
   "common": {
-    "actions": {
-      "apply": "Bruk",
-      "cancel": "Avbryt"
-    },
     "states": {
-      "auto": "Automatisk",
       "custom": "Sjølvvald",
-      "inherit": "Erva",
-      "off": "Avslegen"
+      "inherit": "Erva"
     }
   },
   "control-center": {
@@ -252,10 +245,6 @@
       "visible": "Finnande av nære einingar"
     },
     "calendar": {
-      "all-day": "Hiele døgeret",
-      "events": "Arrangement",
-      "no-events": "Ingen arrangement",
-      "today": "I dag",
       "toggle-events-card": "Slå av / på arrangementkort"
     },
     "display": {
@@ -768,8 +757,6 @@
       "calendar-google-connect-start-failed": "Kunne ikkje byrja Google-sanninga. Sjå etter nettverktilkoplinga og prøv å nyo.",
       "calendar-google-connect-start-http": "Kunne ikkje byrja Google-sanninga. OAuth-handsamaren svara med HTTP {status}.",
       "calendar-google-connect-timeout": "Google-sanning gjekk ut. Byrja koplinga å nyo når du vil skriva deg inn.",
-      "config-migration-body": "Oppdater {path} i brunnfila. Nythera legg til dette utbytet berre mellombels. Køyr nythera config validate for å sjå alle dei naudsynlege brigda.",
-      "config-migration-title": "Tilmåtinga krev oppdatering",
       "dbus-disabled": "DBus-varsel avslegne",
       "desktop-widgets-editor": "Nøytelbrigdar",
       "desktop-widgets-editor-enabled": "Skrivebordsnøytelbrigdaren er på. Gå til eit tomt arbeidsrom slik at opne ruter ikkje ligg over brigdaren.",
@@ -780,11 +767,6 @@
       "greeter-sync-success": "Utsjånad synkronisert. Brigde viser neste gong du skriv deg inn.",
       "greeter-sync-timeout": "Helsarsynkroniseringa ventar enno på stjornargodkjenning. Sjå i ein TTY eller konsoll for polkit-leietekst, slå på polkitagenten i Tryggleiksinnstillingane, eller køyr pkexec sjølv.",
       "greeter-sync-timeout-manual": "Helsarsynkroniseringa tarv enno stjornargodkjenning. Køyr i terminal: pkexec nythera-greeter-apply-appearance \"$XDG_RUNTIME_DIR/nythera-greeter-sync\"",
-      "keybind-app": "Nythera",
-      "keybind-invalid-modifier": "Snarvegen godtek éin knapp utan hjelpeknappar.",
-      "keybind-invalid-printable": "Skrivande knappar (bokstavar, tal, teikn) krev ein hjelpeknapp som Ctrl eller Alt.",
-      "keybind-invalid-super": "Du kan ikkje bruka Superknappen/Windowsknappen i skalsnarvegar.",
-      "keybind-invalid-title": "Snarveg ikkje tillaten.",
       "launcher-usage-reset": "Programveljar",
       "launcher-usage-reset-success": "Bruksdata sletta.",
       "lockscreen-widgets-editor": "Låseskjermnøytelbrigdar",
@@ -981,7 +963,6 @@
         "delete-confirm-desc": "Denne stonga, som var laga med grensesnittet, vert sletta frå settings.toml.",
         "delete-confirm-title": "Sletta \"{name}\"?",
         "id-placeholder": "Stong-ID",
-        "label": "Stong: {name}",
         "management": "Stong",
         "move-down": "Flytta nedetter",
         "move-up": "Flytta oppetter",
@@ -1317,41 +1298,12 @@
       }
     },
     "options": {
-      "accordion-direction": {
-        "end": "Etter fyrste nøytel",
-        "start": "Før fyrste nøytel"
-      },
       "bar": {
         "auto-hide": {
           "off": "Av",
           "on": "På",
           "smart": "Sløg"
         }
-      },
-      "clipboard": {
-        "auto-paste": {
-          "ctrl-shift-v": "Ctrl+Shift+V",
-          "ctrl-v": "Ctrl+V",
-          "shift-insert": "Shift+Insert"
-        }
-      },
-      "control-center": {
-        "sidebar": {
-          "compact": "Tett",
-          "full": "Full",
-          "none": "Ingen"
-        }
-      },
-      "dock-launcher-position": {
-        "end": "Ende",
-        "none": "Ingen",
-        "start": "Byrjing"
-      },
-      "edge": {
-        "bottom": "Botn",
-        "left": "Venstre",
-        "right": "Høgre",
-        "top": "Topp"
       },
       "font-weight": {
         "bold": "Feit",
@@ -1402,69 +1354,9 @@
         "top-left": "Topp venstre",
         "top-right": "Topp høgre"
       },
-      "shell": {
-        "panel-placement": {
-          "attached": "Bunden",
-          "floating": "Svivande"
-        },
-        "panel-transparency": {
-          "glass": "Glas",
-          "soft": "Mjuk",
-          "solid": "Hard"
-        },
-        "password-style": {
-          "filled-circles": "Fylte ringar",
-          "random-icons": "Vilkårlege merke"
-        },
-        "shadow-direction": {
-          "center": "I midten",
-          "down": "Ned",
-          "down-left": "Ned venstre",
-          "down-right": "Ned høgre",
-          "left": "Venstre",
-          "right": "Høgre",
-          "up": "Opp",
-          "up-left": "Opp venstre",
-          "up-right": "Opp høgre"
-        }
-      },
-      "theme": {
-        "mode": {
-          "dark": "Mørk",
-          "light": "Ljos"
-        },
-        "source": {
-          "built-in": "Innebygd",
-          "community": "Samfunn",
-          "custom": "Sjølvvald",
-          "wallpaper": "Bakgrunnsbilete"
-        }
-      },
       "theme-role": {
         "custom": "Sjølvvald",
         "default": "Vanleg"
-      },
-      "wallpaper": {
-        "fill": {
-          "center": "I midten",
-          "crop": "Skjer av",
-          "fit": "Høve",
-          "repeat": "Tile",
-          "span": "Spana",
-          "stretch": "Strekk"
-        },
-        "order": {
-          "alphabetical": "Alfabetisk",
-          "random": "Vilkårleg"
-        },
-        "transition": {
-          "disc": "Skive",
-          "fade": "Folna",
-          "honeycomb": "Biekube",
-          "stripes": "Render",
-          "wipe": "Sveip",
-          "zoom": "Zoom"
-        }
       },
       "weather": {
         "unit": {
@@ -3164,14 +3056,6 @@
       "label-field": "Merkelapp",
       "label-placeholder": "Valfri knappetekst",
       "shortcut-label": "Snarveg",
-      "variant": {
-        "default": "Standard",
-        "destructive": "Skjemmande",
-        "ghost": "Skrømt",
-        "outline": "Rand",
-        "primary": "Primær",
-        "secondary": "Sekundær"
-      },
       "variant-label": "Knappestil"
     },
     "storage-recovery": {
@@ -3958,32 +3842,11 @@
   },
   "time": {
     "duration": {
-      "less-than-day": "mindre enn 1 dag",
-      "less-than-minute": "< 1 m",
-      "three-parts": "{first} {second} {third}",
-      "two-parts": "{first} {second}"
-    },
-    "file": {
-      "unknown": "Ukjend"
-    },
-    "relative": {
-      "days-ago": "for {count} dag sidan",
-      "days-ago-plural": "for {count} dagar sidan",
-      "hours-ago": "for {count} t sidan",
-      "hours-ago-plural": "for {count} t sidan",
-      "just-now": "nett no",
-      "minutes-ago": "for {count} min sidan",
-      "minutes-ago-plural": "for {count} min sidan"
+      "less-than-day": "mindre enn 1 dag"
     },
     "units": {
-      "day": "{count} dag",
-      "day-plural": "{count} dagar",
-      "hour": "{count} time",
       "hour-compact": "{count}t",
-      "hour-plural": "{count} timar",
-      "minute": "{count} minutt",
       "minute-compact": "{count}m",
-      "minute-plural": "{count} minutt",
       "month": "{count} månad",
       "month-plural": "{count} månader",
       "year": "{count} år",
@@ -3995,53 +3858,6 @@
       "empty": "Ingen menyoppslag ...",
       "pin": "Fest",
       "unpin": "Fest frå"
-    }
-  },
-  "ui": {
-    "controls": {
-      "search-picker": {
-        "empty": "Ingen utkomer",
-        "placeholder": "Leita ..."
-      },
-      "select": {
-        "placeholder": "Vel noko"
-      }
-    },
-    "dialogs": {
-      "color-picker": {
-        "title": "Let"
-      },
-      "file": {
-        "actions": {
-          "open": "Opna",
-          "save": "Lagra",
-          "select-folder": "Vel mappe"
-        },
-        "empty-filtered": "Ingen filer samsvarar med vilkåret",
-        "entry": {
-          "folder": "Mappe"
-        },
-        "filename-placeholder": "Filnamn",
-        "filter-placeholder": "Vilkår ...",
-        "sort": {
-          "ascending": "↑",
-          "date": "Dato",
-          "descending": "↓",
-          "name": "Namn",
-          "size": "Storleik"
-        },
-        "title": {
-          "default": "Filval",
-          "open": "Opna fil",
-          "save": "Lagra fil",
-          "select-folder": "Vel mappe"
-        }
-      },
-      "glyph-picker": {
-        "all-categories": "Alle",
-        "search-placeholder": "Leita etter symbol ...",
-        "title": "Vel eit symbol"
-      }
     }
   },
   "wallpaper": {

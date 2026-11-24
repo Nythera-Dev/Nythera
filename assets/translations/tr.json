@@ -184,19 +184,12 @@
       "loading": "Önizleme yükleniyor...",
       "text-title": "Yazı panosu öğesi",
       "truncated": "…kısaltıldı"
-    },
-    "title": "Pano"
+    }
   },
   "common": {
-    "actions": {
-      "apply": "Uygula",
-      "cancel": "İptal"
-    },
     "states": {
-      "auto": "Otomatik",
       "custom": "Özel",
-      "inherit": "Devral",
-      "off": "Kapat"
+      "inherit": "Devral"
     }
   },
   "control-center": {
@@ -248,10 +241,6 @@
       "visible": "Yakındaki cihazlar tarafından keşfedilebilir"
     },
     "calendar": {
-      "all-day": "Tüm gün",
-      "events": "Etkinlikler",
-      "no-events": "Etkinlik yok.",
-      "today": "Bugün",
       "toggle-events-card": "Etkinlik kartlarını aç/kapat"
     },
     "display": {
@@ -765,8 +754,6 @@
       "calendar-google-connect-start-failed": "Google yetkilendirmesi başlatılamadı. Ağ bağlantınızı kontrol edin ve tekrar deneyin.",
       "calendar-google-connect-start-http": "Google yetkilendirmesi başlatılamadı. OAuth aracısı HTTP {status} döndürdü.",
       "calendar-google-connect-timeout": "Google yetkilendirmesi zaman aşımına uğradı. Oturum açmaya hazır olduğunuzda bağlantıyı tekrar başlatın.",
-      "config-migration-body": "Kaynak dosyadaki {path} konumunu güncelleyin. Nythera bu değişimi sadece geçici olarak uyguluyor. Gerekli tüm değişiklikleri listelemek için nythera config validate komutunu çalıştırın.",
-      "config-migration-title": "Yapılandırma güncellemesi gerekiyor",
       "dbus-disabled": "DBus bildirimleri devre dışı",
       "desktop-widgets-editor": "Bileşen düzenleyici",
       "desktop-widgets-editor-enabled": "Masaüstü bileşen düzenleyicisi açık. Açık pencerelerin düzenleyiciyi kapatmaması için boş bir çalışma alanına geçin.",
@@ -777,11 +764,6 @@
       "greeter-sync-success": "Görünüm senkronize edildi. Değişiklikler bir sonraki giriş ekranında uygulanacak.",
       "greeter-sync-timeout": "Karşılama ekranı senkronizasyonu hâlâ yönetici onayı bekliyor. Polkit istemi için bir TTY veya konsolu kontrol edin, Güvenlik ayarlarında polkit aracısını etkinleştirin veya pkexec'i manuel olarak çalıştırın.",
       "greeter-sync-timeout-manual": "Karşılama ekranı senkronizasyonu hâlâ yönetici onayı gerektiriyor. Terminalde şunu çalıştırın: pkexec nythera-greeter-apply-appearance \"$XDG_RUNTIME_DIR/nythera-greeter-sync\"",
-      "keybind-app": "Nythera",
-      "keybind-invalid-modifier": "Bu kısayol, değiştirici olmadan yalnızca tek bir tuş kabul eder.",
-      "keybind-invalid-printable": "Yazdırılabilir tuşlar (harfler, sayılar, semboller) Ctrl veya Alt gibi bir değiştirici tuş gerektirir.",
-      "keybind-invalid-super": "Super/Windows tuşu sistem tuş atamalarında kullanılamaz.",
-      "keybind-invalid-title": "Tuş atamasına izin verilmiyor",
       "launcher-usage-reset": "Başlat",
       "launcher-usage-reset-success": "Kullanım verisi temizlendi.",
       "lockscreen-widgets-editor": "Kilit ekranı bileşen düzenleyicisi",
@@ -978,7 +960,6 @@
         "delete-confirm-desc": "Arayüz üzerinden oluşturulan bu çubuk settings.toml dosyasından kaldırılacaktır.",
         "delete-confirm-title": "\"{name}\"i sil?",
         "id-placeholder": "Çubuk ID'si",
-        "label": "Çubuk: {name}",
         "management": "Çubuk",
         "move-down": "Aşağı İndir",
         "move-up": "Yukarı Çıkar",
@@ -1315,41 +1296,12 @@
       }
     },
     "options": {
-      "accordion-direction": {
-        "end": "İlk araçtan sonra",
-        "start": "İlk araçtan önce"
-      },
       "bar": {
         "auto-hide": {
           "off": "Kapalı",
           "on": "Açık",
           "smart": "Akıllı"
         }
-      },
-      "clipboard": {
-        "auto-paste": {
-          "ctrl-shift-v": "Ctrl+Shift+V",
-          "ctrl-v": "Ctrl+V",
-          "shift-insert": "Shift+Insert"
-        }
-      },
-      "control-center": {
-        "sidebar": {
-          "compact": "Kompakt",
-          "full": "Tam",
-          "none": "Yok"
-        }
-      },
-      "dock-launcher-position": {
-        "end": "Son",
-        "none": "Hiçbiri",
-        "start": "Baş"
-      },
-      "edge": {
-        "bottom": "Alt",
-        "left": "Sol",
-        "right": "Sağ",
-        "top": "Üst"
       },
       "font-weight": {
         "bold": "Kalın",
@@ -1389,13 +1341,6 @@
       "panel-position": {
         "auto": "Çubuğu Takip Et"
       },
-      "plugins": {
-        "auto-update": {
-          "all": "Tümü",
-          "none": "Hiçbiri",
-          "official": "Resmi"
-        }
-      },
       "screen-position": {
         "bottom-center": "Alt Orta",
         "bottom-left": "Alt Sol",
@@ -1407,72 +1352,9 @@
         "top-left": "Üst Sol",
         "top-right": "Üst Sağ"
       },
-      "shell": {
-        "panel-placement": {
-          "attached": "Bitişik",
-          "floating": "Yüzen"
-        },
-        "panel-transparency": {
-          "glass": "Cam",
-          "soft": "Yumuşak",
-          "solid": "Mat"
-        },
-        "password-style": {
-          "filled-circles": "Dolu Daireler",
-          "random-icons": "Rastgele Simgeler"
-        },
-        "shadow-direction": {
-          "center": "Orta",
-          "down": "Aşağı",
-          "down-left": "Sol Aşağı",
-          "down-right": "Sağ Aşağı",
-          "left": "Sol",
-          "right": "Sağ",
-          "up": "Yukarı",
-          "up-left": "Sol Yukarı",
-          "up-right": "Sağ Yukarı"
-        }
-      },
-      "theme": {
-        "mode": {
-          "dark": "Koyu",
-          "light": "Açık"
-        },
-        "shell-mode": {
-          "follow": "Takip et"
-        },
-        "source": {
-          "built-in": "Dahili",
-          "community": "Topluluk",
-          "custom": "Özel",
-          "wallpaper": "Duvar Kağıdı"
-        }
-      },
       "theme-role": {
         "custom": "Özel",
         "default": "Varsayılan"
-      },
-      "wallpaper": {
-        "fill": {
-          "center": "Ortala",
-          "crop": "Krıp",
-          "fit": "Sığdır",
-          "repeat": "Tekrarla",
-          "span": "Ger",
-          "stretch": "Genişlet"
-        },
-        "order": {
-          "alphabetical": "Alfabetik",
-          "random": "Rastgele"
-        },
-        "transition": {
-          "disc": "Disk",
-          "fade": "Solma",
-          "honeycomb": "Bal Peteği",
-          "stripes": "Çubuklar",
-          "wipe": "Sil",
-          "zoom": "Yakınlaştır"
-        }
       },
       "weather": {
         "unit": {
@@ -3181,14 +3063,6 @@
       "label-field": "Etiket",
       "label-placeholder": "İsteğe bağlı düğme metni",
       "shortcut-label": "Kısayol",
-      "variant": {
-        "default": "Varsayılan",
-        "destructive": "Yıkıcı",
-        "ghost": "Hayalet",
-        "outline": "Dış Çizgili",
-        "primary": "Birincil",
-        "secondary": "İkincil"
-      },
       "variant-label": "Düğme stili"
     },
     "storage-recovery": {
@@ -4000,32 +3874,11 @@
   },
   "time": {
     "duration": {
-      "less-than-day": "1 günden az",
-      "less-than-minute": "<1dk",
-      "three-parts": "{first} {second} {third}",
-      "two-parts": "{first} {second}"
-    },
-    "file": {
-      "unknown": "Bilinmiyor"
-    },
-    "relative": {
-      "days-ago": "{count} gün önce",
-      "days-ago-plural": "{count} gün önce",
-      "hours-ago": "{count} saat önce",
-      "hours-ago-plural": "{count} saat önce",
-      "just-now": "şimdi",
-      "minutes-ago": "{count} dk önce",
-      "minutes-ago-plural": "{count} dk önce"
+      "less-than-day": "1 günden az"
     },
     "units": {
-      "day": "{count} gün",
-      "day-plural": "{count} gün",
-      "hour": "{count} saat",
       "hour-compact": "{count}s",
-      "hour-plural": "{count} saat",
-      "minute": "{count} dakika",
       "minute-compact": "{count}d",
-      "minute-plural": "{count} dakika",
       "month": "{count} ay",
       "month-plural": "{count} ay",
       "year": "{count} yıl",
@@ -4037,53 +3890,6 @@
       "empty": "Menü öğesi yok",
       "pin": "Sabitle",
       "unpin": "Serbest Bırak"
-    }
-  },
-  "ui": {
-    "controls": {
-      "search-picker": {
-        "empty": "Sonuç yok",
-        "placeholder": "Ara..."
-      },
-      "select": {
-        "placeholder": "Bir seçenek seçin"
-      }
-    },
-    "dialogs": {
-      "color-picker": {
-        "title": "Renk"
-      },
-      "file": {
-        "actions": {
-          "open": "Aç",
-          "save": "Kaydet",
-          "select-folder": "Klasörü Seç"
-        },
-        "empty-filtered": "Mevcut filtreye uyan dosya yok",
-        "entry": {
-          "folder": "Klasör"
-        },
-        "filename-placeholder": "Dosya adı",
-        "filter-placeholder": "Filtre...",
-        "sort": {
-          "ascending": "↑",
-          "date": "Tarih",
-          "descending": "↓",
-          "name": "Ad",
-          "size": "Boyut"
-        },
-        "title": {
-          "default": "Dosya İletişim Kutusu",
-          "open": "Dosya Aç",
-          "save": "Dosyayı Kaydet",
-          "select-folder": "Klasör Seç"
-        }
-      },
-      "glyph-picker": {
-        "all-categories": "Tümü",
-        "search-placeholder": "Sembol ara...",
-        "title": "Bir Sembol Seç"
-      }
     }
   },
   "wallpaper": {

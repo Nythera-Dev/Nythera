@@ -34,7 +34,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Iterable
@@ -43,6 +45,39 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_TRANSLATIONS = ROOT / "assets" / "translations" / "en.json"
 DEFAULT_SRC = ROOT / "src"
 DEFAULT_RAW_ROOTS = ("src/ui", "src/shell")
+
+
+def resolve_shared_translations_default() -> Path | None:
+    if env_dir := os.environ.get("NYTHERA_LIB_ASSETS_DIR"):
+        candidate = Path(env_dir) / "translations" / "en.json"
+        if candidate.is_file():
+            return candidate
+
+    env = dict(os.environ)
+    local_pc = Path.home() / ".local" / "opt" / "nythera-lib" / "lib" / "pkgconfig"
+    if local_pc.is_dir():
+        existing = env.get("PKG_CONFIG_PATH", "")
+        env["PKG_CONFIG_PATH"] = f"{existing}:{local_pc}" if existing else str(local_pc)
+
+    try:
+        res = subprocess.run(
+            ["pkg-config", "--variable=assetsdir", "nythera-lib"],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=env,
+        )
+        if res.returncode == 0 and res.stdout.strip():
+            candidate = Path(res.stdout.strip()) / "translations" / "en.json"
+            if candidate.is_file():
+                return candidate
+    except OSError:
+        pass
+
+    sibling = ROOT.parent / "nythera-lib" / "assets" / "translations" / "en.json"
+    if sibling.is_file():
+        return sibling
+    return None
 
 # i18n::tr("a.b.c", ...) or i18n::tr("a.b.c")
 TR_RE = re.compile(r'i18n::tr\s*\(\s*"([^"]+)"')
@@ -379,7 +414,13 @@ def main() -> int:
         "--translations",
         type=Path,
         default=DEFAULT_TRANSLATIONS,
-        help="Path to translations JSON (default: en.json)",
+        help="Path to Shell translations JSON (default: assets/translations/en.json)",
+    )
+    ap.add_argument(
+        "--shared-translations",
+        type=Path,
+        default=None,
+        help="Path to NytheraLib shared translations JSON (default: auto-resolved via NYTHERA_LIB_ASSETS_DIR / pkg-config)",
     )
     ap.add_argument("--src", type=Path, default=DEFAULT_SRC, help="Root for i18n key scan (default: src/)")
     ap.add_argument(
@@ -424,9 +465,24 @@ def main() -> int:
         print(f"error: translations file not found: {args.translations}", file=sys.stderr)
         return 2
 
+    shared_path = args.shared_translations if args.shared_translations is not None else resolve_shared_translations_default()
+    if shared_path is None or not shared_path.is_file():
+        print(
+            "error: shared NytheraLib translations file not found; pass --shared-translations or set NYTHERA_LIB_ASSETS_DIR",
+            file=sys.stderr,
+        )
+        return 2
+
     catalog: dict[str, str] = {}
     with args.translations.open(encoding="utf-8") as f:
         flatten_json_strings(json.load(f), "", catalog)
+
+    shared_catalog: dict[str, str] = {}
+    with shared_path.open(encoding="utf-8") as f:
+        flatten_json_strings(json.load(f), "", shared_catalog)
+
+    collisions = sorted(set(catalog) & set(shared_catalog))
+    merged_catalog = {**shared_catalog, **catalog}
 
     all_tr: set[str] = set()
     all_trp: set[str] = set()
@@ -460,18 +516,24 @@ def main() -> int:
                 raw_hits.append((path, line_no, where, lit))
         raw_hits.sort(key=lambda h: (str(h[0]), h[1], h[2], h[3]))
 
-    missing_tr = check_catalog(all_tr, catalog)
+    missing_tr = check_catalog(all_tr, merged_catalog)
     trp_required: set[str] = set()
     for base in all_trp:
         trp_required.add(base)
         trp_required.add(f"{base}-plural")
-    missing_trp = check_catalog(trp_required, catalog)
+    missing_trp = check_catalog(trp_required, merged_catalog)
     missing = sorted(set(missing_tr + missing_trp))
     exit_code = 0
 
+    if collisions:
+        exit_code = 1
+        print(f"Key collision(s) ({len(collisions)}) between {args.translations} and {shared_path}:")
+        for k in collisions:
+            print(f"  - {k}")
+
     if missing:
         exit_code = 1
-        print(f"Missing {len(missing)} translation key(s) in {args.translations}:")
+        print(f"Missing {len(missing)} translation key(s) in {args.translations} + {shared_path}:")
         for k in missing:
             print(f"  - {k}")
 
@@ -510,13 +572,13 @@ def main() -> int:
     elif args.raw:
         print("\nRaw UI scan: clean.")
 
-    if not missing:
+    if not missing and not collisions:
         suffix = ""
         if args.raw and raw_hits:
             suffix = f"; raw UI literals: {len(raw_hits)} hit(s) (see above)"
         print(
             f"OK: {len(all_tr)} tr keys, {len(all_trp)} trp base keys"
-            f", all present in catalog ({len(catalog)} entries){suffix}."
+            f", all present in app ({len(catalog)}) + shared ({len(shared_catalog)}) catalogs{suffix}."
         )
 
     return exit_code

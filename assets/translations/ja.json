@@ -259,24 +259,17 @@
       "loading": "プレビューを読み込み中…",
       "text-title": "テキストのクリップボード項目",
       "truncated": "…省略"
-    },
-    "title": "クリップボード"
+    }
   },
   "common": {
-    "actions": {
-      "apply": "適用",
-      "cancel": "キャンセル"
-    },
     "minimize": "最小化",
     "minimized": "最小化済み",
     "minimized-count": "最小化済み：{count}件",
     "restore": "元に戻す",
     "states": {
-      "auto": "自動",
       "custom": "独自設定",
       "inherit": "継承",
       "inherit-value": "継承（{value}）",
-      "off": "オフ",
       "on": "オン"
     }
   },
@@ -330,14 +323,6 @@
       "visible": "近くのデバイスから検出可能"
     },
     "calendar": {
-      "all-day": "終日",
-      "events": "予定",
-      "hide-past-events": "過去の予定{count}件を非表示",
-      "hide-past-events-plural": "過去の予定{count}件を非表示",
-      "no-events": "予定はありません。",
-      "show-past-events": "過去の予定{count}件を表示",
-      "show-past-events-plural": "過去の予定{count}件を表示",
-      "today": "今日",
       "toggle-events-card": "予定カードの表示を切り替え"
     },
     "display": {
@@ -959,8 +944,6 @@
       "calendar-reminder-open": "開く",
       "calendar-reminder-untitled": "無題の予定",
       "calendar-reminder-with-location": "{when}\n{location}",
-      "config-migration-body": "ソースファイル内の{path}を更新してください。Nytheraはこの置換を一時的にのみ適用しています。必要な変更をすべて確認するには、nythera config validateを実行してください。",
-      "config-migration-title": "設定の更新が必要です",
       "dbus-disabled": "DBus通知は無効です",
       "desktop-widgets-editor": "ウィジェット編集",
       "desktop-widgets-editor-enabled": "デスクトップウィジェットの編集が有効です。開いているウィンドウで編集画面が隠れないよう、空のワークスペースに切り替えてください。",
@@ -974,11 +957,6 @@
       "greeter-sync-timeout": "グリーターの同期は、まだ認証待ちです。TTYまたはコンソールでpolkitの認証要求を確認するか、セキュリティ設定でpolkitエージェントを有効にするか、pkexecを手動で実行してください。",
       "greeter-sync-timeout-manual": "認証済みの従来方式の同期には、引き続き管理者の承認が必要です。ターミナルで位置引数形式の適用ヘルパーを実行し、独自の保存先を使用している場合はNYTHERA_GREETER_STATE_DIRを引き継いでください",
       "greeter-sync-timeout-manual-pkexec": "グリーターの同期には、まだ認証が必要です。ターミナルで次のコマンドを実行してください：pkexec nythera-greeter-apply-appearance --sync \"/run/user/$(id -u)/nythera-greeter-sync\"",
-      "keybind-app": "Nythera",
-      "keybind-invalid-modifier": "このショートカットには、修飾キーを使わない単一のキーを指定できます。",
-      "keybind-invalid-printable": "文字入力キー（英字、数字、記号）を使用するには、CtrlやAltなどの修飾キーが必要です。",
-      "keybind-invalid-super": "シェルのキーバインドではSuper/Windowsキーを使用できません。",
-      "keybind-invalid-title": "このキーバインドは使用できません",
       "launcher-usage-reset": "ランチャー",
       "launcher-usage-reset-success": "使用データを消去しました。",
       "lockscreen-widgets-editor": "ロック画面ウィジェット編集",
@@ -1189,7 +1167,6 @@
         "delete-confirm-desc": "GUIで作成したバーはsettings.tomlから削除されます。",
         "delete-confirm-title": "「{name}」を削除しますか？",
         "id-placeholder": "バーのID",
-        "label": "バー：{name}",
         "management": "バー",
         "move-down": "下へ移動",
         "move-up": "上へ移動",
@@ -1552,41 +1529,12 @@
       }
     },
     "options": {
-      "accordion-direction": {
-        "end": "最初のウィジェットの後",
-        "start": "最初のウィジェットの前"
-      },
       "bar": {
         "auto-hide": {
           "off": "オフ",
           "on": "オン",
           "smart": "スマート"
         }
-      },
-      "clipboard": {
-        "auto-paste": {
-          "ctrl-shift-v": "Ctrl+Shift+V",
-          "ctrl-v": "Ctrl+V",
-          "shift-insert": "Shift+Insert"
-        }
-      },
-      "control-center": {
-        "sidebar": {
-          "compact": "コンパクト",
-          "full": "フル表示",
-          "none": "なし"
-        }
-      },
-      "dock-launcher-position": {
-        "end": "末尾",
-        "none": "なし",
-        "start": "先頭"
-      },
-      "edge": {
-        "bottom": "下",
-        "left": "左",
-        "right": "右",
-        "top": "上"
       },
       "font-weight": {
         "bold": "太字",
@@ -1614,21 +1562,6 @@
         "overlay": "オーバーレイ",
         "top": "トップ"
       },
-      "lockscreen": {
-        "transition": {
-          "diamond": "ダイヤモンド",
-          "disc": "ディスク",
-          "fade": "フェード",
-          "golden": "ゴールデン",
-          "honeycomb": "ハニカム",
-          "melt": "溶解",
-          "pixel": "ピクセル",
-          "stripes": "ストライプ",
-          "vortex": "渦巻き",
-          "wipe": "ワイプ",
-          "zoom": "ズーム"
-        }
-      },
       "notification-urgency": {
         "critical": "緊急",
         "low": "低",
@@ -1641,13 +1574,6 @@
       "panel-position": {
         "auto": "バーに追従"
       },
-      "plugins": {
-        "auto-update": {
-          "all": "すべて",
-          "none": "なし",
-          "official": "公式"
-        }
-      },
       "screen-position": {
         "bottom-center": "下中央",
         "bottom-left": "左下",
@@ -1659,110 +1585,9 @@
         "top-left": "左上",
         "top-right": "右上"
       },
-      "screenshot": {
-        "format": {
-          "jpeg": "JPEG",
-          "jxl": "JPEG XL",
-          "png": "PNG",
-          "webp": "WebP"
-        },
-        "region-modifier": {
-          "alt": "Alt",
-          "ctrl": "Ctrl",
-          "none": "なし",
-          "shift": "Shift",
-          "super": "Super"
-        }
-      },
-      "shell": {
-        "launcher-default-view": {
-          "all": "すべて",
-          "categories": "カテゴリ",
-          "pinned": "ピン留め",
-          "recent": "最近使用した項目"
-        },
-        "launcher-layout": {
-          "full": "フル",
-          "simple": "シンプル"
-        },
-        "launcher-search-position": {
-          "bottom": "下",
-          "top": "上"
-        },
-        "panel-placement": {
-          "attached": "バーに固定",
-          "floating": "フローティング"
-        },
-        "panel-transparency": {
-          "glass": "ガラス",
-          "soft": "ソフト",
-          "solid": "単色"
-        },
-        "password-style": {
-          "filled-circles": "塗りつぶし円",
-          "random-icons": "ランダムなアイコン"
-        },
-        "shadow-direction": {
-          "center": "中央",
-          "down": "下",
-          "down-left": "左下",
-          "down-right": "右下",
-          "left": "左",
-          "right": "右",
-          "up": "上",
-          "up-left": "左上",
-          "up-right": "右上"
-        },
-        "window-switcher-style": {
-          "carousel": "カルーセル",
-          "compact": "コンパクト"
-        }
-      },
-      "theme": {
-        "mode": {
-          "dark": "ダーク",
-          "light": "ライト"
-        },
-        "shell-mode": {
-          "follow": "追従"
-        },
-        "source": {
-          "built-in": "内蔵",
-          "community": "コミュニティ",
-          "custom": "独自設定",
-          "wallpaper": "壁紙"
-        }
-      },
       "theme-role": {
         "custom": "独自設定",
         "default": "既定"
-      },
-      "wallpaper": {
-        "fill": {
-          "center": "中央",
-          "crop": "トリミング",
-          "fit": "全体表示",
-          "repeat": "繰り返し",
-          "span": "複数画面にまたがって表示",
-          "stretch": "引き伸ばし"
-        },
-        "order": {
-          "alphabetical": "名前",
-          "random": "ランダム"
-        },
-        "transition": {
-          "diamond": "ダイヤモンド",
-          "disc": "ディスク",
-          "fade": "フェード",
-          "golden": "ゴールデン",
-          "honeycomb": "ハニカム",
-          "melt": "溶解",
-          "pixel": "ピクセル",
-          "stripes": "ストライプ",
-          "vortex": "渦巻き",
-          "wipe": "ワイプ",
-          "zoom": "ズーム"
-        }
       },
       "weather": {
         "unit": {
@@ -3861,14 +3686,6 @@
       "label-placeholder": "任意のボタン文字列",
       "lockscreen-shortcut-label": "画面ロックのショートカット",
       "shortcut-label": "ショートカット",
-      "variant": {
-        "default": "既定",
-        "destructive": "危険",
-        "ghost": "ゴースト",
-        "outline": "アウトライン",
-        "primary": "主要",
-        "secondary": "補助"
-      },
       "variant-label": "ボタンのスタイル"
     },
     "storage-recovery": {
@@ -5213,32 +5030,11 @@
   },
   "time": {
     "duration": {
-      "less-than-day": "1日未満",
-      "less-than-minute": "1分未満",
-      "three-parts": "{first} {second} {third}",
-      "two-parts": "{first} {second}"
-    },
-    "file": {
-      "unknown": "不明"
-    },
-    "relative": {
-      "days-ago": "{count}日前",
-      "days-ago-plural": "{count}日前",
-      "hours-ago": "{count}時間前",
-      "hours-ago-plural": "{count}時間前",
-      "just-now": "たった今",
-      "minutes-ago": "{count}分前",
-      "minutes-ago-plural": "{count}分前"
+      "less-than-day": "1日未満"
     },
     "units": {
-      "day": "{count}日",
-      "day-plural": "{count}日",
-      "hour": "{count}時間",
       "hour-compact": "{count}時間",
-      "hour-plural": "{count}時間",
-      "minute": "{count}分",
       "minute-compact": "{count}分",
-      "minute-plural": "{count}分",
       "month": "{count}ヶ月",
       "month-plural": "{count}ヶ月",
       "year": "{count}年",
@@ -5250,54 +5046,6 @@
       "empty": "メニュー項目なし…",
       "pin": "ピン留め",
       "unpin": "ピン留めを外す"
-    }
-  },
-  "ui": {
-    "controls": {
-      "search-picker": {
-        "empty": "検索結果がありません",
-        "placeholder": "検索…"
-      },
-      "select": {
-        "placeholder": "オプションを選択"
-      }
-    },
-    "dialogs": {
-      "color-picker": {
-        "copy": "現在の形式でカラーコードをコピー",
-        "title": "色"
-      },
-      "file": {
-        "actions": {
-          "open": "開く",
-          "save": "保存",
-          "select-folder": "フォルダーを選択"
-        },
-        "empty-filtered": "現在の絞り込み条件に一致するファイルがありません",
-        "entry": {
-          "folder": "フォルダー"
-        },
-        "filename-placeholder": "ファイル名",
-        "filter-placeholder": "絞り込み…",
-        "sort": {
-          "ascending": "↑",
-          "date": "日付",
-          "descending": "↓",
-          "name": "名前",
-          "size": "サイズ"
-        },
-        "title": {
-          "default": "ファイルダイアログ",
-          "open": "ファイルを開く",
-          "save": "ファイルを保存",
-          "select-folder": "フォルダーを選択"
-        }
-      },
-      "glyph-picker": {
-        "all-categories": "すべて",
-        "search-placeholder": "グリフを検索…",
-        "title": "グリフを選択"
-      }
     }
   },
   "wallpaper": {

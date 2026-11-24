@@ -163,19 +163,12 @@
       "loading": "Laddar förhandsgranskning...",
       "text-title": "Texturklipp",
       "truncated": "... avkortad"
-    },
-    "title": "Urklipp"
+    }
   },
   "common": {
-    "actions": {
-      "apply": "Applicera",
-      "cancel": "Avbryt"
-    },
     "states": {
-      "auto": "Auto",
       "custom": "Anpassad",
-      "inherit": "Ärv",
-      "off": "Av"
+      "inherit": "Ärv"
     }
   },
   "control-center": {
@@ -226,10 +219,6 @@
       "visible": "Upptäckbar av enheter i närheten"
     },
     "calendar": {
-      "all-day": "Hela dagen",
-      "events": "Händelser",
-      "no-events": "Inga händelser.",
-      "today": "Idag",
       "toggle-events-card": "Visa/göm händelsekortet"
     },
     "display": {
@@ -700,7 +689,6 @@
       "calendar-google-connect-missing-account": "Inget konfigurerat Google Kalender konto matchar \"{account}\".",
       "calendar-google-connect-result-failed": "Kunde inte avsluta Google auktorisering. Påbörja kopplingen på nytt.",
       "greeter-sync": "Nythera Greeter",
-      "keybind-app": "Nythera",
       "launcher-usage-reset": "Launcher",
       "screen-time-reset": "Skärmtid",
       "wallpaper-palette-export": "Anpassad färgskala"
@@ -834,7 +822,6 @@
         "create": "Skapa",
         "delete": "Ta bort",
         "delete-confirm-title": "Ta bort \"{name}\"?",
-        "label": "Bar: {name}",
         "move-down": "Flytta ner",
         "move-up": "Flytta upp",
         "rename": "Byt namn",
@@ -892,11 +879,6 @@
           "off": "Av",
           "on": "På",
           "smart": "Smart"
-        }
-      },
-      "control-center": {
-        "sidebar": {
-          "compact": "Kompakt"
         }
       },
       "font-weight": {
@@ -1028,16 +1010,6 @@
       },
       "types": {
         "caffeine": "Koffein"
-      }
-    }
-  },
-  "ui": {
-    "dialogs": {
-      "file": {
-        "filename-placeholder": "Filnamn",
-        "sort": {
-          "name": "Namn"
-        }
       }
     }
   },

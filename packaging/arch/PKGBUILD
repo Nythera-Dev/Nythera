@@ -7,11 +7,11 @@ arch=(x86_64 aarch64)
 url='https://github.com/Nythera-Dev/Nythera'
 license=(MIT)
 depends=('nythera-lib>=0.1.0' 'nythera-lib<0.2.0' libnythera_lib.so
-         cairo curl fontconfig freetype2 glib2 harfbuzz jemalloc libgcc libglvnd
-         libical libjxl libpipewire libqalculate libsecret libsndfile libsodium libstdc++
-         librsvg libwebp libxkbcommon libxml2 md4c nlohmann-json pam pango polkit
-         sdbus-cpp tomlplusplus wayland wireplumber)
-makedepends=(git meson ninja pkgconf stb wayland-protocols)
+         cairo curl glib2 jemalloc libgcc libical libpipewire libqalculate
+         libsecret libsndfile libsodium libstdc++ libwebp libxkbcommon libxml2
+         nlohmann-json pam pango polkit sdbus-cpp tomlplusplus wayland
+         wireplumber)
+makedepends=(git meson ninja pkgconf wayland-protocols)
 
 build() {
   arch-meson "$startdir/../.." "$srcdir/build" -Dtests=disabled

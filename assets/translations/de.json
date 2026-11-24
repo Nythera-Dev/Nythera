@@ -165,19 +165,12 @@
       "loading": "Vorschau wird geladen…",
       "text-title": "Text-Zwischenablageeintrag",
       "truncated": "… gekürzt"
-    },
-    "title": "Zwischenablage"
+    }
   },
   "common": {
-    "actions": {
-      "apply": "Anwenden",
-      "cancel": "Abbrechen"
-    },
     "states": {
-      "auto": "Auto",
       "custom": "Benutzerdefiniert",
-      "inherit": "Erben",
-      "off": "Aus"
+      "inherit": "Erben"
     }
   },
   "control-center": {
@@ -229,10 +222,6 @@
       "visible": "Sichtbar für Geräte in der Nähe"
     },
     "calendar": {
-      "all-day": "Ganztägig",
-      "events": "Ereignisse",
-      "no-events": "Keine Ereignisse.",
-      "today": "Heute",
       "toggle-events-card": "Ereigniskarte umschalten"
     },
     "display": {
@@ -763,8 +752,6 @@
       "calendar-google-connect-start-failed": "Die Google-Autorisierung konnte nicht gestartet werden. Überprüfe deine Netzwerkverbindung und versuche es erneut.",
       "calendar-google-connect-start-http": "Die Google-Autorisierung konnte nicht gestartet werden. Der OAuth-Broker gab HTTP {status} zurück.",
       "calendar-google-connect-timeout": "Bei der Google-Autorisierung ist eine Zeitüberschreitung aufgetreten. Starte die Verbindung erneut, wenn du bereit bist, dich anzumelden.",
-      "config-migration-body": "Aktualisiere {path} in der Quelldatei. Nythera wendet diesen Ersatz nur vorübergehend an. Führe nythera config validate aus, um alle erforderlichen Änderungen aufzulisten.",
-      "config-migration-title": "Konfigurationsupdate erforderlich",
       "dbus-disabled": "DBus-Benachrichtigungen deaktiviert",
       "desktop-widgets-editor": "Widget-Editor",
       "desktop-widgets-editor-enabled": "Der Desktop-Widget-Editor ist aktiv. Wechsle zu einem leeren Arbeitsbereich, damit offene Fenster den Editor nicht verdecken.",
@@ -775,11 +762,6 @@
       "greeter-sync-success": "Erscheinungsbild synchronisiert. Änderungen werden beim nächsten Anmeldebildschirm angewendet.",
       "greeter-sync-timeout": "Die Greeter-Synchronisierung wartet weiterhin auf Autorisierung. Prüfe ein TTY oder eine Konsole auf eine Polkit-Anfrage, aktiviere den Polkit-Agenten in den Sicherheitseinstellungen oder führe pkexec manuell aus.",
       "greeter-sync-timeout-manual": "Die authentifizierte Legacy-Synchronisierung benötigt weiterhin Administratorfreigabe. Führe den positionalen Apply-Helfer in einem Terminal aus und behalte NYTHERA_GREETER_STATE_DIR bei, falls du einen benutzerdefinierten Pfad verwendest.",
-      "keybind-app": "Nythera",
-      "keybind-invalid-modifier": "Dieses Tastenkürzel akzeptiert eine einzelne Taste ohne Zusatztasten.",
-      "keybind-invalid-printable": "Druckbare Tasten (Buchstaben, Zahlen, Symbole) benötigen einen Modifikator wie Ctrl oder Alt.",
-      "keybind-invalid-super": "Die Super-/Windows-Taste kann nicht für Shell-Tastenkombinationen verwendet werden.",
-      "keybind-invalid-title": "Tastenkombination nicht erlaubt",
       "launcher-usage-reset": "Launcher",
       "launcher-usage-reset-success": "Nutzungsdaten gelöscht",
       "lockscreen-widgets-editor": "Sperrbildschirm-Widget-Editor",
@@ -976,7 +958,6 @@
         "delete-confirm-desc": "Diese über die GUI erstellte Leiste wird aus settings.toml entfernt.",
         "delete-confirm-title": "„{name}“ löschen?",
         "id-placeholder": "Leisten-ID",
-        "label": "Leiste: {name}",
         "management": "Leiste",
         "move-down": "Nach unten",
         "move-up": "Nach oben",
@@ -1314,41 +1295,12 @@
       }
     },
     "options": {
-      "accordion-direction": {
-        "end": "Nach dem ersten Widget",
-        "start": "Vor dem ersten Widget"
-      },
       "bar": {
         "auto-hide": {
           "off": "Aus",
           "on": "An",
           "smart": "Smart"
         }
-      },
-      "clipboard": {
-        "auto-paste": {
-          "ctrl-shift-v": "Strg+Umschalt+V",
-          "ctrl-v": "Strg+V",
-          "shift-insert": "Umschalt+Einfg"
-        }
-      },
-      "control-center": {
-        "sidebar": {
-          "compact": "Kompakt",
-          "full": "Vollständig",
-          "none": "Keine"
-        }
-      },
-      "dock-launcher-position": {
-        "end": "Ende",
-        "none": "Keine",
-        "start": "Anfang"
-      },
-      "edge": {
-        "bottom": "Unten",
-        "left": "Links",
-        "right": "Rechts",
-        "top": "Oben"
       },
       "font-weight": {
         "bold": "Bold",
@@ -1388,13 +1340,6 @@
       "panel-position": {
         "auto": "Leiste folgen"
       },
-      "plugins": {
-        "auto-update": {
-          "all": "Alle",
-          "none": "Keine",
-          "official": "Offizielle"
-        }
-      },
       "screen-position": {
         "bottom-center": "Unten mittig",
         "bottom-left": "Unten links",
@@ -1406,69 +1351,9 @@
         "top-left": "Oben links",
         "top-right": "Oben rechts"
       },
-      "shell": {
-        "panel-placement": {
-          "attached": "Angedockt",
-          "floating": "Schwebend"
-        },
-        "panel-transparency": {
-          "glass": "Glas",
-          "soft": "Matt",
-          "solid": "Opak"
-        },
-        "password-style": {
-          "filled-circles": "Gefüllte Kreise",
-          "random-icons": "Zufällige Symbole"
-        },
-        "shadow-direction": {
-          "center": "Mitte",
-          "down": "Unten",
-          "down-left": "Unten links",
-          "down-right": "Unten rechts",
-          "left": "Links",
-          "right": "Rechts",
-          "up": "Oben",
-          "up-left": "Oben links",
-          "up-right": "Oben rechts"
-        }
-      },
-      "theme": {
-        "mode": {
-          "dark": "Dunkel",
-          "light": "Hell"
-        },
-        "source": {
-          "built-in": "Integriert",
-          "community": "Community",
-          "custom": "Benutzerdefiniert",
-          "wallpaper": "Hintergrundbild"
-        }
-      },
       "theme-role": {
         "custom": "Benutzerdefiniert",
         "default": "Standard"
-      },
-      "wallpaper": {
-        "fill": {
-          "center": "Zentrieren",
-          "crop": "Zuschneiden",
-          "fit": "Anpassen",
-          "repeat": "Wiederholen",
-          "span": "Erstrecken",
-          "stretch": "Strecken"
-        },
-        "order": {
-          "alphabetical": "Alphabetisch",
-          "random": "Zufällig"
-        },
-        "transition": {
-          "disc": "Disc",
-          "fade": "Fade",
-          "honeycomb": "Honeycomb",
-          "stripes": "Stripes",
-          "wipe": "Wipe",
-          "zoom": "Zoom"
-        }
       },
       "weather": {
         "unit": {
@@ -3180,14 +3065,6 @@
       "label-field": "Beschriftung",
       "label-placeholder": "Optionaler Button-Text",
       "shortcut-label": "Tastenkürzel",
-      "variant": {
-        "default": "Standard",
-        "destructive": "Destruktiv",
-        "ghost": "Ghost",
-        "outline": "Outline",
-        "primary": "Primär",
-        "secondary": "Sekundär"
-      },
       "variant-label": "Button-Stil"
     },
     "storage-recovery": {
@@ -3999,32 +3876,11 @@
   },
   "time": {
     "duration": {
-      "less-than-day": "weniger als 1 Tag",
-      "less-than-minute": "<1m",
-      "three-parts": "{first} {second} {third}",
-      "two-parts": "{first} {second}"
-    },
-    "file": {
-      "unknown": "Unbekannt"
-    },
-    "relative": {
-      "days-ago": "vor {count} Tag",
-      "days-ago-plural": "vor {count} Tagen",
-      "hours-ago": "vor {count} Std.",
-      "hours-ago-plural": "vor {count} Std.",
-      "just-now": "gerade eben",
-      "minutes-ago": "vor {count} Min.",
-      "minutes-ago-plural": "vor {count} Min."
+      "less-than-day": "weniger als 1 Tag"
     },
     "units": {
-      "day": "{count} Tag",
-      "day-plural": "{count} Tage",
-      "hour": "{count} Stunde",
       "hour-compact": "{count}h",
-      "hour-plural": "{count} Stunden",
-      "minute": "{count} Minute",
       "minute-compact": "{count}m",
-      "minute-plural": "{count} Minuten",
       "month": "{count} Monat",
       "month-plural": "{count} Monate",
       "year": "{count} Jahr",
@@ -4036,53 +3892,6 @@
       "empty": "Keine Menüelemente…",
       "pin": "Anheften",
       "unpin": "Lösen"
-    }
-  },
-  "ui": {
-    "controls": {
-      "search-picker": {
-        "empty": "Keine Ergebnisse",
-        "placeholder": "Suchen…"
-      },
-      "select": {
-        "placeholder": "Option auswählen"
-      }
-    },
-    "dialogs": {
-      "color-picker": {
-        "title": "Farbe"
-      },
-      "file": {
-        "actions": {
-          "open": "Öffnen",
-          "save": "Speichern",
-          "select-folder": "Ordner auswählen"
-        },
-        "empty-filtered": "Keine Dateien entsprechen dem aktuellen Filter",
-        "entry": {
-          "folder": "Ordner"
-        },
-        "filename-placeholder": "Dateiname",
-        "filter-placeholder": "Filtern…",
-        "sort": {
-          "ascending": "↑",
-          "date": "Datum",
-          "descending": "↓",
-          "name": "Name",
-          "size": "Größe"
-        },
-        "title": {
-          "default": "Dateidialog",
-          "open": "Datei öffnen",
-          "save": "Datei speichern",
-          "select-folder": "Ordner auswählen"
-        }
-      },
-      "glyph-picker": {
-        "all-categories": "Alle",
-        "search-placeholder": "Symbole suchen…",
-        "title": "Symbol auswählen"
-      }
     }
   },
   "wallpaper": {

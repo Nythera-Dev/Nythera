@@ -138,12 +138,5 @@
         }
       }
     }
-  },
-  "ui": {
-    "dialogs": {
-      "color-picker": {
-        "title": "Colour"
-      }
-    }
   }
 }

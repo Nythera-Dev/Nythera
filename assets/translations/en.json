@@ -259,24 +259,17 @@
       "loading": "Loading preview…",
       "text-title": "Text Clipboard Entry",
       "truncated": "… truncated"
-    },
-    "title": "Clipboard"
+    }
   },
   "common": {
-    "actions": {
-      "apply": "Apply",
-      "cancel": "Cancel"
-    },
     "minimize": "Minimise",
     "minimized": "Minimised",
     "minimized-count": "{count} minimised",
     "restore": "Restore",
     "states": {
-      "auto": "Auto",
       "custom": "Custom",
       "inherit": "Inherit",
       "inherit-value": "Inherit ({value})",
-      "off": "Off",
       "on": "On"
     }
   },
@@ -330,14 +323,6 @@
       "visible": "Discoverable by nearby devices"
     },
     "calendar": {
-      "all-day": "All day",
-      "events": "Events",
-      "hide-past-events": "Hide {count} past event",
-      "hide-past-events-plural": "Hide {count} past events",
-      "no-events": "No events.",
-      "show-past-events": "Show {count} past event",
-      "show-past-events-plural": "Show {count} past events",
-      "today": "Today",
       "toggle-events-card": "Toggle events card"
     },
     "display": {
@@ -977,8 +962,6 @@
       "calendar-reminder-open": "Open",
       "calendar-reminder-untitled": "Untitled event",
       "calendar-reminder-with-location": "{when}\n{location}",
-      "config-migration-body": "Update {path} in the source file. Nythera is applying this replacement only temporarily. Run nythera config validate to list every required change.",
-      "config-migration-title": "Configuration update needed",
       "dbus-disabled": "DBus notifications disabled",
       "job-cancelled": "Operation cancelled",
       "job-completed": "Operation completed",
@@ -1015,11 +998,6 @@
       "greeter-sync-timeout": "Greeter sync is still waiting for authorization. Check a TTY or console for a polkit prompt, enable the polkit agent in Security settings, or run pkexec manually.",
       "greeter-sync-timeout-manual": "Authenticated legacy sync still needs administrator approval. Run the positional apply helper in a terminal and preserve NYTHERA_GREETER_STATE_DIR if you use a custom path.",
       "greeter-sync-timeout-manual-pkexec": "Greeter sync still needs authorization. Run in a terminal: pkexec nythera-greeter-apply-appearance --sync \"/run/user/$(id -u)/nythera-greeter-sync\"",
-      "keybind-app": "Nythera",
-      "keybind-invalid-modifier": "This shortcut accepts a single key without modifiers.",
-      "keybind-invalid-printable": "Printable keys (letters, numbers, symbols) require a modifier such as Ctrl or Alt.",
-      "keybind-invalid-super": "The Super/Windows key cannot be used in shell keybinds.",
-      "keybind-invalid-title": "Keybind not allowed",
       "launcher-usage-reset": "Launcher",
       "launcher-usage-reset-success": "Usage data cleared.",
       "lockscreen-widgets-editor": "Lockscreen widget editor",
@@ -1230,7 +1208,6 @@
         "delete-confirm-desc": "This GUI-created bar will be removed from settings.toml.",
         "delete-confirm-title": "Delete \"{name}\"?",
         "id-placeholder": "Bar ID",
-        "label": "Bar: {name}",
         "management": "Bar",
         "move-down": "Move Down",
         "move-up": "Move Up",
@@ -1605,47 +1582,17 @@
       }
     },
     "options": {
-      "accordion-direction": {
-        "end": "After first widget",
-        "start": "Before first widget"
-      },
       "bar": {
         "auto-hide": {
           "off": "Off",
           "on": "On",
           "smart": "Smart"
         },
-        "transparency-custom": "Custom",
         "surface-mode": {
           "full": "Full Bar",
           "islands": "Floating Islands",
           "dynamic": "Dynamic Island"
         }
-      },
-      "clipboard": {
-        "auto-paste": {
-          "ctrl-shift-v": "Ctrl+Shift+V",
-          "ctrl-v": "Ctrl+V",
-          "shift-insert": "Shift+Insert"
-        }
-      },
-      "control-center": {
-        "sidebar": {
-          "compact": "Compact",
-          "full": "Full",
-          "none": "None"
-        }
-      },
-      "dock-launcher-position": {
-        "end": "End",
-        "none": "None",
-        "start": "Start"
-      },
-      "edge": {
-        "bottom": "Bottom",
-        "left": "Left",
-        "right": "Right",
-        "top": "Top"
       },
       "font-weight": {
         "bold": "Bold",
@@ -1673,21 +1620,6 @@
         "overlay": "Overlay",
         "top": "Top"
       },
-      "lockscreen": {
-        "transition": {
-          "diamond": "Diamond",
-          "disc": "Disc",
-          "fade": "Fade",
-          "golden": "Golden",
-          "honeycomb": "Honeycomb",
-          "melt": "Melt",
-          "pixel": "Pixel",
-          "stripes": "Stripes",
-          "vortex": "Vortex",
-          "wipe": "Wipe",
-          "zoom": "Zoom"
-        }
-      },
       "notification-urgency": {
         "critical": "Critical",
         "low": "Low",
@@ -1700,13 +1632,6 @@
       "panel-position": {
         "auto": "Follow Bar"
       },
-      "plugins": {
-        "auto-update": {
-          "all": "All",
-          "none": "None",
-          "official": "Official"
-        }
-      },
       "screen-position": {
         "bottom-center": "Bottom Center",
         "bottom-left": "Bottom Left",
@@ -1718,124 +1643,9 @@
         "top-left": "Top Left",
         "top-right": "Top Right"
       },
-      "screenshot": {
-        "format": {
-          "jpeg": "JPEG",
-          "jxl": "JPEG XL",
-          "png": "PNG",
-          "webp": "WebP"
-        },
-        "region-modifier": {
-          "alt": "Alt",
-          "ctrl": "Ctrl",
-          "none": "None",
-          "shift": "Shift",
-          "super": "Super"
-        }
-      },
-      "shell": {
-        "launcher-default-view": {
-          "all": "All",
-          "categories": "Categories",
-          "pinned": "Pinned",
-          "recent": "Recent"
-        },
-        "launcher-layout": {
-          "full": "Full",
-          "simple": "Simple"
-        },
-        "launcher-search-position": {
-          "bottom": "Bottom",
-          "top": "Top"
-        },
-        "launcher-branding": {
-          "off": "Off",
-          "glyph": "Glyph only",
-          "glyph-wordmark": "Glyph + wordmark"
-        },
-        "panel-placement": {
-          "attached": "Attached",
-          "floating": "Floating"
-        },
-        "panel-transparency": {
-          "glass": "Glass",
-          "soft": "Soft",
-          "solid": "Solid"
-        },
-        "panel-haze-mode": {
-          "static": "Static",
-          "animated": "Animated"
-        },
-        "panel-haze-background": {
-          "opaque": "Opaque",
-          "transparent": "Transparent"
-        },
-        "password-style": {
-          "filled-circles": "Filled Circles",
-          "random-icons": "Random Icons"
-        },
-        "shadow-direction": {
-          "center": "Center",
-          "down": "Down",
-          "down-left": "Down Left",
-          "down-right": "Down Right",
-          "left": "Left",
-          "right": "Right",
-          "up": "Up",
-          "up-left": "Up Left",
-          "up-right": "Up Right"
-        },
-        "window-switcher-style": {
-          "carousel": "Carousel",
-          "compact": "Compact",
-          "icons": "Icons Only"
-        }
-      },
-      "theme": {
-        "mode": {
-          "dark": "Dark",
-          "light": "Light"
-        },
-        "shell-mode": {
-          "follow": "Follow"
-        },
-        "source": {
-          "built-in": "Built-In",
-          "community": "Community",
-          "custom": "Custom",
-          "wallpaper": "Wallpaper"
-        }
-      },
       "theme-role": {
         "custom": "Custom",
         "default": "Default"
-      },
-      "wallpaper": {
-        "fill": {
-          "center": "Center",
-          "crop": "Crop",
-          "fit": "Fit",
-          "repeat": "Repeat",
-          "span": "Span",
-          "stretch": "Stretch"
-        },
-        "order": {
-          "alphabetical": "Alphabetical",
-          "random": "Random"
-        },
-        "transition": {
-          "diamond": "Diamond",
-          "disc": "Disc",
-          "fade": "Fade",
-          "golden": "Golden",
-          "honeycomb": "Honeycomb",
-          "melt": "Melt",
-          "pixel": "Pixel",
-          "stripes": "Stripes",
-          "vortex": "Vortex",
-          "wipe": "Wipe",
-          "zoom": "Zoom"
-        }
       },
       "weather": {
         "unit": {
@@ -2126,24 +1936,78 @@
           "label": "Frame Rounding",
           "description": "Radius of the shared desktop opening in logical pixels; the largest wrapped-bar request on this display wins"
         },
-        "dynamic-notifications": {"label": "Island Notifications", "description": "Route eligible notifications and their actions into Dynamic Island; respects filters and Do Not Disturb"},
-        "dynamic-timers": {"label": "Island Timers", "description": "Show the shared session countdown with a compact cancel control"},
-        "dynamic-alarms": {"label": "Island Alarms", "description": "Show one-shot session alarms with compact dismiss and snooze controls"},
-        "dynamic-calls": {"label": "Island Calls", "description": "Recognise incoming-call notifications from Discord, Vesktop, KDE Connect and explicit call categories; use only actions provided by the app"},
-        "dynamic-timer-seconds": {"label": "Island Timer Duration", "description": "Default countdown duration in seconds for the island-activity timer-start action"},
-        "dynamic-alarm-time": {"label": "Island Alarm Time", "description": "Local HH:MM for the next one-shot alarm-arm action. The shell must remain running"},
-        "dynamic-snooze-seconds": {"label": "Island Snooze Duration", "description": "Alarm snooze duration in seconds"},
-        "dynamic-activity-indicators": {"label": "Activity Indicators", "description": "Keep running timer and microphone, camera or screen-capture indicators visible beside compact feedback"},
-        "dynamic-privacy": {"label": "Privacy Feedback", "description": "Route existing microphone, camera and screen-capture feedback into the island"},
-        "dynamic-devices": {"label": "Device Feedback", "description": "Route existing Wi-Fi, Bluetooth and power-profile feedback into the island"},
-        "dynamic-visualizer": {"label": "Compact Visualiser", "description": "Show the existing audio spectrum beneath compact media feedback; no additional player or capture service"},
-        "dynamic-media": {"label": "Island Media", "description": "Show track changes, playback starting/resuming and an expandable player in Dynamic Island mode"},
-        "dynamic-volume": {"label": "Island Volume", "description": "Route volume and microphone feedback into Dynamic Island instead of the ordinary OSD"},
-        "dynamic-brightness": {"label": "Island Brightness", "description": "Route brightness feedback into Dynamic Island instead of the ordinary OSD"},
-        "dynamic-hover-expand": {"label": "Open Native Tool on Hover", "description": "Grow directly into the existing Nythera tool on hover; the resting clock opens Dashboard/Home"},
-        "dynamic-dwell-ms": {"label": "Island Event Duration", "description": "Milliseconds before temporary feedback returns to the resting clock; interaction holds it open"},
-        "dynamic-width": {"label": "Island Expanded Width", "description": "Maximum expanded card width in logical pixels"},
-        "dynamic-clock-format": {"label": "Island Clock Format", "description": "Resting clock format, using strftime syntax such as %H:%M"},
+        "dynamic-notifications": {
+          "label": "Island Notifications",
+          "description": "Route eligible notifications and their actions into Dynamic Island; respects filters and Do Not Disturb"
+        },
+        "dynamic-timers": {
+          "label": "Island Timers",
+          "description": "Show the shared session countdown with a compact cancel control"
+        },
+        "dynamic-alarms": {
+          "label": "Island Alarms",
+          "description": "Show one-shot session alarms with compact dismiss and snooze controls"
+        },
+        "dynamic-calls": {
+          "label": "Island Calls",
+          "description": "Recognise incoming-call notifications from Discord, Vesktop, KDE Connect and explicit call categories; use only actions provided by the app"
+        },
+        "dynamic-timer-seconds": {
+          "label": "Island Timer Duration",
+          "description": "Default countdown duration in seconds for the island-activity timer-start action"
+        },
+        "dynamic-alarm-time": {
+          "label": "Island Alarm Time",
+          "description": "Local HH:MM for the next one-shot alarm-arm action. The shell must remain running"
+        },
+        "dynamic-snooze-seconds": {
+          "label": "Island Snooze Duration",
+          "description": "Alarm snooze duration in seconds"
+        },
+        "dynamic-activity-indicators": {
+          "label": "Activity Indicators",
+          "description": "Keep running timer and microphone, camera or screen-capture indicators visible beside compact feedback"
+        },
+        "dynamic-privacy": {
+          "label": "Privacy Feedback",
+          "description": "Route existing microphone, camera and screen-capture feedback into the island"
+        },
+        "dynamic-devices": {
+          "label": "Device Feedback",
+          "description": "Route existing Wi-Fi, Bluetooth and power-profile feedback into the island"
+        },
+        "dynamic-visualizer": {
+          "label": "Compact Visualiser",
+          "description": "Show the existing audio spectrum beneath compact media feedback; no additional player or capture service"
+        },
+        "dynamic-media": {
+          "label": "Island Media",
+          "description": "Show track changes, playback starting/resuming and an expandable player in Dynamic Island mode"
+        },
+        "dynamic-volume": {
+          "label": "Island Volume",
+          "description": "Route volume and microphone feedback into Dynamic Island instead of the ordinary OSD"
+        },
+        "dynamic-brightness": {
+          "label": "Island Brightness",
+          "description": "Route brightness feedback into Dynamic Island instead of the ordinary OSD"
+        },
+        "dynamic-hover-expand": {
+          "label": "Open Native Tool on Hover",
+          "description": "Grow directly into the existing Nythera tool on hover; the resting clock opens Dashboard/Home"
+        },
+        "dynamic-dwell-ms": {
+          "label": "Island Event Duration",
+          "description": "Milliseconds before temporary feedback returns to the resting clock; interaction holds it open"
+        },
+        "dynamic-width": {
+          "label": "Island Expanded Width",
+          "description": "Maximum expanded card width in logical pixels"
+        },
+        "dynamic-clock-format": {
+          "label": "Island Clock Format",
+          "description": "Resting clock format, using strftime syntax such as %H:%M"
+        },
         "dynamic-center": {
           "label": "Dynamic Centre",
           "description": "Animate changes in size of the configured centre widgets; contents are managed in the widget editor"
@@ -4013,14 +3877,6 @@
       "label-placeholder": "Optional button text",
       "lockscreen-shortcut-label": "Lock screen shortcut",
       "shortcut-label": "Shortcut",
-      "variant": {
-        "default": "Default",
-        "destructive": "Destructive",
-        "ghost": "Ghost",
-        "outline": "Outline",
-        "primary": "Primary",
-        "secondary": "Secondary"
-      },
       "variant-label": "Button style"
     },
     "storage-recovery": {
@@ -5358,37 +5214,6 @@
       "title": "Settings"
     },
     "haze": {
-      "workspace-map-window": "Workspace Map window",
-      "workspace-map": "Workspace Map panel",
-      "control-center": "Control Centre",
-      "window-inspector": "Window Inspector",
-      "launcher": "Launcher",
-      "settings": "Settings",
-      "clipboard": "Clipboard History",
-      "polkit": "Authentication dialogs",
-      "session": "Session menu",
-      "wallpaper": "Wallpaper picker",
-      "setup-wizard": "Setup Wizard",
-      "notifications": "Notifications",
-      "osd": "On-screen displays",
-      "window-switcher": "Window switcher",
-      "dock": "Dock",
-      "tooltips": "Tooltips",
-      "dock-context-menu": "Dock menus",
-      "context-menu": "Context menus",
-      "select-menu": "Dropdown menus",
-      "tray-menu": "Tray menus",
-      "tray-drawer": "Tray drawer",
-      "file-dialog": "File dialogs",
-      "color-picker": "Colour pickers",
-      "glyph-picker": "Icon pickers",
-      "search-picker": "Search pickers",
-      "desktop-widget-editor": "Widget editors",
-      "lock-screen": "Lock-screen panels",
-      "annotation": "Annotation toolbars",
-      "screenshot": "Screenshot toolbars",
-      "windows": "Other native windows",
-      "popups": "Other native popups",
       "surface-description": "Enable the haze on this native surface",
       "plugin-layer": "Plugin layer:",
       "plugin-panel": "Plugin panel:",
@@ -5432,32 +5257,11 @@
   },
   "time": {
     "duration": {
-      "less-than-day": "less than 1 day",
-      "less-than-minute": "<1m",
-      "three-parts": "{first} {second} {third}",
-      "two-parts": "{first} {second}"
-    },
-    "file": {
-      "unknown": "Unknown"
-    },
-    "relative": {
-      "days-ago": "{count} day ago",
-      "days-ago-plural": "{count} days ago",
-      "hours-ago": "{count} hr ago",
-      "hours-ago-plural": "{count} hr ago",
-      "just-now": "just now",
-      "minutes-ago": "{count} min ago",
-      "minutes-ago-plural": "{count} min ago"
+      "less-than-day": "less than 1 day"
     },
     "units": {
-      "day": "{count} day",
-      "day-plural": "{count} days",
-      "hour": "{count} hour",
       "hour-compact": "{count}h",
-      "hour-plural": "{count} hours",
-      "minute": "{count} minute",
       "minute-compact": "{count}m",
-      "minute-plural": "{count} minutes",
       "month": "{count} month",
       "month-plural": "{count} months",
       "year": "{count} year",
@@ -5469,74 +5273,6 @@
       "empty": "No menu items…",
       "pin": "Pin",
       "unpin": "Unpin"
-    }
-  },
-  "ui": {
-    "controls": {
-      "key-names": {
-        "backspace": "Backspace",
-        "delete": "Delete",
-        "down": "Down",
-        "end": "End",
-        "enter": "Enter",
-        "escape": "Escape",
-        "home": "Home",
-        "insert": "Insert",
-        "left": "Left",
-        "numpad-enter": "Numpad Enter",
-        "page-down": "Page Down",
-        "page-up": "Page Up",
-        "right": "Right",
-        "space": "Space",
-        "tab": "Tab",
-        "up": "Up"
-      },
-      "search-picker": {
-        "empty": "No results",
-        "placeholder": "Search…"
-      },
-      "select": {
-        "placeholder": "Select an option"
-      }
-    },
-    "dialogs": {
-      "color-picker": {
-        "copy": "Copy color code in the current format",
-        "title": "Color"
-      },
-      "file": {
-        "actions": {
-          "open": "Open",
-          "save": "Save",
-          "select-folder": "Select Folder"
-        },
-        "empty-filtered": "No files match the current filter",
-        "entry": {
-          "folder": "Folder",
-          "folder-items": "{count} item",
-          "folder-items-plural": "{count} items"
-        },
-        "filename-placeholder": "Filename",
-        "filter-placeholder": "Filter…",
-        "sort": {
-          "ascending": "↑",
-          "date": "Date",
-          "descending": "↓",
-          "name": "Name",
-          "size": "Size"
-        },
-        "title": {
-          "default": "File Dialog",
-          "open": "Open File",
-          "save": "Save File",
-          "select-folder": "Select Folder"
-        }
-      },
-      "glyph-picker": {
-        "all-categories": "All",
-        "search-placeholder": "Search glyphs…",
-        "title": "Pick a Glyph"
-      }
     }
   },
   "wallpaper": {
