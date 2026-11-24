@@ -4,7 +4,7 @@ Nythera is an experimental fork of [Noctalia](https://github.com/noctalia-dev/no
 
 ## Current packaging status
 
-Stage 2 provides Arch package recipes for NytheraLib and this repository’s Shell and Files build. Stable packages are built from their respective `main` branches and development builds use `dev`. See [BUILDING.md](BUILDING.md) for source builds.
+Separate Arch package recipes exist for [NytheraLib](https://github.com/Nythera-Dev/NytheraLib), Nythera Shell (`packaging/arch/PKGBUILD`), and [Nythera Files](https://github.com/Nythera-Dev/Nythera-Files). Stable packages are built from their respective `main` branches and development builds use `dev`. See [BUILDING.md](BUILDING.md) for source builds.
 
 ## Current technical identity
 

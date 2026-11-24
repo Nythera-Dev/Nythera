@@ -43,9 +43,8 @@ endif
 
 # Auto mode defines tests for unsanitized development builds. `just build` targets
 # only the shell executable, while `just test` builds and runs the test targets.
-build_shell = get_option('shell')
 tests_opt = get_option('tests')
-build_tests = build_shell and (tests_opt.enabled() or (tests_opt.auto() and get_option('buildtype') in ['debug', 'debugoptimized'] and not sanitize))
+build_tests = tests_opt.enabled() or (tests_opt.auto() and get_option('buildtype') in ['debug', 'debugoptimized'] and not sanitize)
 
 # ── Development build optimizations (LLD, split/compressed DWARF) ────────────
 # Keep release builds and packaging untouched (release uses GCC/Clang default
@@ -93,20 +92,18 @@ if get_option('native_optimizations')
 endif
 
 # ── Dependencies ──────────────────────────────────────────────────────────────
-if build_shell
-  sdbus_cpp_dep       = dependency('sdbus-c++')
-  libsecret_dep       = dependency('libsecret-1', version: '>=0.20')
-  libsodium_dep       = dependency('libsodium', version: '>=1.0.18')
-  polkit_agent_dep    = dependency('polkit-agent-1')
-  # PipeWire/SPA headers use GCC extensions. Mark them as system headers.
-  pipewire_dep        = dependency('libpipewire-0.3', include_type: 'system')
-  wireplumber_dep     = dependency('wireplumber-0.5', include_type: 'system')
-  libqalculate_dep    = dependency('libqalculate')
-  libxml2_dep         = dependency('libxml-2.0')
-  libical_dep         = dependency('libical')
-  pam_dep             = cc.find_library('pam')
-  sndfile_dep = dependency('sndfile', required: true)
-endif
+sdbus_cpp_dep       = dependency('sdbus-c++')
+libsecret_dep       = dependency('libsecret-1', version: '>=0.20')
+libsodium_dep       = dependency('libsodium', version: '>=1.0.18')
+polkit_agent_dep    = dependency('polkit-agent-1')
+# PipeWire/SPA headers use GCC extensions. Mark them as system headers.
+pipewire_dep        = dependency('libpipewire-0.3', include_type: 'system')
+wireplumber_dep     = dependency('wireplumber-0.5', include_type: 'system')
+libqalculate_dep    = dependency('libqalculate')
+libxml2_dep         = dependency('libxml-2.0')
+libical_dep         = dependency('libical')
+pam_dep             = cc.find_library('pam')
+sndfile_dep = dependency('sndfile', required: true)
 
 nythera_lib_dep = dependency('nythera-lib', method: 'pkg-config',
   version: ['>=0.1.0', '<0.2.0'], static: false, allow_fallback: false)
@@ -169,7 +166,7 @@ if not gles2_dep.found()
 endif
 
 # Shell also uses stb_image_write for screenshot output.
-if build_shell and not cc.has_header('stb/stb_image_write.h')
+if not cc.has_header('stb/stb_image_write.h')
   error('stb/stb_image_write.h not found')
 endif
 
@@ -182,140 +179,136 @@ libjxl_dep          = dependency('libjxl', required: true)
 libjxl_threads_dep  = dependency('libjxl_threads', required: true)
 
 # Luau remains a Shell dependency and keeps its existing system option.
-if build_shell
-  if get_option('system_libraries')
-    luau_dep = declare_dependency(dependencies: [
-      cpp.find_library('Luau.Compiler', has_headers: ['luacode.h']),
-      cpp.find_library('Luau.Bytecode'),
-      cpp.find_library('Luau.Ast'),
-      cpp.find_library('Luau.VM', has_headers: ['lua.h', 'lualib.h']),
-      cpp.find_library('Luau.Common'),
-    ])
-  else
-    _luau_sources = files(
-      'third_party/luau/Common/src/BytecodeWire.cpp',
-      'third_party/luau/Common/src/StringUtils.cpp',
-      'third_party/luau/Common/src/TimeTrace.cpp',
-      'third_party/luau/Ast/src/Allocator.cpp',
-      'third_party/luau/Ast/src/Ast.cpp',
-      'third_party/luau/Ast/src/Confusables.cpp',
-      'third_party/luau/Ast/src/Cst.cpp',
-      'third_party/luau/Ast/src/Lexer.cpp',
-      'third_party/luau/Ast/src/Location.cpp',
-      'third_party/luau/Ast/src/Parser.cpp',
-      'third_party/luau/Ast/src/PrettyPrinter.cpp',
-      'third_party/luau/Bytecode/src/BytecodeBuilder.cpp',
-      'third_party/luau/Bytecode/src/BytecodeGraph.cpp',
-      'third_party/luau/Compiler/src/BuiltinFolding.cpp',
-      'third_party/luau/Compiler/src/Builtins.cpp',
-      'third_party/luau/Compiler/src/Compiler.cpp',
-      'third_party/luau/Compiler/src/ConstantFolding.cpp',
-      'third_party/luau/Compiler/src/CostModel.cpp',
-      'third_party/luau/Compiler/src/lcode.cpp',
-      'third_party/luau/Compiler/src/TableShape.cpp',
-      'third_party/luau/Compiler/src/Types.cpp',
-      'third_party/luau/Compiler/src/ValueTracking.cpp',
-      'third_party/luau/VM/src/lapi.cpp',
-      'third_party/luau/VM/src/laux.cpp',
-      'third_party/luau/VM/src/lbaselib.cpp',
-      'third_party/luau/VM/src/lbitlib.cpp',
-      'third_party/luau/VM/src/lbuffer.cpp',
-      'third_party/luau/VM/src/lbuflib.cpp',
-      'third_party/luau/VM/src/lbuiltins.cpp',
-      'third_party/luau/VM/src/lcorolib.cpp',
-      'third_party/luau/VM/src/ldblib.cpp',
-      'third_party/luau/VM/src/ldebug.cpp',
-      'third_party/luau/VM/src/ldo.cpp',
-      'third_party/luau/VM/src/lfunc.cpp',
-      'third_party/luau/VM/src/lgc.cpp',
-      'third_party/luau/VM/src/lgcdebug.cpp',
-      'third_party/luau/VM/src/linit.cpp',
-      'third_party/luau/VM/src/lintlib.cpp',
-      'third_party/luau/VM/src/lclass.cpp',
-      'third_party/luau/VM/src/lclasslib.cpp',
-      'third_party/luau/VM/src/lmathlib.cpp',
-      'third_party/luau/VM/src/lmem.cpp',
-      'third_party/luau/VM/src/lnumprint.cpp',
-      'third_party/luau/VM/src/lobject.cpp',
-      'third_party/luau/VM/src/loslib.cpp',
-      'third_party/luau/VM/src/lperf.cpp',
-      'third_party/luau/VM/src/lstate.cpp',
-      'third_party/luau/VM/src/lstring.cpp',
-      'third_party/luau/VM/src/lstrlib.cpp',
-      'third_party/luau/VM/src/ltable.cpp',
-      'third_party/luau/VM/src/ltablib.cpp',
-      'third_party/luau/VM/src/ltm.cpp',
-      'third_party/luau/VM/src/ludata.cpp',
-      'third_party/luau/VM/src/lutf8lib.cpp',
-      'third_party/luau/VM/src/lvector.cpp',
-      'third_party/luau/VM/src/lveclib.cpp',
-      'third_party/luau/VM/src/lvmexecute.cpp',
-      'third_party/luau/VM/src/lvmload.cpp',
-      'third_party/luau/VM/src/lvmutils.cpp',
-    )
-    _luau_inc = include_directories(
-      'third_party/luau/Common/include',
-      'third_party/luau/Ast/include',
-      'third_party/luau/Bytecode/include',
-      'third_party/luau/Compiler/include',
-      'third_party/luau/VM/include',
-      'third_party/luau/VM/src',
-      is_system: true,
-    )
-    _luau_lib = static_library('luau',
-      _luau_sources,
-      include_directories: _luau_inc,
-      cpp_args: ['-w'],
-      override_options: ['warning_level=0'],
-    )
-    luau_dep = declare_dependency(
-      link_whole: _luau_lib,
-      include_directories: _luau_inc,
-    )
-  endif
+if get_option('system_libraries')
+  luau_dep = declare_dependency(dependencies: [
+    cpp.find_library('Luau.Compiler', has_headers: ['luacode.h']),
+    cpp.find_library('Luau.Bytecode'),
+    cpp.find_library('Luau.Ast'),
+    cpp.find_library('Luau.VM', has_headers: ['lua.h', 'lualib.h']),
+    cpp.find_library('Luau.Common'),
+  ])
+else
+  _luau_sources = files(
+    'third_party/luau/Common/src/BytecodeWire.cpp',
+    'third_party/luau/Common/src/StringUtils.cpp',
+    'third_party/luau/Common/src/TimeTrace.cpp',
+    'third_party/luau/Ast/src/Allocator.cpp',
+    'third_party/luau/Ast/src/Ast.cpp',
+    'third_party/luau/Ast/src/Confusables.cpp',
+    'third_party/luau/Ast/src/Cst.cpp',
+    'third_party/luau/Ast/src/Lexer.cpp',
+    'third_party/luau/Ast/src/Location.cpp',
+    'third_party/luau/Ast/src/Parser.cpp',
+    'third_party/luau/Ast/src/PrettyPrinter.cpp',
+    'third_party/luau/Bytecode/src/BytecodeBuilder.cpp',
+    'third_party/luau/Bytecode/src/BytecodeGraph.cpp',
+    'third_party/luau/Compiler/src/BuiltinFolding.cpp',
+    'third_party/luau/Compiler/src/Builtins.cpp',
+    'third_party/luau/Compiler/src/Compiler.cpp',
+    'third_party/luau/Compiler/src/ConstantFolding.cpp',
+    'third_party/luau/Compiler/src/CostModel.cpp',
+    'third_party/luau/Compiler/src/lcode.cpp',
+    'third_party/luau/Compiler/src/TableShape.cpp',
+    'third_party/luau/Compiler/src/Types.cpp',
+    'third_party/luau/Compiler/src/ValueTracking.cpp',
+    'third_party/luau/VM/src/lapi.cpp',
+    'third_party/luau/VM/src/laux.cpp',
+    'third_party/luau/VM/src/lbaselib.cpp',
+    'third_party/luau/VM/src/lbitlib.cpp',
+    'third_party/luau/VM/src/lbuffer.cpp',
+    'third_party/luau/VM/src/lbuflib.cpp',
+    'third_party/luau/VM/src/lbuiltins.cpp',
+    'third_party/luau/VM/src/lcorolib.cpp',
+    'third_party/luau/VM/src/ldblib.cpp',
+    'third_party/luau/VM/src/ldebug.cpp',
+    'third_party/luau/VM/src/ldo.cpp',
+    'third_party/luau/VM/src/lfunc.cpp',
+    'third_party/luau/VM/src/lgc.cpp',
+    'third_party/luau/VM/src/lgcdebug.cpp',
+    'third_party/luau/VM/src/linit.cpp',
+    'third_party/luau/VM/src/lintlib.cpp',
+    'third_party/luau/VM/src/lclass.cpp',
+    'third_party/luau/VM/src/lclasslib.cpp',
+    'third_party/luau/VM/src/lmathlib.cpp',
+    'third_party/luau/VM/src/lmem.cpp',
+    'third_party/luau/VM/src/lnumprint.cpp',
+    'third_party/luau/VM/src/lobject.cpp',
+    'third_party/luau/VM/src/loslib.cpp',
+    'third_party/luau/VM/src/lperf.cpp',
+    'third_party/luau/VM/src/lstate.cpp',
+    'third_party/luau/VM/src/lstring.cpp',
+    'third_party/luau/VM/src/lstrlib.cpp',
+    'third_party/luau/VM/src/ltable.cpp',
+    'third_party/luau/VM/src/ltablib.cpp',
+    'third_party/luau/VM/src/ltm.cpp',
+    'third_party/luau/VM/src/ludata.cpp',
+    'third_party/luau/VM/src/lutf8lib.cpp',
+    'third_party/luau/VM/src/lvector.cpp',
+    'third_party/luau/VM/src/lveclib.cpp',
+    'third_party/luau/VM/src/lvmexecute.cpp',
+    'third_party/luau/VM/src/lvmload.cpp',
+    'third_party/luau/VM/src/lvmutils.cpp',
+  )
+  _luau_inc = include_directories(
+    'third_party/luau/Common/include',
+    'third_party/luau/Ast/include',
+    'third_party/luau/Bytecode/include',
+    'third_party/luau/Compiler/include',
+    'third_party/luau/VM/include',
+    'third_party/luau/VM/src',
+    is_system: true,
+  )
+  _luau_lib = static_library('luau',
+    _luau_sources,
+    include_directories: _luau_inc,
+    cpp_args: ['-w'],
+    override_options: ['warning_level=0'],
+  )
+  luau_dep = declare_dependency(
+    link_whole: _luau_lib,
+    include_directories: _luau_inc,
+  )
 endif
 
 wayland_scanner = find_program('wayland-scanner')
 wayland_protos_dir = wayland_protos_dep.get_variable('pkgdatadir')
 _shell_protocol_headers = []
 _shell_protocol_sources = []
-if build_shell
-  foreach protocol : [
-    ['ext-workspace-v1', wayland_protos_dir / 'staging/ext-workspace/ext-workspace-v1.xml'],
-    ['ext-foreign-toplevel-list-v1', wayland_protos_dir / 'staging/ext-foreign-toplevel-list/ext-foreign-toplevel-list-v1.xml'],
-    ['ext-data-control-v1', wayland_protos_dir / 'staging/ext-data-control/ext-data-control-v1.xml'],
-    ['ext-session-lock-v1', wayland_protos_dir / 'staging/ext-session-lock/ext-session-lock-v1.xml'],
-    ['ext-idle-notify-v1', wayland_protos_dir / 'staging/ext-idle-notify/ext-idle-notify-v1.xml'],
-    ['ext-image-capture-source-v1', wayland_protos_dir / 'staging/ext-image-capture-source/ext-image-capture-source-v1.xml'],
-    ['ext-image-copy-capture-v1', wayland_protos_dir / 'staging/ext-image-copy-capture/ext-image-copy-capture-v1.xml'],
-    ['idle-inhibit-unstable-v1', wayland_protos_dir / 'unstable/idle-inhibit/idle-inhibit-unstable-v1.xml'],
-    ['virtual-keyboard-unstable-v1', 'protocols/virtual-keyboard-unstable-v1.xml'],
-    ['dwl-ipc-unstable-v2', 'protocols/dwl-ipc-unstable-v2.xml'],
-    ['org-kde-plasma-virtual-desktop', 'protocols/org-kde-plasma-virtual-desktop.xml'],
-    ['wlr-foreign-toplevel-management-unstable-v1', 'protocols/wlr-foreign-toplevel-management-unstable-v1.xml'],
-    ['wlr-data-control-unstable-v1', 'protocols/wlr-data-control-unstable-v1.xml'],
-    ['hyprland-focus-grab-v1', 'protocols/hyprland-focus-grab-v1.xml'],
-    ['hyprland-toplevel-mapping-v1', 'protocols/hyprland-toplevel-mapping-v1.xml'],
-    ['wlr-gamma-control-unstable-v1', 'protocols/wlr-gamma-control-unstable-v1.xml'],
-    ['wlr-screencopy-unstable-v1', 'protocols/wlr-screencopy-unstable-v1.xml'],
-    ['wlr-output-management-unstable-v1', 'protocols/wlr-output-management-unstable-v1.xml'],
-  ]
-    name = protocol[0]
-    xml = protocol[1]
-    header = custom_target(name + '-client-header',
-      input: xml,
-      output: name + '-client-protocol.h',
-      command: [wayland_scanner, 'client-header', '@INPUT@', '@OUTPUT@'],
-    )
-    _shell_protocol_headers += header
-    _shell_protocol_sources += custom_target(name + '-client-source',
-      input: xml,
-      output: name + '-client-protocol.c',
-      command: [wayland_scanner, 'private-code', '@INPUT@', '@OUTPUT@'],
-      depends: header,
-    )
-  endforeach
-endif
+foreach protocol : [
+  ['ext-workspace-v1', wayland_protos_dir / 'staging/ext-workspace/ext-workspace-v1.xml'],
+  ['ext-foreign-toplevel-list-v1', wayland_protos_dir / 'staging/ext-foreign-toplevel-list/ext-foreign-toplevel-list-v1.xml'],
+  ['ext-data-control-v1', wayland_protos_dir / 'staging/ext-data-control/ext-data-control-v1.xml'],
+  ['ext-session-lock-v1', wayland_protos_dir / 'staging/ext-session-lock/ext-session-lock-v1.xml'],
+  ['ext-idle-notify-v1', wayland_protos_dir / 'staging/ext-idle-notify/ext-idle-notify-v1.xml'],
+  ['ext-image-capture-source-v1', wayland_protos_dir / 'staging/ext-image-capture-source/ext-image-capture-source-v1.xml'],
+  ['ext-image-copy-capture-v1', wayland_protos_dir / 'staging/ext-image-copy-capture/ext-image-copy-capture-v1.xml'],
+  ['idle-inhibit-unstable-v1', wayland_protos_dir / 'unstable/idle-inhibit/idle-inhibit-unstable-v1.xml'],
+  ['virtual-keyboard-unstable-v1', 'protocols/virtual-keyboard-unstable-v1.xml'],
+  ['dwl-ipc-unstable-v2', 'protocols/dwl-ipc-unstable-v2.xml'],
+  ['org-kde-plasma-virtual-desktop', 'protocols/org-kde-plasma-virtual-desktop.xml'],
+  ['wlr-foreign-toplevel-management-unstable-v1', 'protocols/wlr-foreign-toplevel-management-unstable-v1.xml'],
+  ['wlr-data-control-unstable-v1', 'protocols/wlr-data-control-unstable-v1.xml'],
+  ['hyprland-focus-grab-v1', 'protocols/hyprland-focus-grab-v1.xml'],
+  ['hyprland-toplevel-mapping-v1', 'protocols/hyprland-toplevel-mapping-v1.xml'],
+  ['wlr-gamma-control-unstable-v1', 'protocols/wlr-gamma-control-unstable-v1.xml'],
+  ['wlr-screencopy-unstable-v1', 'protocols/wlr-screencopy-unstable-v1.xml'],
+  ['wlr-output-management-unstable-v1', 'protocols/wlr-output-management-unstable-v1.xml'],
+]
+  name = protocol[0]
+  xml = protocol[1]
+  header = custom_target(name + '-client-header',
+    input: xml,
+    output: name + '-client-protocol.h',
+    command: [wayland_scanner, 'client-header', '@INPUT@', '@OUTPUT@'],
+  )
+  _shell_protocol_headers += header
+  _shell_protocol_sources += custom_target(name + '-client-source',
+    input: xml,
+    output: name + '-client-protocol.c',
+    command: [wayland_scanner, 'private-code', '@INPUT@', '@OUTPUT@'],
+    depends: header,
+  )
+endforeach
 
 _nythera_shell_sources = files(
   'src/ui/controls/pixel_stream_view.cpp',
@@ -766,36 +759,6 @@ _nythera_shell_sources = files(
   'src/ipc/cli.cpp',
 )
 
-_nythera_files_sources = files(
-  'src/filemanager/file_manager.cpp',
-  'src/filemanager/file_manager_settings.cpp',
-  'src/filemanager/file_list_header.cpp',
-  'src/filemanager/directory_session.cpp',
-  'src/filemanager/browser_tab.cpp',
-  'src/filemanager/tab_manager.cpp',
-  'src/filemanager/tab_bar_controller.cpp',
-  'src/filemanager/file_menu_controller.cpp',
-  'src/filemanager/file_transfer_controller.cpp',
-  'src/filemanager/places_sidebar.cpp',
-  'src/filemanager/dialogs/progress_window.cpp',
-  'src/filemanager/dialogs/modal_dialog_host.cpp',
-  'src/filemanager/dialogs/checksum_dialog.cpp',
-  'src/filemanager/dialogs/help_dialog.cpp',
-  'src/filemanager/file_transfer_payload.cpp',
-  'src/filemanager/properties_window.cpp',
-  'src/filemanager/polkit_helper_launch.cpp',
-  'src/filemanager/admin_protocol.cpp',
-  'src/filemanager/admin_helper_session.cpp',
-  'src/filemanager/admin_session_client.cpp',
-  'src/filemanager/property_operation_client.cpp',
-  'src/filemanager/places_model.cpp',
-  'src/filemanager/mount_backends.cpp',
-  'src/filemanager/wastebin_fallback.cpp',
-  'src/filemanager/dialogs/trash_fallback_dialog.cpp',
-  'src/filemanager/file_operation_manager.cpp',
-  'src/filemanager/gio_poll_source.cpp',
-)
-
 git_program = find_program('git', required: false)
 if git_program.found()
   _git_revision_h = vcs_tag(
@@ -862,27 +825,23 @@ _nythera_system_dependencies = [
   libjxl_threads_dep,
 ] + jemalloc_deps + (dl_dep.found() ? [dl_dep] : [])
 
-if build_shell
-  _nythera_shell_only_dependencies = [
-    libsecret_dep,
-    libsodium_dep,
-    sndfile_dep,
-    libxml2_dep,
-    sdbus_cpp_dep,
-    polkit_agent_dep,
-    pipewire_dep,
-    wireplumber_dep,
-    libqalculate_dep,
-    pam_dep,
-    libical_dep,
-  ]
+_nythera_shell_only_dependencies = [
+  libsecret_dep,
+  libsodium_dep,
+  sndfile_dep,
+  libxml2_dep,
+  sdbus_cpp_dep,
+  polkit_agent_dep,
+  pipewire_dep,
+  wireplumber_dep,
+  libqalculate_dep,
+  pam_dep,
+  libical_dep,
+]
 
-  _nythera_shell_dependencies = _nythera_system_dependencies + _nythera_shell_only_dependencies + [luau_dep, polkit_gobject_dep]
+_nythera_shell_dependencies = _nythera_system_dependencies + _nythera_shell_only_dependencies + [luau_dep, polkit_gobject_dep]
 
-  _nythera_test_dependencies = _nythera_system_dependencies + _nythera_shell_only_dependencies + [polkit_gobject_dep]
-endif
-
-_nythera_files_dependencies = _nythera_system_dependencies + [polkit_gobject_dep]
+_nythera_test_dependencies = _nythera_system_dependencies + _nythera_shell_only_dependencies + [polkit_gobject_dep]
 
 _nythera_compile_definitions = [
   '-DNYTHERA_INSTALL_PREFIX="' + get_option('prefix') + '"',
@@ -894,25 +853,6 @@ _nythera_cpp_args = [
   '-Wall', '-Wextra', '-Wno-missing-field-initializers', '-Wpedantic', '-Wconversion', '-Wshadow',
 ] + _nythera_compile_definitions
 
-# Local filesystem execution can be linked without the shell library.
-file_operation_engine_deps = [gio_dep, dependency('threads')]
-file_operation_engine_lib = static_library('nythera_file_operation_engine',
-  sources: files(
-    'src/filemanager/file_operation_engine.cpp',
-    'src/filemanager/checksum.cpp',
-    'src/filemanager/folder_size.cpp',
-    'src/filemanager/fs_compat.cpp',
-    'src/filemanager/property_operations.cpp',
-  ),
-  dependencies: file_operation_engine_deps,
-  include_directories: include_directories('src'),
-  cpp_args: _nythera_cpp_args,
-)
-file_operation_engine_dep = declare_dependency(
-  link_with: file_operation_engine_lib,
-  dependencies: file_operation_engine_deps,
-)
-
 # Build metadata belongs to the application rather than the installed library.
 app_build_info = static_library('nythera_app_build_info',
   sources: files('src/core/build_info.cpp') + [_git_revision_h],
@@ -920,148 +860,73 @@ app_build_info = static_library('nythera_app_build_info',
   cpp_args: _nythera_cpp_args,
 )
 
-if build_shell
-  nythera_shell_protocols_lib = static_library('nythera_shell_wayland_protocols',
-    sources: _shell_protocol_sources + _shell_protocol_headers,
-    dependencies: [wayland_client_dep],
-    include_directories: _nythera_inc,
-  )
+nythera_shell_protocols_lib = static_library('nythera_shell_wayland_protocols',
+  sources: _shell_protocol_sources + _shell_protocol_headers,
+  dependencies: [wayland_client_dep],
+  include_directories: _nythera_inc,
+)
 
-  nythera_shell_lib = static_library('nythera_shell',
-    sources: _nythera_shell_sources + _shell_protocol_headers,
-    link_with: nythera_shell_protocols_lib,
-    dependencies: _nythera_shell_dependencies,
-    include_directories: _nythera_inc,
-    cpp_args: _nythera_cpp_args,
-  )
-endif
-
-nythera_files_lib = static_library('nythera_files',
-  sources: _nythera_files_sources,
-  dependencies: _nythera_files_dependencies + [file_operation_engine_dep],
+nythera_shell_lib = static_library('nythera_shell',
+  sources: _nythera_shell_sources + _shell_protocol_headers,
+  link_with: nythera_shell_protocols_lib,
+  dependencies: _nythera_shell_dependencies,
   include_directories: _nythera_inc,
   cpp_args: _nythera_cpp_args,
 )
 
-if build_shell
-  nythera_core_dep = declare_dependency(
-    link_with: [app_build_info, nythera_shell_lib, nythera_files_lib],
-    dependencies: _nythera_test_dependencies + [file_operation_engine_dep],
-    include_directories: _nythera_inc,
-    compile_args: _nythera_compile_definitions,
-    sources: _shell_protocol_headers,
-  )
-endif
-
-nythera_files_test_dep = declare_dependency(
-  link_with: [app_build_info, nythera_files_lib],
-  dependencies: _nythera_files_dependencies + [file_operation_engine_dep],
+nythera_core_dep = declare_dependency(
+  link_with: [app_build_info, nythera_shell_lib],
+  dependencies: _nythera_test_dependencies,
   include_directories: _nythera_inc,
   compile_args: _nythera_compile_definitions,
+  sources: _shell_protocol_headers,
 )
 
-property_helper_path = get_option('prefix') / get_option('libexecdir') / 'nythera-properties-helper'
-property_policy_dir = polkit_gobject_dep.get_variable(pkgconfig: 'policydir')
-property_policy_path = property_policy_dir / 'dev.nythera.Files.modify-properties.policy'
-property_paths = configuration_data()
-property_paths.set_quoted('NYTHERA_PROPERTIES_HELPER_PATH', property_helper_path)
-property_paths.set_quoted('NYTHERA_PROPERTIES_POLICY_PATH', property_policy_path)
-configure_file(output: 'property_helper_paths.h', configuration: property_paths)
-property_policy = configuration_data()
-property_policy.set('HELPER_PATH', property_helper_path)
-configure_file(input: 'data/polkit/dev.nythera.Files.modify-properties.policy.in',
-  output: 'dev.nythera.Files.modify-properties.policy', configuration: property_policy,
-  install_dir: property_policy_dir, install_tag: 'properties-helper')
-executable('nythera-properties-helper',
-  sources: files('src/filemanager/property_helper_main.cpp', 'src/filemanager/property_operations.cpp'),
-  dependencies: gio_dep, include_directories: include_directories('src'),
-  install: true, install_dir: get_option('libexecdir'), install_tag: 'properties-helper')
-
-admin_helper_path = get_option('prefix') / get_option('libexecdir') / 'nythera-admin-helper'
-admin_policy_path = property_policy_dir / 'dev.nythera.Files.admin-session.policy'
-admin_paths = configuration_data()
-admin_paths.set_quoted('NYTHERA_ADMIN_HELPER_PATH', admin_helper_path)
-admin_paths.set_quoted('NYTHERA_ADMIN_POLICY_PATH', admin_policy_path)
-configure_file(output: 'admin_helper_paths.h', configuration: admin_paths)
-admin_policy = configuration_data()
-admin_policy.set('HELPER_PATH', admin_helper_path)
-configure_file(input: 'data/polkit/dev.nythera.Files.admin-session.policy.in',
-  output: 'dev.nythera.Files.admin-session.policy', configuration: admin_policy,
-  install_dir: property_policy_dir, install_tag: 'admin-helper')
-executable('nythera-admin-helper',
-  sources: files(
-    'src/filemanager/admin_helper_main.cpp',
-    'src/filemanager/admin_helper_session.cpp',
-    'src/filemanager/admin_protocol.cpp',
-  ),
-  dependencies: file_operation_engine_dep, include_directories: include_directories('src'),
-  cpp_args: _nythera_cpp_args,
-  install: true, install_dir: get_option('libexecdir'), install_tag: 'admin-helper')
-
-if build_shell
-  nythera_exe = executable('nythera',
-    sources: files('src/main.cpp'),
-    dependencies: _nythera_shell_dependencies,
-    include_directories: _nythera_inc,
-    cpp_args: _nythera_cpp_args,
-    link_with: [app_build_info, nythera_shell_lib],
-    install: true,
-  )
-endif
-
-files_assets = []
-files_asset_copy = import('fs')
-subdir('files-assets')
-
-executable('nythera-file-manager',
-  sources: files('src/filemanager/main.cpp'),
-  dependencies: _nythera_files_dependencies + [file_operation_engine_dep],
+nythera_exe = executable('nythera',
+  sources: files('src/main.cpp'),
+  dependencies: _nythera_shell_dependencies,
   include_directories: _nythera_inc,
   cpp_args: _nythera_cpp_args,
-  link_with: [app_build_info, nythera_files_lib],
-  link_depends: files_assets,
+  link_with: [app_build_info, nythera_shell_lib],
   install: true,
-  install_tag: 'files',
 )
 
-if build_shell
-  install_subdir('assets',
-    install_dir: get_option('datadir') / 'nythera',
-    exclude_files: ['dev.nythera.Nythera.desktop', 'dev.nythera.Nythera.Annotator.desktop'],
-  )
+install_subdir('assets',
+  install_dir: get_option('datadir') / 'nythera',
+  exclude_files: ['dev.nythera.Nythera.desktop', 'dev.nythera.Nythera.Annotator.desktop'],
+)
 
-  install_data(
-    'assets/dev.nythera.Nythera.desktop',
-    'assets/dev.nythera.Nythera.Annotator.desktop',
-    install_dir: get_option('datadir') / 'applications',
-  )
+install_data(
+  'assets/dev.nythera.Nythera.desktop',
+  'assets/dev.nythera.Nythera.Annotator.desktop',
+  install_dir: get_option('datadir') / 'applications',
+)
 
-  install_data(
-    'assets/nythera-logo.svg',
-    install_dir: get_option('datadir') / 'icons' / 'hicolor' / 'scalable' / 'apps',
-    rename: 'nythera.svg',
-  )
+install_data(
+  'assets/nythera-logo.svg',
+  install_dir: get_option('datadir') / 'icons' / 'hicolor' / 'scalable' / 'apps',
+  rename: 'nythera.svg',
+)
 
-  # Completions are generated by the same CLI schema used at runtime.
-  if meson.can_run_host_binaries()
-    foreach completion : [
-      ['bash', 'nythera.bash', 'bash-completion/completions'],
-      ['fish', 'nythera.fish', 'fish/vendor_completions.d'],
-      ['zsh', '_nythera', 'zsh/site-functions'],
-    ]
-      shell_name = completion[0]
-      completion_file = completion[1]
-      completion_dir = completion[2]
-      custom_target('nythera-completions-' + shell_name,
-        output: completion_file,
-        command: [nythera_exe, 'completions', shell_name],
-        capture: true,
-        build_by_default: true,
-        install: true,
-        install_dir: get_option('datadir') / completion_dir,
-      )
-    endforeach
-  endif
+# Completions are generated by the same CLI schema used at runtime.
+if meson.can_run_host_binaries()
+  foreach completion : [
+    ['bash', 'nythera.bash', 'bash-completion/completions'],
+    ['fish', 'nythera.fish', 'fish/vendor_completions.d'],
+    ['zsh', '_nythera', 'zsh/site-functions'],
+  ]
+    shell_name = completion[0]
+    completion_file = completion[1]
+    completion_dir = completion[2]
+    custom_target('nythera-completions-' + shell_name,
+      output: completion_file,
+      command: [nythera_exe, 'completions', shell_name],
+      capture: true,
+      build_by_default: true,
+      install: true,
+      install_dir: get_option('datadir') / completion_dir,
+    )
+  endforeach
 endif
 
 if build_tests
@@ -1181,8 +1046,6 @@ if build_tests
     'input_password_mode',
     'input_readline_shortcuts',
     'input_read_only',
-    'file_inline_rename',
-    'file_manager_keyboard_audit',
     'search_picker_selection',
     'ipc_service',
     'iwd_diagnostics',
@@ -1473,186 +1336,12 @@ if build_tests
     )
   endif
 
-  file_sort_test_exe = executable('file_sort_test',
-    sources: files('tests/file_sort_test.cpp'), dependencies: gio_dep,
-    include_directories: include_directories('src'), override_options: ['b_ndebug=false'])
-  test('file_sort', file_sort_test_exe, timeout: 10)
-
-  checksum_test_exe = executable('checksum_test',
-    sources: files('tests/checksum_test.cpp', 'src/filemanager/checksum.cpp'),
-    dependencies: gio_dep, include_directories: include_directories('src'),
-    override_options: ['b_ndebug=false'])
-  test('checksum', checksum_test_exe, timeout: 15)
-
-  directory_metadata_test_exe = executable('directory_metadata_test',
-    sources: files('tests/directory_metadata_test.cpp'), dependencies: gio_dep,
-    include_directories: include_directories('src'), override_options: ['b_ndebug=false'])
-  test('directory_metadata', directory_metadata_test_exe, timeout: 10)
-
-  folder_size_test_exe = executable('folder_size_test',
-    sources: files('tests/folder_size_test.cpp', 'src/filemanager/folder_size.cpp', 'src/filemanager/property_operations.cpp'),
-    dependencies: gio_dep, include_directories: include_directories('src'),
-    override_options: ['b_ndebug=false'])
-  test('folder_size', folder_size_test_exe, timeout: 15)
-
-  property_metadata_test_exe = executable('property_metadata_test',
-    sources: files('tests/property_metadata_test.cpp'), dependencies: gio_dep,
-    include_directories: include_directories('src'), override_options: ['b_ndebug=false'])
-  test('property_metadata', property_metadata_test_exe, timeout: 10)
-
-  property_operations_test_exe = executable('property_operations_test',
-    sources: files('tests/property_operations_test.cpp', 'src/filemanager/property_operations.cpp',
-      'src/filemanager/property_operation_client.cpp', 'src/filemanager/polkit_helper_launch.cpp'),
-    dependencies: [gio_dep, dependency('gio-unix-2.0'), polkit_gobject_dep], include_directories: [include_directories('src'), include_directories('.')],
-    override_options: ['b_ndebug=false'],
-  )
-  test('property_operations', property_operations_test_exe, timeout: 15)
-
-  property_permissions_test_exe = executable('property_permissions_test',
-    sources: files('tests/property_permissions_test.cpp'),
-    dependencies: gio_dep,
-    include_directories: include_directories('src'),
-    override_options: ['b_ndebug=false'],
-  )
-  test('property_permissions', property_permissions_test_exe, timeout: 10)
-
-  file_interaction_test_exe = executable('file_interaction_test',
-    sources: files('tests/file_interaction_test.cpp'),
-    dependencies: nythera_files_test_dep,
-    override_options: ['b_ndebug=false'],
-  )
-  test('file_interaction', file_interaction_test_exe, timeout: 10)
-
-  file_manager_sort_test_exe = executable('file_manager_sort_test',
-    sources: files('tests/file_manager_sort_test.cpp'), dependencies: nythera_files_test_dep,
-    override_options: ['b_ndebug=false'])
-  test('file_manager_sort', file_manager_sort_test_exe, timeout: 15)
-
-  property_scan_presentation_test_exe = executable('property_scan_presentation_test',
-    sources: files('tests/property_scan_presentation_test.cpp'),
-    dependencies: gio_dep, include_directories: include_directories('src'), override_options: ['b_ndebug=false'])
-  test('property_scan_presentation', property_scan_presentation_test_exe, timeout: 10)
-
-  file_columns_test_exe = executable('file_columns_test',
-    sources: files('tests/file_columns_test.cpp'),
-    include_directories: include_directories('src'), override_options: ['b_ndebug=false'])
-  test('file_columns', file_columns_test_exe, timeout: 10)
-
-  file_artwork_test_exe = executable('file_artwork_test',
-    sources: files('tests/file_artwork_test.cpp'),
-    dependencies: nythera_files_test_dep,
-    override_options: ['b_ndebug=false'],
-  )
-  test('file_artwork', file_artwork_test_exe, timeout: 10)
-
   tooltip_manager_test_exe = executable('tooltip_manager_test',
     sources: files('tests/tooltip_manager_test.cpp'),
     dependencies: nythera_core_dep,
     override_options: ['b_ndebug=false'],
   )
   test('tooltip_manager', tooltip_manager_test_exe, timeout: 10)
-
-  places_model_test_exe = executable('places_model_test',
-    sources: files('tests/places_model_test.cpp'),
-    dependencies: nythera_files_test_dep,
-    override_options: ['b_ndebug=false'],
-  )
-  test('places_model', places_model_test_exe, timeout: 30)
-
-  mount_backends_test_exe = executable('mount_backends_test',
-    sources: files('tests/mount_backends_test.cpp'),
-    dependencies: nythera_files_test_dep,
-    override_options: ['b_ndebug=false'],
-  )
-  test('mount_backends', mount_backends_test_exe, timeout: 30)
-
-  file_operation_manager_test_exe = executable('file_operation_manager_test',
-    sources: files('tests/file_operation_manager_test.cpp'),
-    dependencies: nythera_files_test_dep,
-    override_options: ['b_ndebug=false'],
-  )
-  if dbus_run_session.found()
-    test('file_operation_manager', find_program('sh'),
-      args: [
-        '-c',
-        'rt=$(mktemp -d); chmod 700 "$rt"; trap "rm -rf \\"$rt\\"" EXIT; XDG_RUNTIME_DIR="$rt" "$1" -- "$2"',
-        'sh', dbus_run_session.full_path(), file_operation_manager_test_exe.full_path(),
-      ],
-      depends: file_operation_manager_test_exe,
-      timeout: 60,
-    )
-  else
-    test('file_operation_manager', file_operation_manager_test_exe,
-      env: {
-        'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/nonexistent/nythera-disabled-dbus',
-        'GIO_USE_VFS': 'local',
-        'GVFS_DISABLE_FUSE': '1',
-        'NYTHERA_TEST_FORBID_PRODUCTION_WASTEBIN': '1',
-      },
-      timeout: 60,
-    )
-  endif
-
-  file_transfer_pause_test_exe = executable('file_transfer_pause_test',
-    sources: files('tests/file_transfer_pause_test.cpp'),
-    dependencies: nythera_files_test_dep,
-    override_options: ['b_ndebug=false'],
-  )
-  if dbus_run_session.found()
-    test('file_transfer_pause', dbus_run_session,
-      args: ['--', file_transfer_pause_test_exe.full_path()],
-      depends: file_transfer_pause_test_exe,
-      timeout: 30,
-    )
-  else
-    test('file_transfer_pause', file_transfer_pause_test_exe,
-      env: {
-        'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/nonexistent/nythera-disabled-dbus',
-        'GIO_USE_VFS': 'local',
-        'GVFS_DISABLE_FUSE': '1',
-        'NYTHERA_TEST_FORBID_PRODUCTION_WASTEBIN': '1',
-      },
-      timeout: 30,
-    )
-  endif
-
-  file_wastebin_operation_test_exe = executable('file_wastebin_operation_test',
-    sources: files('tests/file_wastebin_operation_test.cpp'),
-    dependencies: nythera_files_test_dep,
-    override_options: ['b_ndebug=false'],
-  )
-  if dbus_run_session.found()
-    test('file_wastebin_operation', dbus_run_session,
-      args: ['--', file_wastebin_operation_test_exe.full_path()],
-      depends: file_wastebin_operation_test_exe,
-      timeout: 30,
-    )
-  else
-    test('file_wastebin_operation', file_wastebin_operation_test_exe,
-      env: {
-        'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/nonexistent/nythera-disabled-dbus',
-        'GIO_USE_VFS': 'local',
-        'GVFS_DISABLE_FUSE': '1',
-        'NYTHERA_TEST_FORBID_PRODUCTION_WASTEBIN': '1',
-      },
-      timeout: 30,
-    )
-  endif
-
-  file_manager_wastebin_test_exe = executable('file_manager_wastebin_test',
-    sources: files('tests/file_manager_wastebin_test.cpp'),
-    dependencies: nythera_files_test_dep,
-    override_options: ['b_ndebug=false'],
-  )
-  test('file_manager_wastebin', file_manager_wastebin_test_exe, timeout: 15)
-
-  file_transfer_payload_test_exe = executable('file_transfer_payload_test',
-    sources: files('tests/file_transfer_payload_test.cpp', 'src/filemanager/file_transfer_payload.cpp'),
-    dependencies: gio_dep,
-    include_directories: include_directories('src'),
-    override_options: ['b_ndebug=false'],
-  )
-  test('file_transfer_payload', file_transfer_payload_test_exe, timeout: 10)
 
   native_data_transfer_test_exe = executable('native_data_transfer_test',
     sources: files('tests/native_data_transfer_test.cpp'),
@@ -1673,97 +1362,6 @@ if build_tests
     )
     test('native_data_transfer_wlroots', native_data_transfer_wlroots_test_exe, timeout: 15)
   endif
-
-  transfer_rates_test_exe = executable('transfer_rates_test',
-    sources: files('tests/transfer_rates_test.cpp'),
-    include_directories: include_directories('src'),
-    override_options: ['b_ndebug=false'],
-  )
-  test('transfer_rates', transfer_rates_test_exe, timeout: 10)
-
-  file_manager_startup_test_exe = executable('file_manager_startup_test',
-    sources: files('tests/file_manager_startup_test.cpp'),
-    dependencies: gio_dep, include_directories: include_directories('src'),
-    override_options: ['b_ndebug=false'],
-  )
-  test('file_manager_startup', file_manager_startup_test_exe, timeout: 10)
-
-  file_manager_paste_selection_test_exe = executable('file_manager_paste_selection_test',
-    sources: files('tests/file_manager_paste_selection_test.cpp'),
-    dependencies: nythera_files_test_dep,
-    override_options: ['b_ndebug=false'],
-  )
-  test('file_manager_paste_selection', file_manager_paste_selection_test_exe, timeout: 15)
-
-  file_manager_async_fs_test_exe = executable('file_manager_async_fs_test',
-    sources: files('tests/file_manager_async_fs_test.cpp'),
-    dependencies: nythera_files_test_dep,
-    override_options: ['b_ndebug=false'],
-  )
-  test('file_manager_async_fs', file_manager_async_fs_test_exe, timeout: 15)
-
-  file_manager_conflict_dialog_test_exe = executable('file_manager_conflict_dialog_test',
-    sources: files('tests/file_manager_conflict_dialog_test.cpp'),
-    dependencies: nythera_files_test_dep,
-    override_options: ['b_ndebug=false'],
-  )
-  test('file_manager_conflict_dialog', file_manager_conflict_dialog_test_exe, timeout: 15)
-
-  file_manager_help_menu_test_exe = executable('file_manager_help_menu_test',
-    sources: files('tests/file_manager_help_menu_test.cpp'),
-    dependencies: nythera_files_test_dep,
-    override_options: ['b_ndebug=false'],
-  )
-  test('file_manager_help_menu', file_manager_help_menu_test_exe, timeout: 15)
-
-  file_manager_tabs_test_exe = executable('file_manager_tabs_test',
-    sources: files('tests/file_manager_tabs_test.cpp'),
-    dependencies: nythera_files_test_dep,
-    override_options: ['b_ndebug=false'],
-  )
-  test('file_manager_tabs', file_manager_tabs_test_exe, timeout: 20)
-
-  admin_session_stage1_test_exe = executable('admin_session_stage1_test',
-    sources: files('tests/admin_session_stage1_test.cpp'),
-    dependencies: nythera_files_test_dep,
-    override_options: ['b_ndebug=false'],
-  )
-  test('admin_session_stage1', admin_session_stage1_test_exe, timeout: 20)
-
-  admin_mode_stage2_test_exe = executable('admin_mode_stage2_test',
-    sources: files('tests/admin_mode_stage2_test.cpp'),
-    dependencies: nythera_files_test_dep,
-    override_options: ['b_ndebug=false'],
-  )
-  test('admin_mode_stage2', admin_mode_stage2_test_exe, timeout: 25)
-
-  admin_mode_stage3_test_exe = executable('admin_mode_stage3_test',
-    sources: files('tests/admin_mode_stage3_test.cpp'),
-    dependencies: nythera_files_test_dep,
-    override_options: ['b_ndebug=false'],
-  )
-  test('admin_mode_stage3', admin_mode_stage3_test_exe, timeout: 25)
-
-  permanent_delete_prompt_test_exe = executable('permanent_delete_prompt_test',
-    sources: files('tests/permanent_delete_prompt_test.cpp'),
-    include_directories: include_directories('src'),
-    override_options: ['b_ndebug=false'],
-  )
-  test('permanent_delete_prompt', permanent_delete_prompt_test_exe, timeout: 10)
-
-  gio_poll_source_test_exe = executable('gio_poll_source_test',
-    sources: files('tests/gio_poll_source_test.cpp'),
-    dependencies: nythera_files_test_dep,
-    override_options: ['b_ndebug=false'],
-  )
-  test('gio_poll_source', gio_poll_source_test_exe, timeout: 10)
-
-  test_isolation_test_exe = executable('test_isolation_test',
-    sources: files('tests/test_isolation_test.cpp'),
-    dependencies: nythera_core_dep,
-    override_options: ['b_ndebug=false'],
-  )
-  test('test_isolation', test_isolation_test_exe, timeout: 20)
 
   executable('job_progress_demo',
     sources: files('tools/job_progress_demo.cpp'),

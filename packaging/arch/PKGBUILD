@@ -2,7 +2,7 @@
 pkgname=nythera
 pkgver=$(cat ../../VERSION)
 pkgrel=1
-pkgdesc='Nythera Wayland Shell and Files'
+pkgdesc='Nythera Wayland Shell'
 arch=(x86_64 aarch64)
 url='https://github.com/Nythera-Dev/Nythera'
 license=(MIT)

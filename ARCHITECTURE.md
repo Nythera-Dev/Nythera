@@ -4,9 +4,7 @@ This file describes the architecture inherited from Noctalia and the technical i
 
 ## Build Targets
 
-[NytheraLib](https://github.com/Nythera-Dev/NytheraLib) provides shared infrastructure, including rendering, UI controls, configuration reads, and common Wayland protocols. Shell and Files resolve the installed shared library through the `nythera-lib` pkg-config module. Shell keeps its application archive, plugin UI, and extra Wayland bindings. Files stays in this repository with its application archive, operation engine, helpers, and assets.
-
-Configure Meson with `-Dshell=false` to build and install Files without Shell. The combined test suite uses the default configuration.
+[NytheraLib](https://github.com/Nythera-Dev/NytheraLib) provides shared infrastructure, including rendering, UI controls, configuration reads, and common Wayland protocols. Nythera Shell and [Nythera Files](https://github.com/Nythera-Dev/Nythera-Files) live in separate repositories and both resolve the installed shared library through the `nythera-lib` pkg-config module. This repository owns Shell's application archive, plugin UI, compositor backends, and extra Wayland bindings.
 
 ## Event Loop
 
@@ -60,13 +58,7 @@ Inside a hook, call the parent hook (for example `Flex::doLayout()`), not the pu
 
 ## Filesystem Operations
 
-Nythera Files runs local copy, duplicate, move, rename, create and permanent delete through `file_operation_engine`. The engine runs synchronously on the caller's worker thread and owns filesystem traversal, conflict decisions, staging, recovery and pause checkpoints. It uses GIO and `fs_compat` for filesystem access and reports progress through callbacks.
-
-Copy and Duplicate use the destination's ownership rules. New directories use creation modes and regular file copies retain ordinary access bits with set-ID bits cleared. Move and Rename retain the inode when possible. The staged move fallback restores and verifies the original owner, group and mode before removing the source.
-
-`FileOperationManager` owns GTask dispatch, progress presentation, session D-Bus jobs, mount protection, history and shutdown. Wastebin and Undo/Redo reuse filesystem primitives from the engine. For Administrator Mode, the manager submits protocol v9 operations through the originating tab’s session client and consumes the results on its worker. The helper runs the same engine. The GUI uses engine-provided conflict metadata and the existing progress and job presentation.
-
-Protected file export, explicit write-back, checksums and recursive folder sizes also use the originating tab’s session and the shared engine. Foreground reads and background thumbnail exports can proceed independently of filesystem mutations. Temporary copies are owned by the signed-in user, and external applications run under that user’s credentials.
+Nythera Files' local operation engine (`file_operation_engine`), `FileOperationManager`, administrator helpers, and Polkit policies have been extracted to [Nythera-Dev/Nythera-Files](https://github.com/Nythera-Dev/Nythera-Files).
 
 ## Scene Graph and Input
 

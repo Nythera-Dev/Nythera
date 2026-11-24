@@ -12,5 +12,3 @@ option(
   value: false,
   description: 'Link system Luau instead of the vendored copy in third_party/',
 )
-
-option('shell', type: 'boolean', value: true, description: 'Build Nythera Shell alongside Nythera Files')
