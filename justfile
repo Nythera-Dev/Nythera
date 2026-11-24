@@ -6,6 +6,7 @@ debug-buildtype := "debugoptimized"
 build-dir := "build-" + mode
 prefix := "/usr/local"
 cpp-std := "c++23"
+nythera-lib-pkgconfig := env("HOME") + "/.local/opt/nythera-lib/lib/pkgconfig"
 
 default:
     @just --list
@@ -21,9 +22,30 @@ _validate-mode m:
             ;;
     esac
 
+_resolve-pkg-config-path local_pc_dir=nythera-lib-pkgconfig:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if pkg-config --exists nythera-lib 2>/dev/null; then
+        printf '%s\n' "${PKG_CONFIG_PATH:-}"
+        exit 0
+    fi
+    if [[ -f "{{local_pc_dir}}/nythera-lib.pc" ]]; then
+        if [[ -n "${PKG_CONFIG_PATH:-}" ]]; then
+            printf '%s:%s\n' "${PKG_CONFIG_PATH}" "{{local_pc_dir}}"
+        else
+            printf '%s\n' "{{local_pc_dir}}"
+        fi
+        exit 0
+    fi
+    printf '%s\n' "${PKG_CONFIG_PATH:-}"
+
 configure m=mode install_prefix=prefix: (_validate-mode m)
     #!/usr/bin/env bash
     set -euo pipefail
+    resolved_pkg_config_path="$(just _resolve-pkg-config-path "{{nythera-lib-pkgconfig}}")"
+    if [[ -n "$resolved_pkg_config_path" ]]; then
+        export PKG_CONFIG_PATH="$resolved_pkg_config_path"
+    fi
     args=(--buildtype={{ if m == "release" { "release" } else if m == "asan" { "debug" } else { debug-buildtype } }} -Dcpp_std={{cpp-std}} -Dtests=auto)
     [[ "{{m}}" == "release" ]] && args+=(-Db_lto=true)
     [[ "{{m}}" == "asan"    ]] && args+=(-Db_sanitize=address,undefined)
@@ -35,11 +57,21 @@ configure m=mode install_prefix=prefix: (_validate-mode m)
     ln -sfn "build-{{m}}/compile_commands.json" compile_commands.json
 
 build m=mode: (_ensure-configured m)
-    meson compile -C build-{{m}} nythera
+    #!/usr/bin/env bash
+    set -euo pipefail
+    resolved_pkg_config_path="$(just _resolve-pkg-config-path "{{nythera-lib-pkgconfig}}")"
+    if [[ -n "$resolved_pkg_config_path" ]]; then
+        export PKG_CONFIG_PATH="$resolved_pkg_config_path"
+    fi
+    meson compile -C "build-{{m}}" nythera
 
 _ensure-configured m=mode: (_validate-mode m)
     #!/usr/bin/env bash
     set -euo pipefail
+    resolved_pkg_config_path="$(just _resolve-pkg-config-path "{{nythera-lib-pkgconfig}}")"
+    if [[ -n "$resolved_pkg_config_path" ]]; then
+        export PKG_CONFIG_PATH="$resolved_pkg_config_path"
+    fi
     if [[ ! -f "build-{{m}}/build.ninja" ]]; then
         just configure {{m}}
         exit 0
@@ -64,6 +96,10 @@ run m=mode: (build m)
 test m=mode *args: (_ensure-configured m)
     #!/usr/bin/env bash
     set -euo pipefail
+    resolved_pkg_config_path="$(just _resolve-pkg-config-path "{{nythera-lib-pkgconfig}}")"
+    if [[ -n "$resolved_pkg_config_path" ]]; then
+        export PKG_CONFIG_PATH="$resolved_pkg_config_path"
+    fi
     if [[ "{{m}}" == "release" || "{{m}}" == "asan" ]]; then
         meson setup "build-{{m}}" -Dtests=enabled --reconfigure >/dev/null
     fi

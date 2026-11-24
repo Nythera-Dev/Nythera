@@ -139,16 +139,18 @@ The sources are built as C++23, which requires GCC 13+ or Clang 16+. Current rol
 
 Requires [just](https://github.com/casey/just) and [meson](https://mesonbuild.com/).
 
-Install a compatible [NytheraLib](https://github.com/Nythera-Dev/NytheraLib) first. Nythera Shell requires the installed `nythera-lib` pkg-config module at version 0.1.x (0.1.0 or newer). On Arch, install the library package with Pacman. For coordinated development, build the library from its `dev` branch and use the installation instructions in that checkout.
+Install a compatible [NytheraLib](https://github.com/Nythera-Dev/NytheraLib) first (`just build && just install debug` in that checkout installs into `~/.local/opt/nythera-lib`). Nythera Shell requires the installed `nythera-lib` pkg-config module at version 0.1.x (0.1.0 or newer). On Arch, install the library package with Pacman. For coordinated development, build the library from its `dev` branch and follow the installation and rebuild discipline in NytheraLib's `README.md`.
 
-For development without a system installation, install NytheraLib into a persistent user prefix such as `~/.local/opt/nythera-lib`. For an existing application build directory, point Meson at that installation and clear its cached dependency paths:
+When `nythera-lib` is not already resolvable via system `pkg-config` or an explicit `PKG_CONFIG_PATH`, `just configure`, `just build`, and `just test` automatically check `~/.local/opt/nythera-lib/lib/pkgconfig` without modifying your shell configuration. Explicit `PKG_CONFIG_PATH` settings and system installations retain precedence.
+
+If invoking Meson directly without `just`, or switching an existing build directory to a different NytheraLib prefix, pass `PKG_CONFIG_PATH` or point Meson at that installation and clear cached dependency paths:
 
 ```sh
 meson setup --reconfigure --clearcache build-debug -Dpkg_config_path="$HOME/.local/opt/nythera-lib/lib/pkgconfig"
 meson compile -C build-debug nythera
 ```
 
-For a fresh build directory, omit `--reconfigure --clearcache`. Meson records the library directory in the development binaries' RUNPATH. Keep the installed library available at that path for subsequent launches. The application install prefix and data directory still control asset lookup.
+For a fresh build directory, omit `--reconfigure --clearcache`. Meson records the library directory in the development binaries' RUNPATH. Keep the installed library available at that path for subsequent launches. Rebuild `nythera-shell` whenever NytheraLib public headers, inline/template implementations, or ABI-affecting build options change, and restart `nythera` to load reinstalled `.cpp`-only library updates. The application install prefix and data directory still control asset lookup.
 
 ### Release build
 

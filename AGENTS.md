@@ -10,6 +10,12 @@ Repository-specific guidance supplementing the global Codex `AGENTS.md`. Follow 
 - Distinguish Nythera-owned identifiers from Umbriel-owned integration contracts before renaming or modifying them.
 - Follow relevant project documentation listed below. Surface conflicts with documented technical invariants rather than silently bypassing them.
 
+## Cross-repository dependencies (NytheraLib)
+
+- `nythera-shell` dynamically links `nythera-lib` (`>=0.1.0, <0.2.0`) via `pkg-config` and remains independent of `nythera-files`.
+- `justfile` automatically discovers `$HOME/.local/opt/nythera-lib/lib/pkgconfig` when `nythera-lib` is not already resolvable via system `pkg-config` or an explicit `PKG_CONFIG_PATH`.
+- Follow the `0.1.x` coordinated rebuild discipline in `../nythera-lib/README.md`: build and install `nythera-lib` before building/testing `nythera-shell` against library changes; rebuild `nythera-shell` when `nythera-lib` public headers, inline/template code, or ABI-affecting build options change; restart running `nythera` (only when authorised) to load reinstalled `.cpp`-only library updates.
+
 ## Repository workflow
 
 1. **Orient and inspect.** Check `git status --short` before edits. Identify the owning subsystem using `rg --files`, focused `rg -n` searches and bounded `sed -n` reads. Exclude `third_party/`, build trees, generated output, caches and large assets unless relevant. Check only relevant docs and diffs.
