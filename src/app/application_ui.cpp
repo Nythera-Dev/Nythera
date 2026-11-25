@@ -1,6 +1,5 @@
 #include "app/main_loop.h"
 #include "application.h"
-#include "pipewire/sound_player.h"
 #include "application_internal.h"
 #include "compositors/compositor_detect.h"
 #include "config/config_types.h"
@@ -25,6 +24,7 @@
 #include "notification/notifications.h"
 #include "pipewire/pipewire_service.h"
 #include "pipewire/pipewire_spectrum.h"
+#include "pipewire/sound_player.h"
 #include "render/backend/render_backend.h"
 #include "render/text/font_weight_catalog.h"
 #include "scripting/plugin_ipc.h"
@@ -38,10 +38,9 @@
 #include "shell/polkit/polkit_panel.h"
 #include "shell/session/session_ipc.h"
 #include "shell/session/session_panel.h"
+#include "shell/settings/settings_content_common.h"
 #include "shell/setup_wizard/setup_wizard_panel.h"
 #include "shell/test/test_panel.h"
-#include "shell/settings/settings_content_common.h"
-#include "ui/tooltip/tooltip_manager.h"
 #include "shell/tray/tray_drawer_panel.h"
 #include "shell/wallpaper/panel/wallpaper_panel.h"
 #include "shell/wallpaper/wallpaper_paths.h"
@@ -56,6 +55,7 @@
 #include "ui/dialogs/file_dialog.h"
 #include "ui/dialogs/glyph_picker_dialog.h"
 #include "ui/style.h"
+#include "ui/tooltip/tooltip_manager.h"
 #include "util/string_utils.h"
 
 #include <chrono>
@@ -491,7 +491,7 @@ void Application::initInputDispatch() {
       m_glyphPickerDialogPopup.onKeyboardEvent(event);
       return;
     }
-    if (m_fileDialogPopup.isOpen()) {
+    if (m_fileDialogPopup.handlesKeyboardForSurface(m_wayland.lastKeyboardSurface())) {
       m_fileDialogPopup.onKeyboardEvent(event);
       return;
     }
@@ -776,8 +776,13 @@ void Application::initNotificationAndOsd() {
       m_wayland, m_compositorPlatform, &m_configService, &m_notificationManager, &m_renderContext, &m_httpClient,
       &m_jobProgressManager
   );
-  m_bar.setIslandAlertCallback([this] { if (m_soundPlayer) m_soundPlayer->play(SoundPlayer::kEventNotification); });
-  m_notificationToast.setContentInterceptor([this](const Notification& n, NotificationEvent event) { return m_bar.routeDynamicNotification(n,event); });
+  m_bar.setIslandAlertCallback([this] {
+    if (m_soundPlayer)
+      m_soundPlayer->play(SoundPlayer::kEventNotification);
+  });
+  m_notificationToast.setContentInterceptor([this](const Notification& n, NotificationEvent event) {
+    return m_bar.routeDynamicNotification(n, event);
+  });
   m_configService.addReloadCallback([this] { m_notificationToast.onConfigReload(); });
   auto applyNotificationFilterConfig = [this] {
     m_notificationManager.setFilters(m_configService.config().notification.filters);

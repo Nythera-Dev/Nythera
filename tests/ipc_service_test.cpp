@@ -1,10 +1,12 @@
 #include "ipc/ipc_service.h"
+#include "shell/osd/osd_overlay.h"
 #include "tests/test_check.h"
 
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -183,8 +185,34 @@ int main() {
   TEST_CHECK(updatedHelp.contains("panel-toggle <id> [context]"));
   TEST_CHECK(updatedHelp.contains("Toggle a panel by id"));
 
+  OsdOverlay osd;
+  std::optional<OsdContent> receivedOsd;
+  osd.setContentInterceptor([&](const OsdContent& content) {
+    receivedOsd = content;
+    return true;
+  });
+  osd.registerIpc(ipc);
+
   TEST_CHECK(ipc.start());
   const auto socketPath = runtimeDir / ("nythera-" + std::string(kWaylandDisplay) + ".sock");
   TEST_CHECK(sendRaw(ipc, socketPath, "status line1\nline2\nline3") == "status:line1\nline2\nline3\n");
+  const std::string notice =
+      "Invalid configuration\n~/.config/nythera/files/\nconfig.toml · Line 14, column 8\n> Unterminated string";
+  const nlohmann::json payload{{"icon", "alert-triangle"}, {"value", notice}, {"hide_delay_ms", 5000}};
+  TEST_CHECK(sendRaw(ipc, socketPath, "osd-show " + payload.dump()) == "ok\n");
+  TEST_CHECK(receivedOsd && receivedOsd->kind == OsdKind::Custom);
+  TEST_CHECK(!receivedOsd->showProgress && receivedOsd->value == notice);
+  TEST_CHECK(receivedOsd->hideDelayMs == 5000);
+  TEST_CHECK(
+      sendRaw(ipc, socketPath, R"(osd-show {"icon":"circle-check","value":"Config reloaded","hide_delay_ms":1000})")
+      == "ok\n"
+  );
+  TEST_CHECK(receivedOsd->hideDelayMs == 1000);
+  TEST_CHECK(sendRaw(ipc, socketPath, R"(osd-show {"icon":"volume","progress":0.4})") == "ok\n");
+  TEST_CHECK(receivedOsd->showProgress && !receivedOsd->hideDelayMs);
+  TEST_CHECK(sendRaw(ipc, socketPath, "osd-show wifi VPN connected") == "ok\n");
+  TEST_CHECK(!receivedOsd->hideDelayMs);
+  TEST_CHECK(sendRaw(ipc, socketPath, R"(osd-show {"icon":"wifi","hide_delay_ms":1.5})").starts_with("error: "));
+  TEST_CHECK(sendRaw(ipc, socketPath, R"(osd-show {"icon":"wifi","hide_delay_ms":-1000})").starts_with("error: "));
   return 0;
 }

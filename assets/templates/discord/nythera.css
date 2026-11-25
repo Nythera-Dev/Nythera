@@ -28,6 +28,7 @@ body {
 
   --small-user-panel: on;
   --unrounding: off;
+  --panel-labels: off;
 
   /* Official Nythera Home/DM mark (not legacy Noctalia). */
   /* The flat Nythera SVG uses an internal SVG mask. Display it as an

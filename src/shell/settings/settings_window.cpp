@@ -22,7 +22,6 @@
 #include "scripting/plugin_registry.h"
 #include "shell/settings/settings_content_plugins.h"
 #include "shell/settings/settings_dialog_presenter.h"
-#include "ui/tooltip/tooltip_manager.h"
 #include "system/dependency_service.h"
 #include "ui/controls/box.h"
 #include "ui/controls/flex.h"
@@ -33,6 +32,7 @@
 #include "ui/palette.h"
 #include "ui/split_pane_focus.h"
 #include "ui/style.h"
+#include "ui/tooltip/tooltip_manager.h"
 #include "util/clamp.h"
 #include "wayland/toplevel_surface.h"
 #include "wayland/wayland_connection.h"
@@ -319,7 +319,8 @@ std::optional<LayerPopupParentContext> SettingsWindow::topmostPopupParentContext
   }
 
   const auto makeContext = [this](
-                               wl_surface* wlSurface, xdg_surface* xdgSurface, std::uint32_t width, std::uint32_t height
+                               wl_surface* wlSurface, xdg_surface* xdgSurface, std::uint32_t width,
+                               std::uint32_t height, xdg_toplevel* xdgToplevel = nullptr
                            ) -> std::optional<LayerPopupParentContext> {
     if (wlSurface == nullptr || xdgSurface == nullptr || width == 0 || height == 0) {
       return std::nullopt;
@@ -332,6 +333,7 @@ std::optional<LayerPopupParentContext> SettingsWindow::topmostPopupParentContext
         .surface = wlSurface,
         .layerSurface = nullptr,
         .xdgSurface = xdgSurface,
+        .xdgToplevel = xdgToplevel,
         .output = output,
         .width = width,
         .height = height,
@@ -363,7 +365,9 @@ std::optional<LayerPopupParentContext> SettingsWindow::topmostPopupParentContext
         m_widgetAddPopup->height()
     );
   }
-  return makeContext(m_surface->wlSurface(), m_surface->xdgSurface(), m_surface->width(), m_surface->height());
+  return makeContext(
+      m_surface->wlSurface(), m_surface->xdgSurface(), m_surface->width(), m_surface->height(), m_surface->xdgToplevel()
+  );
 }
 
 std::optional<LayerPopupParentContext> SettingsWindow::fallbackPopupParentContext() const {

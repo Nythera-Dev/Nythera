@@ -30,6 +30,8 @@ nythera msg osd-show '{"icon":"wifi-off","value":"VPN disconnected","inactive":t
 
 JSON fields: `icon` (required string), `value` (string), `progress` (number from `0` to `1`, clamped; omit it for a text-only popup), and `inactive` (boolean). Custom popups follow `[osd.kinds].custom` and share the slot with the built-in OSDs, the same as popups from plugins.
 
+The optional `hide_delay_ms` integer sets how long this popup waits before its hide animation starts (250–10000 ms). When omitted, the popup uses the global OSD delay.
+
 ## Volume
 
 | Action                   | Command                                | Description                                                                  |

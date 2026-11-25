@@ -52,6 +52,7 @@ struct OsdContent {
   bool showProgress = true;
   bool overLimit = false;
   bool inactive = false;
+  std::optional<std::int32_t> hideDelayMs = std::nullopt;
 };
 
 // Custom OSD as requested by plugins and the osd-show IPC command. No progress hides the bar;
@@ -98,6 +99,8 @@ private:
     wl_output* output = nullptr;
     std::int32_t scale = 1;
     float uiLayoutScale = 1.0F;
+    float cardWidth = 0.0F;
+    float cardHeight = 0.0F;
     std::unique_ptr<LayerSurface> surface;
     // sceneRoot must be destroyed before `animations` — ~Node() calls cancelForOwner().
     AnimationManager animations;

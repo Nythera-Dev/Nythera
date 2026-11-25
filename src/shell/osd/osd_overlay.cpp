@@ -3,6 +3,7 @@
 #include "compositors/compositor_platform.h"
 #include "config/config_service.h"
 #include "config/config_types.h"
+#include "config/schema/ranges.h"
 #include "core/deferred_call.h"
 #include "core/log.h"
 #include "core/ui_phase.h"
@@ -10,6 +11,7 @@
 #include "ipc/ipc_service.h"
 #include "render/core/renderer.h"
 #include "render/render_context.h"
+#include "render/render_target.h"
 #include "render/scene/node.h"
 #include "shell/surface/edge_inset.h"
 #include "ui/builders.h"
@@ -20,11 +22,16 @@
 
 #include <algorithm>
 #include <cmath>
+#include <format>
 #include <nlohmann/json.hpp>
 
 namespace {
 
   constexpr Logger kLog("osd");
+
+  bool isMultilineCustom(const OsdContent& content) {
+    return content.kind == OsdKind::Custom && !content.showProgress && content.value.contains('\n');
+  }
 
   enum class OsdRevealDir { FromLeft, FromRight, FromTop, FromBottom };
 
@@ -146,13 +153,13 @@ namespace {
     return (Style::controlHeight + Style::spaceSm) * s;
   }
 
-  [[nodiscard]] std::uint32_t osdSurfaceWidth(float s, const std::string& orientation, float innerPadX) {
-    const float w = cardWidth(s, orientation) + innerPadX * 2.0F;
+  [[nodiscard]] std::uint32_t osdSurfaceWidth(float cardWidth, float innerPadX) {
+    const float w = cardWidth + innerPadX * 2.0F;
     return static_cast<std::uint32_t>(std::max(1, static_cast<int>(std::ceil(w))));
   }
 
-  [[nodiscard]] std::uint32_t osdSurfaceHeight(float s, const std::string& orientation, bool showProgress) {
-    const float h = cardHeight(s, orientation, showProgress) + Style::spaceLg * s;
+  [[nodiscard]] std::uint32_t osdSurfaceHeight(float s, float cardHeight) {
+    const float h = cardHeight + Style::spaceLg * s;
     return static_cast<std::uint32_t>(std::max(1, static_cast<int>(std::ceil(h))));
   }
 
@@ -167,6 +174,8 @@ namespace {
   [[nodiscard]] float cardPadding(float s) { return Style::spaceMd * s; }
 
   [[nodiscard]] float innerGap(float s) { return (Style::spaceSm + Style::spaceXs * 0.5F) * s; }
+
+  [[nodiscard]] float horizontalTextInsets(float s) { return cardPadding(s) * 2.0F + glyphSize(s) + innerGap(s); }
 
   [[nodiscard]] float osdCardRadius(float cw, float ch, float layoutScale) {
     const float maxR = std::min(cw, ch) * 0.5F;
@@ -269,6 +278,7 @@ void OsdOverlay::registerIpc(IpcService& ipc) {
     std::string icon;
     std::string value;
     std::optional<double> progress;
+    std::optional<std::int32_t> hideDelayMs;
     bool inactive = false;
 
     if (input.front() == '{') {
@@ -300,6 +310,19 @@ void OsdOverlay::registerIpc(IpcService& ipc) {
         }
         inactive = it->get<bool>();
       }
+      if (const auto it = payload.find("hide_delay_ms"); it != payload.end()) {
+        if (!it->is_number_integer()) {
+          return "error: osd-show field 'hide_delay_ms' must be an integer\n";
+        }
+        constexpr auto range = nythera::config::schema::kOsdHideDelayMsRange;
+        const auto delay = it->get<std::int64_t>();
+        if (delay < *range.min || delay > *range.max) {
+          return std::format(
+              "error: osd-show field 'hide_delay_ms' must be between {} and {}\n", *range.min, *range.max
+          );
+        }
+        hideDelayMs = static_cast<std::int32_t>(delay);
+      }
     } else {
       const std::size_t split = input.find_first_of(" \t");
       icon = input.substr(0, split);
@@ -311,7 +334,9 @@ void OsdOverlay::registerIpc(IpcService& ipc) {
     if (icon.empty()) {
       return "error: osd-show requires a non-empty icon\n";
     }
-    show(customOsdContent(std::move(icon), std::move(value), progress, inactive));
+    auto content = customOsdContent(std::move(icon), std::move(value), progress, inactive);
+    content.hideDelayMs = hideDelayMs;
+    show(content);
     return "ok\n";
   });
 }
@@ -345,7 +370,8 @@ void OsdOverlay::requestLayout() {
 }
 
 void OsdOverlay::show(const OsdContent& content) {
-  if (m_contentInterceptor && m_contentInterceptor(content)) return;
+  if (m_contentInterceptor && m_contentInterceptor(content))
+    return;
   if (m_wayland == nullptr || m_renderContext == nullptr) {
     return;
   }
@@ -517,8 +543,6 @@ void OsdOverlay::ensureSurfaces() {
   const int marginH = (m_config != nullptr) ? std::max(0, m_config->config().osd.offsetX) : 0;
   const float horizontalInnerPad =
       shell::surface_edge_inset::resolve(marginH, Style::spaceMd * layoutScale).innerPadding;
-  const auto surfaceWidth = osdSurfaceWidth(layoutScale, orientation, horizontalInnerPad);
-  const auto surfaceHeight = osdSurfaceHeight(layoutScale, orientation, showProgress);
   const SurfaceMargins margins = surfaceMarginsForPosition(position);
 
   m_lastPosition = position;
@@ -548,21 +572,6 @@ void OsdOverlay::ensureSurfaces() {
     return anyConfiguredPresent && !shouldRenderOnOutput(*wlOutput);
   });
 
-  for (auto& inst : m_instances) {
-    if (inst->surface == nullptr) {
-      continue;
-    }
-    if (inst->surface->marginTop() != margins.top
-        || inst->surface->marginRight() != margins.right
-        || inst->surface->marginBottom() != margins.bottom
-        || inst->surface->marginLeft() != margins.left) {
-      inst->surface->setMargins(margins.top, margins.right, margins.bottom, margins.left);
-    }
-    if (inst->surface->width() != surfaceWidth || inst->surface->height() != surfaceHeight) {
-      inst->surface->requestSize(surfaceWidth, surfaceHeight);
-    }
-  }
-
   for (const auto& output : m_wayland->outputs()) {
     if (!output.done || output.output == nullptr || !output.hasUsableGeometry()) {
       continue;
@@ -571,12 +580,43 @@ void OsdOverlay::ensureSurfaces() {
       continue;
     }
 
+    float contentWidth = cardWidth(layoutScale, orientation);
+    float contentHeight = cardHeight(layoutScale, orientation, showProgress);
+    if (isMultilineCustom(m_content)) {
+      ScaledRenderer renderer(*m_renderContext, output.configuredScale());
+      const TextFont font{.weight = FontWeight::Bold};
+      const float fontSize = valueFontSize(layoutScale);
+      const float insets = horizontalTextInsets(layoutScale);
+      // Measure the longest explicit line before applying the output's width limit.
+      const auto natural = renderer.measureText(m_content.value, fontSize, font);
+      const float availableWidth = static_cast<float>(output.effectiveLogicalWidth())
+          - static_cast<float>(margins.left + margins.right)
+          - horizontalInnerPad * 2.0F;
+      contentWidth =
+          std::min(std::max(contentWidth, std::ceil(natural.width + insets)), std::max(1.0F, availableWidth));
+      const auto wrapped = renderer.measureText(m_content.value, fontSize, font, std::max(1.0F, contentWidth - insets));
+      contentHeight =
+          std::max(contentHeight, std::ceil(wrapped.bottom - wrapped.top + cardPadding(layoutScale) * 2.0F));
+    }
+    const auto surfaceWidth = osdSurfaceWidth(contentWidth, horizontalInnerPad);
+    const auto surfaceHeight = osdSurfaceHeight(layoutScale, contentHeight);
+
     auto existingIt = std::ranges::find_if(m_instances, [&output](const auto& inst) {
       return inst != nullptr && inst->output == output.output;
     });
     if (existingIt != m_instances.end()) {
-      (*existingIt)->scale = output.scale;
-      (*existingIt)->uiLayoutScale = layoutScale;
+      auto& inst = **existingIt;
+      inst.scale = output.scale;
+      inst.uiLayoutScale = layoutScale;
+      inst.cardWidth = contentWidth;
+      inst.cardHeight = contentHeight;
+      if (inst.surface->marginTop() != margins.top
+          || inst.surface->marginRight() != margins.right
+          || inst.surface->marginBottom() != margins.bottom
+          || inst.surface->marginLeft() != margins.left) {
+        inst.surface->setMargins(margins.top, margins.right, margins.bottom, margins.left);
+      }
+      inst.surface->requestSize(surfaceWidth, surfaceHeight);
       continue;
     }
 
@@ -584,6 +624,8 @@ void OsdOverlay::ensureSurfaces() {
     inst->output = output.output;
     inst->scale = output.scale;
     inst->uiLayoutScale = layoutScale;
+    inst->cardWidth = contentWidth;
+    inst->cardHeight = contentHeight;
 
     std::uint32_t anchor = LayerShellAnchor::Top | LayerShellAnchor::Right;
 
@@ -684,8 +726,8 @@ void OsdOverlay::prepareFrame(Instance& inst, bool needsUpdate, bool needsLayout
     const float corner = Style::cornerRadiusScale();
     if (std::abs(corner - inst.appliedCornerRadiusScale) > 1.0e-4F) {
       const float s = inst.uiLayoutScale;
-      const float cw = cardWidth(s, m_lastOrientation);
-      const float ch = cardHeight(s, m_lastOrientation, m_lastShowProgress);
+      const float cw = inst.cardWidth;
+      const float ch = inst.cardHeight;
       inst.background->setRadius(osdCardRadius(cw, ch, s));
       if (inst.progress != nullptr) {
         inst.progress->setRadius(osdProgressRadius(s));
@@ -715,8 +757,8 @@ void OsdOverlay::buildScene(Instance& inst, std::uint32_t width, std::uint32_t h
   const auto h = static_cast<float>(height);
   const float s = inst.uiLayoutScale;
   const bool vertical = isVerticalOrientation(m_lastOrientation);
-  const float cw = cardWidth(s, m_lastOrientation);
-  const float ch = cardHeight(s, m_lastOrientation, m_lastShowProgress);
+  const float cw = inst.cardWidth;
+  const float ch = inst.cardHeight;
   const float pad = cardPadding(s);
   const float gap = innerGap(s);
 
@@ -833,8 +875,8 @@ void OsdOverlay::updateInstanceContent(Instance& inst) {
   const float s = inst.uiLayoutScale;
   const bool vertical = isVerticalOrientation(m_lastOrientation);
   // Card frame size is animated during reveal; measure layout against intrinsic size.
-  const float cw = cardWidth(s, m_lastOrientation);
-  const float ch = cardHeight(s, m_lastOrientation, m_lastShowProgress);
+  const float cw = inst.cardWidth;
+  const float ch = inst.cardHeight;
   inst.background->setFill(colorSpecFromRole(ColorRole::Surface, osdBackgroundOpacity(m_config)));
   inst.background->setBorder(osdBorderColor(m_config), osdBorderWidth(m_config, s));
 
@@ -852,11 +894,17 @@ void OsdOverlay::updateInstanceContent(Instance& inst) {
       : m_content.inactive                        ? ColorRole::OnSurfaceVariant
                                                   : ColorRole::OnSurface;
   inst.value->setColor(colorSpecFromRole(valueRole));
-  inst.value->setTextAlign((vertical || !m_content.showProgress) ? TextAlign::Center : TextAlign::End);
+  const bool multiline = isMultilineCustom(m_content);
+  inst.value->setMaxLines(multiline ? 0 : 1);
+  inst.value->setTextAlign(
+      multiline                                   ? TextAlign::Start
+          : (vertical || !m_content.showProgress) ? TextAlign::Center
+                                                  : TextAlign::End
+  );
   // Text OSDs (media title, device name, ...) carry arbitrary-length values; cap them to the card
   // interior so they ellipsize within the padding instead of overflowing. Progress OSDs keep the
   // uncapped "100%" value so it can reserve minWidth beside the bar.
-  const float horizontalValueMax = cw - cardPadding(s) * 2.0F - glyphSize(s) - innerGap(s);
+  const float horizontalValueMax = cw - horizontalTextInsets(s);
 
   // Progress OSDs: cap the label so a long custom label can't squeeze the bar to nothing.
   // Built-in "100%" values are far below this cap, so they are unaffected.
@@ -904,9 +952,8 @@ void OsdOverlay::applyReveal(Instance& inst, float reveal) {
     return;
   }
 
-  const float s = inst.uiLayoutScale;
-  const float cw = cardWidth(s, m_lastOrientation);
-  const float ch = cardHeight(s, m_lastOrientation, m_lastShowProgress);
+  const float cw = inst.cardWidth;
+  const float ch = inst.cardHeight;
   const float baseX = cardBaseX(inst.sceneRoot->width(), cw);
   const float baseY = cardBaseYForPosition(m_lastPosition, inst.sceneRoot->height(), ch);
   const float r = std::clamp(reveal, 0.0F, 1.0F);
@@ -988,10 +1035,11 @@ void OsdOverlay::animateInstance(Instance& inst) {
     applyReveal(inst, 1.0F);
   }
 
-  const float hideDelayMs =
-      static_cast<float>(m_config != nullptr ? m_config->config().osd.hideDelayMs : OsdConfig{}.hideDelayMs);
+  const auto hideDelayMs = m_content.hideDelayMs.value_or(
+      m_config != nullptr ? m_config->config().osd.hideDelayMs : OsdConfig{}.hideDelayMs
+  );
   inst.hideAnimId = inst.animations.animateTimer(
-      1.0F, 0.0F, hideDelayMs, Easing::Linear, [](float /*v*/) {},
+      1.0F, 0.0F, static_cast<float>(hideDelayMs), Easing::Linear, [](float /*v*/) {},
       [this, &inst] {
         inst.hideAnimId = inst.animations.animate(
             1.0F, 0.0F, Style::animNormal, Easing::EaseInQuad, [this, &inst](float v) { applyReveal(inst, v); },
