@@ -404,8 +404,10 @@ struct ScreenWrap::Shared {
           auto& s = strips[i];
           if (s.cornerLogo && s.cornerLogo->visible()) {
             const bool hadImage = s.cornerLogo->hasImage();
-            const bool loaded = s.cornerLogo->setSourceFile(s.surface->renderTarget().renderer(),
-                paths::assetPath("nythera-logo.svg").string(), static_cast<int>(std::ceil(s.cornerLogo->width())), true);
+            const bool loaded = s.cornerLogo->setSourceFile(
+                s.surface->renderTarget().renderer(), paths::sharedAssetPath("nythera-logo.svg").string(),
+                static_cast<int>(std::ceil(s.cornerLogo->width())), true
+            );
             if (!hadImage && loaded) {
               static constexpr Logger log("screen-wrap");
               log.info("loaded Nythera corner logo ({}px)", s.cornerLogo->width());

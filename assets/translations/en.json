@@ -4244,6 +4244,10 @@
             "description": "Set the UPower power profile (e.g. performance, balanced, power-saver)",
             "label": "Set power profile"
           },
+          "restart": {
+            "description": "Restart the running Nythera process",
+            "label": "Restart Nythera"
+          },
           "screenshot-annotate": {
             "description": "Freeze the screen and annotate it, then copy or save",
             "label": "Annotate screenshot"
@@ -4287,6 +4291,10 @@
           "status": {
             "description": "Print current state as JSON",
             "label": "Print status"
+          },
+          "stop": {
+            "description": "Stop the running Nythera process",
+            "label": "Stop Nythera"
           },
           "taskbar-cycle": {
             "description": "Step to the adjacent task or workspace group in the invoking taskbar",

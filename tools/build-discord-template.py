@@ -3,12 +3,47 @@
 
 import argparse
 import base64
+import os
 from pathlib import Path
 import re
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "assets"
 TEMPLATE = ASSETS / "templates/discord"
+
+
+def shared_assets_dir():
+    if env_dir := os.environ.get("NYTHERA_LIB_ASSETS_DIR"):
+        candidate = Path(env_dir)
+        if candidate.is_dir():
+            return candidate
+
+    env = dict(os.environ)
+    local_pc = Path.home() / ".local" / "opt" / "nythera-lib" / "lib" / "pkgconfig"
+    if local_pc.is_dir():
+        existing = env.get("PKG_CONFIG_PATH", "")
+        env["PKG_CONFIG_PATH"] = f"{existing}:{local_pc}" if existing else str(local_pc)
+
+    try:
+        res = subprocess.run(
+            ["pkg-config", "--variable=assetsdir", "nythera-lib"],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=env,
+        )
+        if res.returncode == 0 and res.stdout.strip():
+            candidate = Path(res.stdout.strip())
+            if candidate.is_dir():
+                return candidate
+    except OSError:
+        pass
+
+    sibling = ROOT.parent / "nythera-lib" / "assets"
+    if sibling.is_dir():
+        return sibling
+    return ASSETS
 
 
 def data_url(path, mime):
@@ -35,10 +70,14 @@ def assemble():
         licence = (TEMPLATE / "vendor" / f"{name}.LICENSE").read_text()
         parts.append(f"\n/* Bundled {name}\n{licence}*/\n" + css)
     source = re.sub(r"^@import[^\n]*\n", "", source, flags=re.MULTILINE)
+    shared = shared_assets_dir()
     for name in ("nythera-logo-flat.svg", "nythera-header-accent.svg"):
+        asset_path = shared / name
+        if not asset_path.is_file():
+            asset_path = ASSETS / name
         source = source.replace(
             f"https://raw.githubusercontent.com/Nythera-Dev/Nythera/dev/assets/{name}",
-            data_url(ASSETS / name, "image/svg+xml"),
+            data_url(asset_path, "image/svg+xml"),
         )
     parts.append("\n/* Nythera overrides */\n" + source)
     result = "".join(parts)

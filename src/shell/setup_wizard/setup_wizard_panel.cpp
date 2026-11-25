@@ -433,7 +433,7 @@ void SetupWizardPanel::create() {
 void SetupWizardPanel::doLayout(Renderer& renderer, float width, float height) {
   if (m_logo != nullptr && !m_logo->hasImage()) {
     m_logo->setSourceFile(
-        renderer, paths::assetPath("nythera-logo.svg").string(), 48 * static_cast<int>(contentScale())
+        renderer, paths::sharedAssetPath("nythera-logo.svg").string(), 48 * static_cast<int>(contentScale())
     );
   }
   if (m_root != nullptr) {

@@ -2380,7 +2380,7 @@ void LauncherPanel::doLayout(Renderer& renderer, float width, float height) {
   }
   if (m_brandGlyph != nullptr) {
     if (m_brandGlyphPath.empty()) {
-      m_brandGlyphPath = paths::assetPath("nythera-logo.png").string();
+      m_brandGlyphPath = paths::sharedAssetPath("nythera-logo.png").string();
     }
     if (!m_brandGlyph->hasImage()) {
       (void)m_brandGlyph->setSourceFile(renderer, m_brandGlyphPath, static_cast<int>(52.0F * contentScale()));
@@ -2403,7 +2403,7 @@ void LauncherPanel::doLayout(Renderer& renderer, float width, float height) {
     m_container->layout(renderer);
   }
   if (m_brandHeaderAccent != nullptr && m_brandHeader != nullptr) {
-    const std::string accentPath = paths::assetPath("nythera-header-accent.svg").string();
+    const std::string accentPath = paths::sharedAssetPath("nythera-header-accent.svg").string();
     const int targetSize = std::max(1, static_cast<int>(std::ceil(m_brandHeader->width())));
     (void)m_brandHeaderAccent->setSourceFile(renderer, accentPath, targetSize);
     m_brandHeaderAccent->setPosition(0.0F, 0.0F);
