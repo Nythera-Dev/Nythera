@@ -1,5 +1,6 @@
 #include "notification_manager.h"
 
+#include "config/config_service.h"
 #include "core/deferred_call.h"
 #include "core/log.h"
 #include "notification/notification_filter.h"
@@ -915,7 +916,7 @@ void NotificationManager::schedulePersistHistory() {
 
 namespace {
   std::filesystem::path historyPath() {
-    const auto dir = FileUtils::stateDir();
+    const auto dir = ConfigService::resolveActiveStateDir();
     return dir.empty() ? std::filesystem::path{} : std::filesystem::path(dir) / "notification_history.enc";
   }
 } // namespace

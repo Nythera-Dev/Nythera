@@ -53,6 +53,8 @@ namespace settings {
     std::function<void(std::vector<std::string>)> resetBarLane;
     std::function<void(std::string, std::string, std::vector<std::pair<std::vector<std::string>, ConfigOverrideValue>>)>
         renameWidgetInstance;
+    std::function<void(std::string, std::vector<std::pair<std::vector<std::string>, ConfigOverrideValue>>)>
+        deleteWidgetInstance;
     std::function<void()> closeHostedEditor;
     std::function<void(std::vector<std::string> laneListPath, std::string widgetName)> openWidgetInspector;
     std::function<void(std::vector<std::string> laneListPath, std::string groupId)> openCapsuleGroupInspector;

@@ -1,8 +1,8 @@
+#include "config/config_service.h"
 #include "core/deferred_call.h"
 #include "notification/notification_history_store.h"
 #include "notification/notification_manager.h"
 #include "notification_history_test_utils.h"
-#include "util/file_utils.h"
 
 #include <cstdlib>
 #include <filesystem>
@@ -145,7 +145,10 @@ namespace {
     std::uint64_t serial = 0;
 
     // An atomic-write failure preserves the source manifest and every old sidecar.
-    fs::create_directory(path.string() + ".tmp");
+    const auto unwritable = dir / "unwritable";
+    fs::create_directory(unwritable);
+    fs::permissions(unwritable, static_cast<fs::perms>(0555));
+    fs::create_symlink(unwritable / "blocked" / "history.enc", path);
     const auto originalJson = contents(legacy);
     const auto originalPixels = contents(assets / "n_1.rgba");
     TEST_CHECK(!loadNotificationHistoryFromFile(path, loaded, nextId, serial, key));
@@ -153,7 +156,9 @@ namespace {
     TEST_CHECK(contents(legacy) == originalJson);
     TEST_CHECK(contents(assets / "n_1.rgba") == originalPixels);
     TEST_CHECK(contents(legacy.string() + ".tmp") == "abandoned plaintext write");
-    fs::remove(path.string() + ".tmp");
+    fs::remove(path);
+    fs::permissions(unwritable, static_cast<fs::perms>(0700));
+    fs::remove(unwritable);
     TEST_CHECK(loadNotificationHistoryFromFile(path, loaded, nextId, serial, key));
     TEST_CHECK(loaded.size() == 1);
     TEST_CHECK(loaded.front().notification.body == "legacy secret");
@@ -196,8 +201,10 @@ namespace {
   }
 
   void testManager(const fs::path& dir) {
+    TEST_CHECK(setenv("NYTHERA_CONFIG_HOME", (dir / "config").c_str(), 1) == 0);
     TEST_CHECK(setenv("NYTHERA_STATE_HOME", dir.c_str(), 1) == 0);
-    const auto path = fs::path(FileUtils::stateDir()) / "notification_history.enc";
+    const auto path = fs::path(ConfigService::resolveActiveStateDir()) / "notification_history.enc";
+    TEST_CHECK(path == dir / "nythera" / "shell" / "notification_history.enc");
     const auto keyFile = dir / "storage-key";
     write(keyFile, std::string(64, '1'));
     security::SecretStore store;
@@ -277,8 +284,10 @@ namespace {
     provider.setChangeCallback({});
   }
   void testClearBeforeUnlock(const fs::path& dir) {
+    TEST_CHECK(setenv("NYTHERA_CONFIG_HOME", (dir / "config").c_str(), 1) == 0);
     TEST_CHECK(setenv("NYTHERA_STATE_HOME", dir.c_str(), 1) == 0);
-    const auto path = fs::path(FileUtils::stateDir()) / "notification_history.enc";
+    const auto path = fs::path(ConfigService::resolveActiveStateDir()) / "notification_history.enc";
+    TEST_CHECK(path == dir / "nythera" / "shell" / "notification_history.enc");
     const auto keyFile = dir / "storage-key";
     write(keyFile, std::string(64, '1'));
     security::SecretStore store;

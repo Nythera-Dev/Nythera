@@ -26,7 +26,6 @@
 #include "shell/settings/settings_content_plugins.h"
 #include "shell/settings/settings_sidebar.h"
 #include "shell/settings/settings_window.h"
-#include "ui/tooltip/tooltip_manager.h"
 #include "system/battery_warning_monitor.h"
 #include "system/dependency_service.h"
 #include "theme/builtin_templates.h"
@@ -39,6 +38,7 @@
 #include "ui/palette_swatch_preview.h"
 #include "ui/scroll_into_view.h"
 #include "ui/style.h"
+#include "ui/tooltip/tooltip_manager.h"
 #include "util/string_utils.h"
 #include "util/sys_utils.h"
 #include "wayland/clipboard_service.h"
@@ -896,6 +896,10 @@ settings::SettingsContentContext SettingsWindow::makeContentContext(
                             ) {
     renameWidgetInstance(std::move(oldName), std::move(newName), std::move(referenceOverrides));
   };
+  const auto deleteWidget = [this](
+                                std::string widgetName,
+                                std::vector<std::pair<std::vector<std::string>, ConfigOverrideValue>> referenceRemovals
+                            ) { deleteWidgetInstance(std::move(widgetName), std::move(referenceRemovals)); };
 
   return settings::SettingsContentContext{
       .config = cfg,
@@ -951,6 +955,7 @@ settings::SettingsContentContext SettingsWindow::makeContentContext(
             m_pendingResetSettingPaths = std::move(paths);
           },
       .renameWidgetInstance = renameWidget,
+      .deleteWidgetInstance = deleteWidget,
       .openSessionActionEntryEditor = [this](std::size_t entryIndex) { openSessionActionEntryEditor(entryIndex); },
       .openIdleBehaviorEntryEditor = [this](std::size_t entryIndex) { openIdleBehaviorEntryEditor(entryIndex); },
       .openIdleBehaviorCreateEditor = [this] { openIdleBehaviorCreateEditor(); },
@@ -1338,7 +1343,12 @@ std::unique_ptr<Flex> SettingsWindow::buildFilterRow(
           .checked = m_showAdvanced,
           .scale = scale,
           .onChange = [this, requestRebuild](bool value) {
-            if (m_config != nullptr && !m_config->setOverride({"shell", "settings_show_advanced"}, value)) {
+            bool wrote = true;
+            if (m_config != nullptr) {
+              const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+              wrote = m_config->setOverride({"shell", "settings_show_advanced"}, value);
+            }
+            if (!wrote) {
               markSettingsWriteError(i18n::tr("settings.errors.write"));
               return;
             }

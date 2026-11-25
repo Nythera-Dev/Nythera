@@ -1,6 +1,7 @@
 #include "system/screen_time_service.h"
 
 #include "compositors/compositor_platform.h"
+#include "config/config_service.h"
 #include "core/log.h"
 #include "system/app_identity.h"
 #include "system/desktop_entry.h"
@@ -283,7 +284,7 @@ ScreenTimeService::DayRecord ScreenTimeService::materializeDayForCharts(const Da
 
 void ScreenTimeService::initialize(CompositorPlatform* platform) {
   m_platform = platform;
-  const std::string dir = FileUtils::stateDir();
+  const std::string dir = ConfigService::resolveActiveStateDir();
   m_storagePath = dir.empty() ? "screen_time.json" : dir + "/screen_time.json";
   load();
   ensureCurrentDayLocked(localNow());

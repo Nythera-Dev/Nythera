@@ -159,7 +159,9 @@ namespace {
         root / "assets" / "templates" / "builtin.toml",
         "[templates.stuck]\nundo_hook = \"" + hangCommand(pidFile) + "\"\n"
     );
-    writeFile(root / "state" / "nythera" / "state.toml", "[theme_templates]\napplied_builtin_ids = \"stuck\"\n");
+    writeFile(
+        root / "state" / "nythera" / "shell" / "state.toml", "[theme_templates]\napplied_builtin_ids = \"stuck\"\n"
+    );
 
     std::vector<pid_t> pids;
     const double elapsed = applyThenDestroy(root, "", {pidFile}, pids);
@@ -173,10 +175,12 @@ namespace {
   // runs on the same synchronous path and must be bounded the same way.
   void test_stuck_community_undo_hook(const std::filesystem::path& root) {
     const auto pidFile = root / "community-undo.pid";
-    const auto templateDir = root / "state" / "nythera" / "community-templates" / "stuck";
+    const auto templateDir = root / "state" / "nythera" / "shell" / "community-templates" / "stuck";
     std::filesystem::create_directories(templateDir);
     writeFile(templateDir / "template.toml", "[templates.stuck]\nundo_hook = \"" + hangCommand(pidFile) + "\"\n");
-    writeFile(root / "state" / "nythera" / "state.toml", "[theme_templates]\napplied_community_ids = \"stuck\"\n");
+    writeFile(
+        root / "state" / "nythera" / "shell" / "state.toml", "[theme_templates]\napplied_community_ids = \"stuck\"\n"
+    );
 
     std::vector<pid_t> pids;
     const double elapsed = applyThenDestroy(root, "", {pidFile}, pids);
@@ -193,7 +197,7 @@ int main() {
       std::filesystem::temp_directory_path() / ("nythera-template-shutdown-" + std::to_string(::getpid()));
   std::filesystem::remove_all(root);
   std::filesystem::create_directories(root / "config" / "nythera");
-  std::filesystem::create_directories(root / "state" / "nythera");
+  std::filesystem::create_directories(root / "state" / "nythera" / "shell");
   std::filesystem::create_directories(root / "data");
   ::setenv("NYTHERA_CONFIG_HOME", (root / "config").c_str(), 1);
   ::setenv("NYTHERA_STATE_HOME", (root / "state").c_str(), 1);

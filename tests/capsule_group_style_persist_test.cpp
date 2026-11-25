@@ -1,17 +1,16 @@
-// Locks that every capsule group style field edited in the settings GUI survives a restart. Group
-// overrides are written to settings.toml by a hand-listed serializer, so a field it forgets reads
-// back as its default the next time the config loads.
+// Locks that every capsule group style field edited in the settings GUI persists directly
+// to user configuration and survives a reload.
 
 #include "config/color_spec.h"
 #include "config/config_service.h"
 #include "config/config_types.h"
+#include "test_isolation.h"
 
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <print>
 #include <string>
-#include <unistd.h>
 #include <vector>
 
 namespace {
@@ -34,16 +33,12 @@ namespace {
 } // namespace
 
 int main() {
-  const std::filesystem::path root =
-      std::filesystem::temp_directory_path() / ("nythera-group-style-persist-" + std::to_string(::getpid()));
-  std::filesystem::remove_all(root);
-  writeFile(root / "config" / "nythera" / "config.toml", R"(
+  const nythera::test::ScopedTestEnv env({.prefix = "nythera-group-style-persist"});
+  const auto configPath = env.config() / "nythera" / "shell" / "config.toml";
+  writeFile(configPath, R"(
 [bar.default]
 start = [ "clock", "weather" ]
 )");
-
-  ::setenv("NYTHERA_CONFIG_HOME", (root / "config").c_str(), 1);
-  ::setenv("XDG_STATE_HOME", (root / "state").c_str(), 1);
 
   // Every style field differs from its default so a dropped key cannot pass by accident.
   BarCapsuleGroupStyle group;
@@ -72,6 +67,7 @@ start = [ "clock", "weather" ]
         std::vector<std::string>{"bar", "default", "capsule_group"}, std::vector<BarCapsuleGroupStyle>{group}
     );
     expect(config.setOverrides(std::move(edits)), "group override writes");
+    expect(!std::filesystem::exists(env.state() / "nythera" / "settings.toml"), "must not create settings.toml");
   }
 
   {
@@ -89,7 +85,6 @@ start = [ "clock", "weather" ]
     }
   }
 
-  std::filesystem::remove_all(root);
   if (g_failures == 0) {
     std::println("capsule_group_style_persist: OK");
   }

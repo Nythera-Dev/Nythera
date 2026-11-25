@@ -212,7 +212,7 @@ namespace {
 
   void seedLegacyHistory(const std::filesystem::path& stateHome) {
     namespace fs = std::filesystem;
-    const fs::path clipboardDir = stateHome / "nythera/clipboard";
+    const fs::path clipboardDir = stateHome / "nythera/shell/clipboard";
     const fs::path entriesDir = clipboardDir / "entries";
     const fs::path manifestPath = clipboardDir / "index.json";
     const fs::path payloadPath = entriesDir / "entry.bin";
@@ -248,7 +248,7 @@ namespace {
 
   bool migrationAndEncryptedReload(const std::filesystem::path& stateHome) {
     namespace fs = std::filesystem;
-    const fs::path clipboardDir = stateHome / "nythera/clipboard";
+    const fs::path clipboardDir = stateHome / "nythera/shell/clipboard";
     const fs::path entriesDir = clipboardDir / "entries";
     const fs::path encryptedManifest = clipboardDir / "index.enc";
     const fs::path encryptedPayload = entriesDir / "entry.enc";
@@ -307,8 +307,8 @@ namespace {
   bool unavailableProviderPreservesPlaintext(const std::filesystem::path& stateHome) {
     namespace fs = std::filesystem;
     seedLegacyHistory(stateHome);
-    const fs::path manifest = stateHome / "nythera/clipboard/index.json";
-    const fs::path payload = stateHome / "nythera/clipboard/entries/entry.bin";
+    const fs::path manifest = stateHome / "nythera/shell/clipboard/index.json";
+    const fs::path payload = stateHome / "nythera/shell/clipboard/entries/entry.bin";
     const std::string manifestBefore = readFile(manifest);
     const std::string payloadBefore = readFile(payload);
 
@@ -329,7 +329,7 @@ namespace {
     ok = expect(fake->storeCount() == 0, "a key was stored while the provider was unavailable") && ok;
     ok = expect(readFile(manifest) == manifestBefore, "legacy manifest changed without a keyring") && ok;
     ok = expect(readFile(payload) == payloadBefore, "legacy payload changed without a keyring") && ok;
-    ok = expect(!fs::exists(stateHome / "nythera/clipboard/index.enc"), "encrypted manifest was created") && ok;
+    ok = expect(!fs::exists(stateHome / "nythera/shell/clipboard/index.enc"), "encrypted manifest was created") && ok;
 
     fake->setLookupStatus(std::nullopt);
     clipboard.retryPersistence();
@@ -343,13 +343,14 @@ namespace {
         && ok;
     ok = expect(!fs::exists(manifest), "retry left the legacy manifest behind") && ok;
     ok = expect(!fs::exists(payload), "retry left the legacy payload behind") && ok;
-    ok = expect(fs::exists(stateHome / "nythera/clipboard/index.enc"), "retry did not create encrypted history") && ok;
+    ok = expect(fs::exists(stateHome / "nythera/shell/clipboard/index.enc"), "retry did not create encrypted history")
+        && ok;
     return ok;
   }
 
   bool missingKeyPreservesEncryptedFiles(const std::filesystem::path& stateHome) {
     namespace fs = std::filesystem;
-    const fs::path clipboardDir = stateHome / "nythera/clipboard";
+    const fs::path clipboardDir = stateHome / "nythera/shell/clipboard";
     const fs::path manifest = clipboardDir / "index.enc";
     fs::create_directories(clipboardDir);
     {
@@ -378,7 +379,7 @@ namespace {
 
   bool secretServiceRecoveryReset(const std::filesystem::path& stateHome) {
     namespace fs = std::filesystem;
-    const fs::path clipboardDir = stateHome / "nythera/clipboard";
+    const fs::path clipboardDir = stateHome / "nythera/shell/clipboard";
     const fs::path entriesDir = clipboardDir / "entries";
     const fs::path manifest = clipboardDir / "index.enc";
     const fs::path encryptedPayload = entriesDir / "entry.enc";
@@ -446,7 +447,7 @@ namespace {
     auto backend = std::make_unique<FakeSecretStoreBackend>();
     auto* fake = backend.get();
     security::SecretStore store(std::move(backend));
-    const fs::path encryptedManifest = stateHome / "nythera/clipboard/index.enc";
+    const fs::path encryptedManifest = stateHome / "nythera/shell/clipboard/index.enc";
     bool ok = true;
 
     {
@@ -461,7 +462,7 @@ namespace {
       ok = expect(newestEntryText(clipboard) == "secret", "file key source did not migrate legacy history") && ok;
       ok = expect(fs::exists(encryptedManifest), "file key source did not create encrypted history") && ok;
       ok = expect(
-               !fs::exists(stateHome / "nythera/clipboard/index.json"),
+               !fs::exists(stateHome / "nythera/shell/clipboard/index.json"),
                "file key source left the legacy manifest behind"
            )
           && ok;
@@ -571,12 +572,13 @@ int main() {
   const auto serial = std::chrono::steady_clock::now().time_since_epoch().count();
   const fs::path root = fs::temp_directory_path() / ("nythera-clipboard-storage-test-" + std::to_string(serial));
   fs::remove_all(root);
-  fs::create_directories(root);
+  fs::create_directories(root / "isolated-config");
+  expect(::setenv("NYTHERA_CONFIG_HOME", (root / "isolated-config").c_str(), 1) == 0, "failed to set config home");
 
   bool ok = true;
   const fs::path migrationHome = root / "migration";
-  ok = expect(::setenv("NYTHERA_STATE_HOME", migrationHome.c_str(), 1) == 0, "failed to set migration state home")
-      && ok;
+  ok =
+      expect(::setenv("NYTHERA_STATE_HOME", migrationHome.c_str(), 1) == 0, "failed to set migration state home") && ok;
   ok = migrationAndEncryptedReload(migrationHome) && ok;
 
   const fs::path unavailableHome = root / "unavailable";
@@ -598,6 +600,7 @@ int main() {
   ok = fileKeySource(fileKeyHome) && ok;
 
   ::unsetenv("NYTHERA_STATE_HOME");
+  ::unsetenv("NYTHERA_CONFIG_HOME");
   fs::remove_all(root);
   return ok ? 0 : 1;
 }

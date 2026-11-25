@@ -1,4 +1,3 @@
-#include "config/atomic_file.h"
 #include "config/config_merge.h"
 #include "config/config_service.h"
 #include "config/schema/ranges.h"
@@ -18,35 +17,14 @@
 #include <exception>
 #include <filesystem>
 #include <fstream>
-#include <iterator>
 #include <optional>
 #include <set>
-#include <sstream>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
 namespace {
   constexpr Logger kLog("config");
-
-  std::string overrideCacheKey(const std::vector<std::string>& path) {
-    std::string key;
-    for (const auto& part : path) {
-      if (!key.empty()) {
-        key.push_back('.');
-      }
-      key += part;
-    }
-    return key;
-  }
-
-  toml::table* ensureTable(toml::table& parent, std::string_view key) {
-    if (auto* existing = parent.get_as<toml::table>(key)) {
-      return existing;
-    }
-    auto [it, _] = parent.insert_or_assign(key, toml::table{});
-    return it->second.as_table();
-  }
 
   void insertWidgetSetting(toml::table& table, const std::string& key, const WidgetSettingValue& value) {
     std::visit(
@@ -293,25 +271,26 @@ namespace {
     );
   }
 
-  std::vector<std::string> barOrderNames(const std::vector<BarConfig>& bars) {
-    std::vector<std::string> order;
-    order.reserve(bars.size());
-    for (const auto& bar : bars) {
-      order.push_back(bar.name);
+  toml::table* ensureTable(toml::table& parent, std::string_view key) {
+    if (auto* existing = parent.get_as<toml::table>(key)) {
+      return existing;
     }
-    return order;
+    auto [it, _] = parent.insert_or_assign(key, toml::table{});
+    return it->second.as_table();
   }
 
-  bool setBarOverrideOrder(toml::table& root, const std::vector<std::string>& order) {
-    auto* barRoot = ensureTable(root, "bar");
-    if (barRoot == nullptr) {
-      return false;
+  std::string joinDottedPath(const std::vector<std::string>& path) {
+    std::string key;
+    for (const auto& part : path) {
+      if (!key.empty()) {
+        key.push_back('.');
+      }
+      key += part;
     }
-    insertOverrideValue(*barRoot, "order", order);
-    return true;
+    return key;
   }
 
-  const toml::node* findOverrideNode(const toml::table& root, const std::vector<std::string>& path) {
+  const toml::node* findNode(const toml::table& root, const std::vector<std::string>& path) {
     const toml::table* table = &root;
     for (std::size_t i = 0; i < path.size(); ++i) {
       if (i + 1 == path.size()) {
@@ -326,9 +305,7 @@ namespace {
     return nullptr;
   }
 
-  void pruneEmptyOverrideTables(
-      toml::table& root, const std::vector<std::string>& changedPath, std::size_t preserveDepth = 0
-  ) {
+  void pruneEmptyTables(toml::table& root, const std::vector<std::string>& changedPath, std::size_t preserveDepth = 0) {
     if (changedPath.size() < 2) {
       return;
     }
@@ -355,7 +332,7 @@ namespace {
     }
   }
 
-  bool eraseOverridePath(toml::table& root, const std::vector<std::string>& path, std::size_t preserveDepth = 0) {
+  bool erasePathFromTable(toml::table& root, const std::vector<std::string>& path, std::size_t preserveDepth = 0) {
     if (path.empty()) {
       return false;
     }
@@ -372,8 +349,17 @@ namespace {
     if (table->erase(path.back()) == 0) {
       return false;
     }
-    pruneEmptyOverrideTables(root, path, preserveDepth);
+    pruneEmptyTables(root, path, preserveDepth);
     return true;
+  }
+
+  std::vector<std::string> barOrderNames(const std::vector<BarConfig>& bars) {
+    std::vector<std::string> order;
+    order.reserve(bars.size());
+    for (const auto& bar : bars) {
+      order.push_back(bar.name);
+    }
+    return order;
   }
 
   const BarConfig* findBarConfig(const Config& cfg, std::string_view name) {
@@ -386,7 +372,6 @@ namespace {
     return it != bar.monitorOverrides.end() ? &*it : nullptr;
   }
 
-  // {"bar", name, lane} or {"bar", name, "monitor", match, lane}, lane being a widget list.
   bool isBarLanePath(const std::vector<std::string>& path) {
     const bool barScope = path.size() == 3 && path[0] == "bar";
     const bool monitorScope = path.size() == 5 && path[0] == "bar" && path[2] == "monitor";
@@ -452,27 +437,28 @@ namespace {
     }
 
     // migrateCustomSchedule() turns custom_schedule on for a times-only location whenever the key is
-    // absent. The no-override comparison therefore resolves to true too, but writing an explicit
-    // true override is exactly what opts the user's config out of that legacy migration. Dropping it
-    // as a no-op would re-trigger the migration and its "set custom_schedule = true" warning.
+    // absent. Writing an explicit true value opts the user's config out of that legacy warning.
     if (path.size() == 2 && path[0] == "location" && path[1] == "custom_schedule") {
       return true;
     }
 
-    if (path.size() != 5 || path[0] != "bar" || path[2] != "monitor") {
-      return false;
+    if (path.size() == 5 && path[0] == "bar" && path[2] == "monitor") {
+      const auto& key = path[4];
+      return key == "start" || key == "center" || key == "end";
     }
-    const auto& key = path[4];
-    return key == "start" || key == "center" || key == "end";
+    return false;
   }
 
-}
-
-namespace {
-
-  void writeWidgetsPlacementToTable(
-      toml::table& sectionTbl, const DesktopWidgetsGridState& grid, const std::vector<DesktopWidgetState>& widgets
+  toml::table serializeWidgetsPlacementSection(
+      const DesktopWidgetsGridState& grid, const std::vector<DesktopWidgetState>& widgets, std::optional<bool> enabled,
+      std::int32_t schemaVersion
   ) {
+    toml::table sectionTbl;
+    if (enabled.has_value()) {
+      sectionTbl.insert_or_assign("enabled", *enabled);
+    }
+    sectionTbl.insert_or_assign("schema_version", static_cast<std::int64_t>(schemaVersion));
+
     toml::table gridTable;
     gridTable.insert_or_assign("visible", grid.visible);
     gridTable.insert_or_assign("cell_size", static_cast<std::int64_t>(grid.cellSize));
@@ -490,15 +476,150 @@ namespace {
     }
     sectionTbl.insert_or_assign("widget", std::move(widgetTable));
     sectionTbl.insert_or_assign("widget_order", std::move(widgetOrder));
+    return sectionTbl;
+  }
+
+  toml::array serializeWallpaperFavorites(const std::vector<WallpaperFavorite>& favorites) {
+    toml::array favoritesArray;
+    favoritesArray.reserve(favorites.size());
+    for (const auto& favorite : favorites) {
+      toml::table entry;
+      entry.insert("path", favorite.path);
+      if (favorite.themeMode.has_value()) {
+        entry.insert("theme_mode", std::string(enumToKey(kThemeModes, *favorite.themeMode)));
+      }
+      if (favorite.paletteSource.has_value()) {
+        entry.insert("palette_source", std::string(enumToKey(kPaletteSources, *favorite.paletteSource)));
+        switch (*favorite.paletteSource) {
+        case PaletteSource::Builtin:
+          if (!favorite.builtinPalette.empty()) {
+            entry.insert("builtin_palette", favorite.builtinPalette);
+          }
+          break;
+        case PaletteSource::Wallpaper:
+          if (!favorite.wallpaperScheme.empty()) {
+            entry.insert("wallpaper_scheme", favorite.wallpaperScheme);
+          }
+          break;
+        case PaletteSource::Community:
+          if (!favorite.communityPalette.empty()) {
+            entry.insert("community_palette", favorite.communityPalette);
+          }
+          break;
+        case PaletteSource::Custom:
+          if (!favorite.customPalette.empty()) {
+            entry.insert("custom_palette", favorite.customPalette);
+          }
+          break;
+        }
+      }
+      favoritesArray.push_back(std::move(entry));
+    }
+    return favoritesArray;
+  }
+
+  std::string formatStringValue(std::string_view text) {
+    toml::value<std::string> v{std::string(text)};
+    // Delegate to ConfigService::formatTomlValue via a temporary node.
+    toml::table t;
+    t.insert("v", v.get());
+    return ConfigService::formatTomlValue(*t.get("v"));
+  }
+
+  std::string formatStringArrayValue(const std::vector<std::string>& items) {
+    toml::array arr;
+    for (const auto& item : items) {
+      arr.push_back(item);
+    }
+    return ConfigService::formatTomlValue(arr);
+  }
+
+  template <typename Edit>
+  void syncTableEdits(
+      const std::vector<std::string>& prefix, const toml::node* currentNode, const toml::table& desired,
+      std::vector<Edit>& out, const std::optional<std::filesystem::path>& destination = std::nullopt
+  ) {
+    const toml::table* currentTbl = currentNode != nullptr ? currentNode->as_table() : nullptr;
+    if (currentTbl != nullptr) {
+      for (const auto& [k, _] : *currentTbl) {
+        const std::string key(k.str());
+        if (!desired.contains(key)) {
+          auto childPath = prefix;
+          childPath.push_back(key);
+          out.push_back({std::move(childPath), std::nullopt, destination});
+        }
+      }
+    }
+    if (desired.empty() && currentTbl == nullptr) {
+      out.push_back({prefix, "{}", destination});
+      return;
+    }
+    for (const auto& [k, v] : desired) {
+      auto childPath = prefix;
+      childPath.emplace_back(k.str());
+      const toml::node* existingChild = currentTbl != nullptr ? currentTbl->get(k) : nullptr;
+      if (const auto* subTbl = v.as_table()) {
+        if (existingChild != nullptr && !existingChild->is_table()) {
+          out.push_back({childPath, std::nullopt, destination});
+        }
+        syncTableEdits(childPath, existingChild, *subTbl, out, destination);
+      } else {
+        out.push_back({std::move(childPath), ConfigService::formatTomlValue(v), destination});
+      }
+    }
+  }
+
+  template <typename Edit>
+  void emitSubtreeEdits(
+      const std::vector<std::string>& prefix, const toml::table& tbl, std::vector<Edit>& out,
+      const std::optional<std::filesystem::path>& destination
+  ) {
+    if (tbl.empty()) {
+      out.push_back({prefix, "{}", destination});
+      return;
+    }
+    for (const auto& [k, v] : tbl) {
+      auto childPath = prefix;
+      childPath.emplace_back(k.str());
+      if (const auto* subTbl = v.as_table()) {
+        emitSubtreeEdits(childPath, *subTbl, out, destination);
+      } else {
+        out.push_back({std::move(childPath), ConfigService::formatTomlValue(v), destination});
+      }
+    }
+  }
+
+  template <typename Edit>
+  void appendOverrideValueEdits(
+      const std::vector<std::string>& path, const ConfigOverrideValue& value, const toml::table& currentUserTable,
+      std::vector<Edit>& out
+  ) {
+    toml::table temp;
+    insertOverrideValue(temp, path.back(), value);
+
+    if (const auto* node = temp.get(path.back()); node != nullptr && node->is_table()) {
+      syncTableEdits(path, findNode(currentUserTable, path), *node->as_table(), out);
+      if (path.size() == 2 && path[0] == "idle" && path[1] == "behavior") {
+        if (const auto* orderNode = temp.get("behavior_order")) {
+          out.push_back({{"idle", "behavior_order"}, ConfigService::formatTomlValue(*orderNode), std::nullopt});
+        }
+      } else if (path.size() == 2 && path[0] == "notification" && path[1] == "filter") {
+        if (const auto* orderNode = temp.get("filter_order")) {
+          out.push_back({{"notification", "filter_order"}, ConfigService::formatTomlValue(*orderNode), std::nullopt});
+        }
+      }
+      return;
+    }
+
+    if (const auto* node = temp.get(path.back())) {
+      out.push_back({path, ConfigService::formatTomlValue(*node), std::nullopt});
+    }
   }
 
 } // namespace
 
 void ConfigService::setPluginEnabled(std::string_view pluginId, bool enabled) {
-  if (!scripting::isValidPluginId(pluginId)) {
-    return;
-  }
-  if (m_overridesPath.empty()) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty() || !scripting::isValidPluginId(pluginId)) {
     return;
   }
 
@@ -508,35 +629,22 @@ void ConfigService::setPluginEnabled(std::string_view pluginId, bool enabled) {
 
   if (enabled) {
     if (currentlyEnabled) {
-      return; // already enabled
+      return;
     }
     next.push_back(id);
   } else {
     if (!currentlyEnabled) {
-      return; // already disabled
+      return;
     }
     std::erase(next, id);
   }
 
-  toml::array enabledArray;
-  for (const auto& plugin : next) {
-    enabledArray.push_back(plugin);
-  }
-  auto* pluginsTbl = ensureTable(m_overridesTable, "plugins");
-  pluginsTbl->insert_or_assign("enabled", std::move(enabledArray));
-
-  if (!writeOverridesToFile()) {
-    kLog.warn("failed to write {}", m_overridesPath);
-    return;
-  }
-
-  m_ownOverridesWritePending = true;
-  loadAll();
-  fireReloadCallbacks();
+  const std::vector<DirectEdit> edits{{{"plugins", "enabled"}, formatStringArrayValue(next), std::nullopt}};
+  (void)persistDirectEdits(edits);
 }
 
 void ConfigService::addPluginSource(const PluginSourceConfig& source) {
-  if (m_overridesPath.empty() || !isValidPluginSourceName(source.name)) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty() || !isValidPluginSourceName(source.name)) {
     return;
   }
 
@@ -551,69 +659,56 @@ void ConfigService::addPluginSource(const PluginSourceConfig& source) {
     return entry;
   };
 
-  auto* pluginsTbl = ensureTable(m_overridesTable, "plugins");
-  auto* arr = pluginsTbl->get_as<toml::array>("source");
+  toml::array nextSources;
   bool sourceWritten = false;
-  if (arr == nullptr) {
-    toml::array seededSources;
+  if (const auto* existingNode = findNode(m_mergedUserTable, {"plugins", "source"});
+      existingNode != nullptr && existingNode->is_array()) {
+    nextSources = *existingNode->as_array();
+    for (auto it = nextSources.begin(); it != nextSources.end(); ++it) {
+      const auto* tbl = it->as_table();
+      const auto name = tbl != nullptr ? (*tbl)["name"].value<std::string>() : std::nullopt;
+      if (name && *name == source.name) {
+        nextSources.replace(it, sourceTable(source));
+        sourceWritten = true;
+        break;
+      }
+    }
+    if (!sourceWritten) {
+      nextSources.push_back(sourceTable(source));
+    }
+  } else {
     for (const auto& existing : m_config.plugins.sources) {
       if (!isValidPluginSourceName(existing.name)) {
         continue;
       }
-      seededSources.push_back(sourceTable(existing.name == source.name ? source : existing));
+      nextSources.push_back(sourceTable(existing.name == source.name ? source : existing));
       sourceWritten = sourceWritten || existing.name == source.name;
     }
-    auto [it, _] = pluginsTbl->insert_or_assign("source", std::move(seededSources));
-    arr = it->second.as_array();
-  }
-
-  if (!sourceWritten) {
-    // A source name is an identity, not a duplicate key. Replace any existing entry
-    // in place: source order is precedence, so toggling enabled must not move the
-    // source to the end. Append only when the name isn't present yet.
-    bool replaced = false;
-    for (auto it = arr->begin(); it != arr->end(); ++it) {
-      const auto* tbl = it->as_table();
-      const auto name = tbl != nullptr ? (*tbl)["name"].value<std::string>() : std::nullopt;
-      if (name && *name == source.name) {
-        arr->replace(it, sourceTable(source));
-        replaced = true;
-        break;
-      }
-    }
-    if (!replaced) {
-      arr->push_back(sourceTable(source));
+    if (!sourceWritten) {
+      nextSources.push_back(sourceTable(source));
     }
   }
 
-  if (!writeOverridesToFile()) {
-    kLog.warn("failed to write {}", m_overridesPath);
-    return;
-  }
-  m_ownOverridesWritePending = true;
-  loadAll();
-  fireReloadCallbacks();
+  const std::vector<DirectEdit> edits{{{"plugins", "source"}, formatTomlValue(nextSources), std::nullopt}};
+  (void)persistDirectEdits(edits);
 }
 
 void ConfigService::removePluginSource(std::string_view name) {
-  if (m_overridesPath.empty()) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty()) {
     return;
   }
-  auto* pluginsTbl = m_overridesTable.get_as<toml::table>("plugins");
-  if (pluginsTbl == nullptr) {
-    return;
-  }
-  auto* arr = pluginsTbl->get_as<toml::array>("source");
-  if (arr == nullptr) {
+  const auto* existingNode = findNode(m_mergedUserTable, {"plugins", "source"});
+  if (existingNode == nullptr || !existingNode->is_array()) {
     return;
   }
 
+  toml::array nextSources = *existingNode->as_array();
   bool removed = false;
-  for (auto it = arr->begin(); it != arr->end();) {
+  for (auto it = nextSources.begin(); it != nextSources.end();) {
     const auto* tbl = it->as_table();
     const auto entryName = tbl != nullptr ? (*tbl)["name"].value<std::string>() : std::nullopt;
     if (entryName && *entryName == name) {
-      it = arr->erase(it);
+      it = nextSources.erase(it);
       removed = true;
     } else {
       ++it;
@@ -623,37 +718,22 @@ void ConfigService::removePluginSource(std::string_view name) {
     return;
   }
 
-  if (!writeOverridesToFile()) {
-    kLog.warn("failed to write {}", m_overridesPath);
-    return;
-  }
-  m_ownOverridesWritePending = true;
-  loadAll();
-  fireReloadCallbacks();
+  const std::vector<DirectEdit> edits{{{"plugins", "source"}, formatTomlValue(nextSources), std::nullopt}};
+  (void)persistDirectEdits(edits);
 }
 
 void ConfigService::setThemeMode(ThemeMode mode) {
-  if (m_overridesPath.empty()) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty()) {
     return;
   }
-
-  auto* themeTbl = ensureTable(m_overridesTable, "theme");
-  themeTbl->insert_or_assign("mode", std::string(enumToKey(kThemeModes, mode)));
-
-  if (!writeOverridesToFile()) {
-    kLog.warn("failed to write {}", m_overridesPath);
-    return;
-  }
-
-  m_ownOverridesWritePending = true;
-
-  // Rebuild Config and fan out reload callbacks so ThemeService transitions.
-  loadAll();
-  fireReloadCallbacks();
+  const std::vector<DirectEdit> edits{
+      {{"theme", "mode"}, formatStringValue(enumToKey(kThemeModes, mode)), std::nullopt}
+  };
+  (void)persistDirectEdits(edits);
 }
 
 bool ConfigService::setThemeColorScheme(PaletteSource source, std::string_view valueRaw) {
-  if (m_overridesPath.empty()) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty()) {
     return false;
   }
 
@@ -662,137 +742,94 @@ bool ConfigService::setThemeColorScheme(PaletteSource source, std::string_view v
     return false;
   }
 
+  std::string paletteKey;
   switch (source) {
   case PaletteSource::Builtin:
     if (nythera::theme::findBuiltinPalette(value) == nullptr) {
       return false;
     }
+    paletteKey = "builtin";
     break;
   case PaletteSource::Wallpaper:
     if (!nythera::theme::schemeFromString(value)) {
       return false;
     }
+    paletteKey = "wallpaper_scheme";
     break;
   case PaletteSource::Community:
+    paletteKey = "community_palette";
     break;
   case PaletteSource::Custom:
     if (!std::filesystem::exists(nythera::theme::customPalettePath(value))) {
       return false;
     }
+    paletteKey = "custom_palette";
     break;
   }
 
-  auto* themeTbl = ensureTable(m_overridesTable, "theme");
-  themeTbl->insert_or_assign("source", std::string(enumToKey(kPaletteSources, source)));
-
-  switch (source) {
-  case PaletteSource::Builtin:
-    themeTbl->insert_or_assign("builtin", value);
-    break;
-  case PaletteSource::Wallpaper:
-    themeTbl->insert_or_assign("wallpaper_scheme", value);
-    break;
-  case PaletteSource::Community:
-    themeTbl->insert_or_assign("community_palette", value);
-    break;
-  case PaletteSource::Custom:
-    themeTbl->insert_or_assign("custom_palette", value);
-    break;
-  }
-
-  if (!writeOverridesToFile()) {
-    kLog.warn("failed to write {}", m_overridesPath);
-    return false;
-  }
-
-  m_ownOverridesWritePending = true;
-  loadAll();
-  fireReloadCallbacks();
-  return true;
+  const std::vector<DirectEdit> edits{
+      {{"theme", "source"}, formatStringValue(enumToKey(kPaletteSources, source)), std::nullopt},
+      {{"theme", std::move(paletteKey)}, formatStringValue(value), std::nullopt},
+  };
+  return persistDirectEdits(edits);
 }
 
 void ConfigService::setDockEnabled(bool enabled) {
-  if (m_overridesPath.empty()) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty()) {
     return;
   }
-
-  auto* dockTbl = ensureTable(m_overridesTable, "dock");
-  const auto existing = (*dockTbl)["enabled"].value<bool>();
-  if (existing.has_value() && *existing == enabled && m_config.dock.enabled == enabled) {
-    return;
+  if (const auto* node = findNode(m_mergedUserTable, {"dock", "enabled"})) {
+    const auto existing = node->value<bool>();
+    if (existing.has_value() && *existing == enabled && m_config.dock.enabled == enabled) {
+      return;
+    }
   }
 
-  dockTbl->insert_or_assign("enabled", enabled);
-
-  if (!writeOverridesToFile()) {
-    kLog.warn("failed to write {}", m_overridesPath);
-    return;
-  }
-
-  m_ownOverridesWritePending = true;
-
-  loadAll();
-  fireReloadCallbacks();
+  const std::vector<DirectEdit> edits{{{"dock", "enabled"}, enabled ? "true" : "false", std::nullopt}};
+  (void)persistDirectEdits(edits);
 }
 
 void ConfigService::setPluginsAutoUpdate(PluginAutoUpdateMode mode) {
-  if (m_overridesPath.empty()) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty()) {
     return;
   }
-
-  auto* pluginsTbl = ensureTable(m_overridesTable, "plugins");
-  const auto existingKey = (*pluginsTbl)["auto_update"].value<std::string>();
-  const auto existingMode = existingKey.has_value() ? enumFromKey(kPluginAutoUpdateModes, *existingKey) : std::nullopt;
-  if (existingMode.has_value() && *existingMode == mode && m_config.plugins.autoUpdate == mode) {
-    return;
+  if (const auto* node = findNode(m_mergedUserTable, {"plugins", "auto_update"})) {
+    const auto existingKey = node->value<std::string>();
+    const auto existingMode =
+        existingKey.has_value() ? enumFromKey(kPluginAutoUpdateModes, *existingKey) : std::nullopt;
+    if (existingMode.has_value() && *existingMode == mode && m_config.plugins.autoUpdate == mode) {
+      return;
+    }
   }
 
-  pluginsTbl->insert_or_assign("auto_update", std::string(enumToKey(kPluginAutoUpdateModes, mode)));
-
-  if (!writeOverridesToFile()) {
-    kLog.warn("failed to write {}", m_overridesPath);
-    return;
-  }
-
-  m_ownOverridesWritePending = true;
-
-  loadAll();
-  fireReloadCallbacks();
+  const std::vector<DirectEdit> edits{
+      {{"plugins", "auto_update"}, formatStringValue(enumToKey(kPluginAutoUpdateModes, mode)), std::nullopt}
+  };
+  (void)persistDirectEdits(edits);
 }
 
 bool ConfigService::setDesktopWidgetsState(const DesktopWidgetsConfig& desktopWidgets) {
-  if (m_overridesPath.empty()) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty()) {
     return false;
   }
-
-  toml::table next = m_overridesTable;
-  auto* desktopWidgetsTbl = ensureTable(next, "desktop_widgets");
-  if (desktopWidgetsTbl == nullptr) {
-    return false;
-  }
-
-  desktopWidgetsTbl->insert_or_assign("schema_version", static_cast<std::int64_t>(desktopWidgets.schemaVersion));
-  writeWidgetsPlacementToTable(*desktopWidgetsTbl, desktopWidgets.grid, desktopWidgets.widgets);
-
-  return commitOverrideTable(std::move(next), nullptr);
+  const toml::table desired = serializeWidgetsPlacementSection(
+      desktopWidgets.grid, desktopWidgets.widgets, std::nullopt, desktopWidgets.schemaVersion
+  );
+  std::vector<DirectEdit> edits;
+  syncTableEdits({"desktop_widgets"}, findNode(m_mergedUserTable, {"desktop_widgets"}), desired, edits);
+  return persistDirectEdits(edits);
 }
 
 bool ConfigService::setLockscreenWidgetsState(const LockscreenWidgetsConfig& lockscreenWidgets) {
-  if (m_overridesPath.empty()) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty()) {
     return false;
   }
-
-  toml::table next = m_overridesTable;
-  auto* sectionTbl = ensureTable(next, "lockscreen_widgets");
-  if (sectionTbl == nullptr) {
-    return false;
-  }
-
-  sectionTbl->insert_or_assign("enabled", lockscreenWidgets.enabled);
-  sectionTbl->insert_or_assign("schema_version", static_cast<std::int64_t>(lockscreenWidgets.schemaVersion));
-  writeWidgetsPlacementToTable(*sectionTbl, lockscreenWidgets.grid, lockscreenWidgets.widgets);
-
-  return commitOverrideTable(std::move(next), nullptr);
+  const toml::table desired = serializeWidgetsPlacementSection(
+      lockscreenWidgets.grid, lockscreenWidgets.widgets, lockscreenWidgets.enabled, lockscreenWidgets.schemaVersion
+  );
+  std::vector<DirectEdit> edits;
+  syncTableEdits({"lockscreen_widgets"}, findNode(m_mergedUserTable, {"lockscreen_widgets"}), desired, edits);
+  return persistDirectEdits(edits);
 }
 
 bool ConfigService::markSetupWizardCompleted() {
@@ -813,6 +850,8 @@ bool ConfigService::markSetupWizardCompleted() {
     }
   }
 
+  std::error_code ec;
+  std::filesystem::create_directories(std::filesystem::path(m_setupMarkerPath).parent_path(), ec);
   std::ofstream out(m_setupMarkerPath, std::ios::trunc);
   if (!out.is_open()) {
     kLog.warn("failed to write {}", m_setupMarkerPath);
@@ -821,89 +860,12 @@ bool ConfigService::markSetupWizardCompleted() {
   return true;
 }
 
-void ConfigService::reconcileCapsuleGroupOverrides(toml::table& candidate) const {
-  const auto* barRoot = candidate.get_as<toml::table>("bar");
-  if (barRoot == nullptr) {
-    return;
-  }
-
-  // Scope = the table owning a capsule_group array: a bar, or one of its monitor overrides.
-  std::vector<std::vector<std::string>> scopePaths;
-  for (const auto& [barName, barNode] : *barRoot) {
-    const auto* barTable = barNode.as_table();
-    if (barTable == nullptr) {
-      continue;
-    }
-    const std::string name(barName.str());
-    if (barTable->contains("capsule_group")) {
-      scopePaths.push_back({"bar", name, "capsule_group"});
-    }
-    const auto* monitorRoot = barTable->get_as<toml::table>("monitor");
-    if (monitorRoot == nullptr) {
-      continue;
-    }
-    for (const auto& [match, monitorNode] : *monitorRoot) {
-      const auto* monitorTable = monitorNode.as_table();
-      if (monitorTable != nullptr && monitorTable->contains("capsule_group")) {
-        scopePaths.push_back({"bar", name, "monitor", std::string(match.str()), "capsule_group"});
-      }
-    }
-  }
-  if (scopePaths.empty()) {
-    return;
-  }
-
-  const auto resolved = configForOverrides(candidate);
-  const auto fileConfig = configForOverrides(toml::table{});
-  if (!resolved.has_value() || !fileConfig.has_value()) {
-    return;
-  }
-
-  for (const auto& path : scopePaths) {
-    const BarConfig* bar = findBarConfig(*resolved, path[1]);
-    const BarConfig* fileBar = findBarConfig(*fileConfig, path[1]);
-    if (bar == nullptr || fileBar == nullptr) {
-      continue;
-    }
-
-    const bool monitorScope = path.size() == 5;
-    const BarMonitorOverride* ovr = monitorScope ? findBarMonitorOverride(*bar, path[3]) : nullptr;
-    if (monitorScope && (ovr == nullptr || !ovr->widgetCapsuleGroups.has_value())) {
-      continue;
-    }
-    const BarMonitorOverride* fileOvr = monitorScope ? findBarMonitorOverride(*fileBar, path[3]) : nullptr;
-
-    const std::vector<BarCapsuleGroupStyle>& current =
-        monitorScope ? *ovr->widgetCapsuleGroups : bar->widgetCapsuleGroups;
-    const std::vector<BarCapsuleGroupStyle>& base = fileOvr != nullptr && fileOvr->widgetCapsuleGroups.has_value()
-        ? *fileOvr->widgetCapsuleGroups
-        : fileBar->widgetCapsuleGroups;
-    const std::set<std::string> referenced =
-        monitorScope ? capsuleGroupRefsForMonitorScope(*bar, *ovr) : capsuleGroupRefsForBarScope(*bar);
-
-    const std::vector<BarCapsuleGroupStyle> reconciled = reconcileCapsuleGroups(current, base, referenced);
-    if (reconciled == current) {
-      continue;
-    }
-    if (reconciled == base) {
-      eraseOverridePath(candidate, path, overridePreserveDepthForPath(path));
-      continue;
-    }
-    toml::table* scopeTable = &candidate;
-    for (std::size_t i = 0; i + 1 < path.size() && scopeTable != nullptr; ++i) {
-      scopeTable = scopeTable->get_as<toml::table>(path[i]);
-    }
-    if (scopeTable != nullptr) {
-      insertOverrideValue(*scopeTable, "capsule_group", reconciled);
-    }
-  }
-}
-
 bool ConfigService::isOverrideOnlyCalendarAccount(std::string_view id) const {
-  if (id.empty() || !hasOverride({"calendar", "account", std::string(id)})) {
+  if (id.empty()) {
     return false;
   }
-  return !m_configFileCalendarAccountNames.contains(std::string(id));
+  const auto* node = findNode(m_mergedUserTable, {"calendar", "account", std::string(id)});
+  return node != nullptr && node->is_table();
 }
 
 bool ConfigService::canMoveBarOverride(std::string_view name, int direction) const {
@@ -928,13 +890,15 @@ bool ConfigService::canDeleteBarOverride(std::string_view name) const {
 }
 
 bool ConfigService::isOverrideOnlyDockMonitorOverride(std::string_view tableName) const {
-  return !tableName.empty()
-      && hasOverride({"dock", "monitor", std::string(tableName)})
-      && !m_configFileDockMonitorOverrideNames.contains(std::string(tableName));
+  if (tableName.empty()) {
+    return false;
+  }
+  const auto* node = findNode(m_mergedUserTable, {"dock", "monitor", std::string(tableName)});
+  return node != nullptr && node->is_table();
 }
 
 bool ConfigService::createBarOverride(std::string_view name) {
-  if (m_overridesPath.empty() || name.empty()) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty() || name.empty()) {
     return false;
   }
 
@@ -943,44 +907,24 @@ bool ConfigService::createBarOverride(std::string_view name) {
       return false;
     }
   }
-
-  auto* barRoot = ensureTable(m_overridesTable, "bar");
-  if (barRoot == nullptr || barRoot->get(name) != nullptr) {
+  if (findNode(m_mergedUserTable, {"bar", std::string(name)}) != nullptr) {
     return false;
   }
 
-  if (m_configFileBarNames.empty()
-      && barRoot->empty()
-      && m_config.bars.size() == 1
-      && m_config.bars.front().name == "default") {
-    auto* defaultBar = ensureTable(*barRoot, "default");
-    if (defaultBar == nullptr) {
-      return false;
-    }
-    defaultBar->insert_or_assign("enabled", m_config.bars.front().enabled);
+  std::vector<DirectEdit> edits;
+  const auto* barMap = m_mergedUserTable["bar"].as_table();
+  const bool hasAnyBarTable =
+      barMap != nullptr && std::ranges::any_of(*barMap, [](const auto& entry) { return entry.second.is_table(); });
+  if (!hasAnyBarTable && m_config.bars.size() == 1 && m_config.bars.front().name == "default") {
+    edits.push_back({{"bar", "default", "enabled"}, m_config.bars.front().enabled ? "true" : "false", std::nullopt});
   }
 
-  auto* barTbl = ensureTable(*barRoot, name);
-  if (barTbl == nullptr) {
-    return false;
-  }
-  barTbl->insert_or_assign("enabled", true);
-
+  edits.push_back({{"bar", std::string(name), "enabled"}, "true", std::nullopt});
   auto order = barOrderNames(m_config.bars);
   order.emplace_back(name);
-  if (!setBarOverrideOrder(m_overridesTable, order)) {
-    return false;
-  }
+  edits.push_back({{"bar", "order"}, formatStringArrayValue(order), std::nullopt});
 
-  if (!writeOverridesToFile()) {
-    kLog.warn("failed to write {}", m_overridesPath);
-    return false;
-  }
-
-  m_ownOverridesWritePending = true;
-  loadAll();
-  fireReloadCallbacks();
-  return true;
+  return persistDirectEdits(edits);
 }
 
 bool ConfigService::moveBarOverride(std::string_view name, int direction) {
@@ -1000,19 +944,8 @@ bool ConfigService::moveBarOverride(std::string_view name, int direction) {
     std::iter_swap(currentIt, std::next(currentIt));
   }
 
-  if (!setBarOverrideOrder(m_overridesTable, order)) {
-    return false;
-  }
-
-  if (!writeOverridesToFile()) {
-    kLog.warn("failed to write {}", m_overridesPath);
-    return false;
-  }
-
-  m_ownOverridesWritePending = true;
-  loadAll();
-  fireReloadCallbacks();
-  return true;
+  const std::vector<DirectEdit> edits{{{"bar", "order"}, formatStringArrayValue(order), std::nullopt}};
+  return persistDirectEdits(edits);
 }
 
 bool ConfigService::renameBarOverride(std::string_view oldName, std::string_view newName) {
@@ -1025,6 +958,27 @@ bool ConfigService::renameBarOverride(std::string_view oldName, std::string_view
       return false;
     }
   }
+  if (findNode(m_mergedUserTable, {"bar", std::string(newName)}) != nullptr) {
+    return false;
+  }
+
+  const std::vector<std::string> oldPath{"bar", std::string(oldName)};
+  const std::vector<std::string> newPath{"bar", std::string(newName)};
+  const auto* oldNode = findNode(m_mergedUserTable, oldPath);
+  if (oldNode == nullptr || !oldNode->is_table()) {
+    return false;
+  }
+
+  std::optional<std::filesystem::path> dest;
+  if (const auto* winner = m_sourceMap.winner(oldPath)) {
+    dest = std::filesystem::path(winner->origin.file);
+  } else {
+    dest = defaultDestinationForPath(newPath);
+  }
+
+  std::vector<DirectEdit> edits;
+  edits.push_back({oldPath, std::nullopt, std::nullopt});
+  emitSubtreeEdits(newPath, *oldNode->as_table(), edits, dest);
 
   auto order = barOrderNames(m_config.bars);
   for (auto& item : order) {
@@ -1033,41 +987,35 @@ bool ConfigService::renameBarOverride(std::string_view oldName, std::string_view
       break;
     }
   }
-  if (!setBarOverrideOrder(m_overridesTable, order)) {
-    return false;
-  }
+  edits.push_back({{"bar", "order"}, formatStringArrayValue(order), std::nullopt});
+
   // shell.panel_anchor_bar names a bar; follow the rename so panels keep opening.
   if (m_config.shell.panelAnchorBar == oldName) {
-    auto* shellTbl = ensureTable(m_overridesTable, "shell");
-    if (shellTbl == nullptr) {
-      return false;
-    }
-    insertOverrideValue(*shellTbl, "panel_anchor_bar", std::string(newName));
+    edits.push_back({{"shell", "panel_anchor_bar"}, formatStringValue(newName), std::nullopt});
   }
 
-  return renameOverrideTable({"bar", std::string(oldName)}, {"bar", std::string(newName)});
+  return persistDirectEdits(edits);
 }
 
 bool ConfigService::deleteBarOverride(std::string_view name) {
   if (!canDeleteBarOverride(name)) {
     return false;
   }
+
   auto order = barOrderNames(m_config.bars);
   std::erase(order, std::string(name));
-  if (!setBarOverrideOrder(m_overridesTable, order)) {
-    return false;
-  }
-  std::vector<std::vector<std::string>> clearPaths{{"bar", std::string(name)}};
-  // shell.panel_anchor_bar names a bar; drop it with the bar so panels fall back to per-source resolution.
+
+  std::vector<DirectEdit> edits;
+  edits.push_back({{"bar", std::string(name)}, std::nullopt, std::nullopt});
+  edits.push_back({{"bar", "order"}, formatStringArrayValue(order), std::nullopt});
   if (m_config.shell.panelAnchorBar == name) {
-    clearPaths.push_back({"shell", "panel_anchor_bar"});
+    edits.push_back({{"shell", "panel_anchor_bar"}, std::nullopt, std::nullopt});
   }
-  bool changed = false;
-  return clearOverrides(clearPaths, &changed) && changed;
+  return persistDirectEdits(edits);
 }
 
 bool ConfigService::createMonitorOverride(std::string_view barName, std::string_view match) {
-  if (m_overridesPath.empty() || barName.empty() || match.empty()) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty() || barName.empty() || match.empty()) {
     return false;
   }
 
@@ -1082,32 +1030,13 @@ bool ConfigService::createMonitorOverride(std::string_view barName, std::string_
   if (monitorIt != barIt->monitorOverrides.end()) {
     return false;
   }
-
-  auto* barRoot = ensureTable(m_overridesTable, "bar");
-  if (barRoot == nullptr) {
-    return false;
-  }
-  auto* barTbl = ensureTable(*barRoot, barName);
-  if (barTbl == nullptr) {
-    return false;
-  }
-  auto* monitorRoot = ensureTable(*barTbl, "monitor");
-  if (monitorRoot == nullptr || monitorRoot->get(match) != nullptr) {
-    return false;
-  }
-  if (ensureTable(*monitorRoot, match) == nullptr) {
+  const std::vector<std::string> path{"bar", std::string(barName), "monitor", std::string(match)};
+  if (findNode(m_mergedUserTable, path) != nullptr) {
     return false;
   }
 
-  if (!writeOverridesToFile()) {
-    kLog.warn("failed to write {}", m_overridesPath);
-    return false;
-  }
-
-  m_ownOverridesWritePending = true;
-  loadAll();
-  fireReloadCallbacks();
-  return true;
+  const std::vector<DirectEdit> edits{{path, "{}", std::nullopt}};
+  return persistDirectEdits(edits);
 }
 
 bool ConfigService::renameMonitorOverride(
@@ -1147,7 +1076,7 @@ bool ConfigService::deleteMonitorOverride(std::string_view barName, std::string_
 }
 
 bool ConfigService::createDockMonitorOverride(std::string_view match) {
-  if (m_overridesPath.empty() || match.empty()) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty() || match.empty()) {
     return false;
   }
   if (std::ranges::any_of(m_config.dock.monitorOverrides, [match](const DockMonitorOverride& override) {
@@ -1155,28 +1084,13 @@ bool ConfigService::createDockMonitorOverride(std::string_view match) {
       })) {
     return false;
   }
-
-  auto* dockRoot = ensureTable(m_overridesTable, "dock");
-  if (dockRoot == nullptr) {
-    return false;
-  }
-  auto* monitorRoot = ensureTable(*dockRoot, "monitor");
-  if (monitorRoot == nullptr || monitorRoot->get(match) != nullptr) {
-    return false;
-  }
-  if (ensureTable(*monitorRoot, match) == nullptr) {
+  const std::vector<std::string> path{"dock", "monitor", std::string(match)};
+  if (findNode(m_mergedUserTable, path) != nullptr) {
     return false;
   }
 
-  if (!writeOverridesToFile()) {
-    kLog.warn("failed to write {}", m_overridesPath);
-    return false;
-  }
-
-  m_ownOverridesWritePending = true;
-  loadAll();
-  fireReloadCallbacks();
-  return true;
+  const std::vector<DirectEdit> edits{{path, "{}", std::nullopt}};
+  return persistDirectEdits(edits);
 }
 
 bool ConfigService::renameDockMonitorOverride(std::string_view oldTableName, std::string_view newMatch) {
@@ -1219,6 +1133,7 @@ bool ConfigService::setOverride(const std::vector<std::string>& path, ConfigOver
 bool ConfigService::validateOverride(
     const std::vector<std::string>& path, const ConfigOverrideValue& value, std::string* error
 ) {
+  m_lastMutationError.clear();
   if (path.empty()) {
     if (error != nullptr) {
       *error = "invalid empty setting path";
@@ -1226,7 +1141,35 @@ bool ConfigService::validateOverride(
     return false;
   }
 
-  toml::table candidate = m_overridesTable;
+  std::vector<std::filesystem::path> baseFiles;
+  if (!m_sharedThemePath.empty()) {
+    baseFiles.emplace_back(m_sharedThemePath);
+  }
+  auto current = nythera::config::mergeConfigWithSources(m_configDir, {}, baseFiles);
+  if (!current.config.firstError.empty()) {
+    m_lastMutationError = current.config.firstErrorOrigin.prefixedShort(m_configDir, current.config.firstError);
+    if (error != nullptr) {
+      *error = m_lastMutationError;
+    }
+    return false;
+  }
+
+  toml::table baselineMerged = current.config.merged;
+  nythera::config::ConfigOriginIndex baselineOrigins = current.config.origins;
+  toml::table baselineSidecar;
+  bool hasBaselineSidecar = false;
+  ConfigProblem legacyError;
+  if (!overlayLegacySidecar(baselineMerged, baselineOrigins, baselineSidecar, hasBaselineSidecar, &legacyError)) {
+    m_lastMutationError = legacyError.flatten(m_configDir);
+    if (error != nullptr) {
+      *error = m_lastMutationError;
+    }
+    return false;
+  }
+  const auto baselineDiagnostics =
+      diagnosticsForTable(baselineMerged, baselineOrigins, hasBaselineSidecar ? &baselineSidecar : nullptr);
+
+  toml::table candidate = baselineMerged;
   toml::table* table = &candidate;
   for (std::size_t i = 0; i + 1 < path.size(); ++i) {
     table = ensureTable(*table, path[i]);
@@ -1238,8 +1181,10 @@ bool ConfigService::validateOverride(
     }
   }
   insertOverrideValue(*table, path.back(), value);
-  const auto candidateDiagnostics = diagnosticsForOverrides(candidate);
-  const std::string settingPath = overrideCacheKey(path);
+
+  const auto candidateDiagnostics =
+      diagnosticsForTable(candidate, baselineOrigins, hasBaselineSidecar ? &baselineSidecar : nullptr);
+  const std::string settingPath = joinDottedPath(path);
   const auto fieldError = std::ranges::find_if(candidateDiagnostics.entries, [&](const auto& entry) {
     return entry.severity == nythera::config::schema::Diagnostics::Severity::Error && entry.path == settingPath;
   });
@@ -1251,11 +1196,28 @@ bool ConfigService::validateOverride(
     return false;
   }
 
-  const bool valid = validateOverrideMutation(candidate, {.candidate = &candidateDiagnostics});
-  if (!valid && error != nullptr) {
-    *error = m_lastMutationError;
+  const auto fatal = std::ranges::find_if(candidateDiagnostics.entries, [](const auto& entry) {
+    return entry.severity == nythera::config::schema::Diagnostics::Severity::Error
+        && entry.recoveryScope == nythera::config::schema::Diagnostics::RecoveryScope::Document;
+  });
+  if (fatal != candidateDiagnostics.entries.end()) {
+    m_lastMutationError = fatal->describeShort(m_configDir);
+    if (error != nullptr) {
+      *error = m_lastMutationError;
+    }
+    return false;
   }
-  return valid;
+
+  const auto introduced = candidateDiagnostics.introducedErrorsComparedTo(baselineDiagnostics);
+  if (!introduced.entries.empty()) {
+    m_lastMutationError = introduced.entries.front().describeShort(m_configDir);
+    if (error != nullptr) {
+      *error = m_lastMutationError;
+    }
+    return false;
+  }
+
+  return true;
 }
 
 bool ConfigService::setOverride(const std::vector<std::string>& path, ConfigOverrideValue value, bool* changed) {
@@ -1276,7 +1238,7 @@ bool ConfigService::setOverrides(
   if (changed != nullptr) {
     *changed = false;
   }
-  if (m_overridesPath.empty() || overrides.empty()) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty() || overrides.empty()) {
     return false;
   }
   return mutateOverrides(overrides, {}, changed);
@@ -1289,33 +1251,49 @@ bool ConfigService::mutateOverrides(
   if (changed != nullptr) {
     *changed = false;
   }
-  if (m_overridesPath.empty()) {
+  m_lastMutationError.clear();
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty()) {
     return false;
   }
 
-  const auto erasePath = [this](toml::table& table, const std::vector<std::string>& path) {
-    const bool erased = eraseOverridePath(table, path, overridePreserveDepthForPath(path));
+  const auto erasePath = [](toml::table& table, const std::vector<std::string>& path) {
+    const bool erased = erasePathFromTable(table, path, preserveDepthForPath(path, table));
     if (erased && path.size() == 2 && path[0] == "idle" && path[1] == "behavior") {
-      eraseOverridePath(table, {"idle", "behavior_order"}, overridePreserveDepthForPath(path));
+      erasePathFromTable(table, {"idle", "behavior_order"}, preserveDepthForPath(path, table));
+    }
+    if (erased && path.size() == 2 && path[0] == "notification" && path[1] == "filter") {
+      erasePathFromTable(table, {"notification", "filter_order"}, preserveDepthForPath(path, table));
     }
     return erased;
   };
 
-  toml::table next = m_overridesTable;
-
-  bool anyCleared = false;
+  std::vector<DirectEdit> edits;
+  toml::table next = m_mergedUserTable;
+  std::vector<std::vector<std::string>> clearedLanePaths;
   for (const auto& path : clearPaths) {
     if (path.empty()) {
       return false;
     }
-    anyCleared = erasePath(next, path) || anyCleared;
+    if (erasePath(next, path)) {
+      edits.push_back({path, std::nullopt, std::nullopt});
+      if (path.size() == 2 && path[0] == "idle" && path[1] == "behavior") {
+        edits.push_back({{"idle", "behavior_order"}, std::nullopt, std::nullopt});
+      }
+      if (path.size() == 2 && path[0] == "notification" && path[1] == "filter") {
+        edits.push_back({{"notification", "filter_order"}, std::nullopt, std::nullopt});
+      }
+      if (isBarLanePath(path)) {
+        clearedLanePaths.push_back(path);
+      }
+    } else if (m_usingLegacyConfigDir && findNode(m_mergedUserTable, path) != nullptr) {
+      edits.push_back({path, std::nullopt, std::nullopt});
+    }
   }
 
   for (const auto& [path, value] : overrides) {
     if (path.empty()) {
       return false;
     }
-
     toml::table* table = &next;
     for (std::size_t i = 0; i + 1 < path.size(); ++i) {
       table = ensureTable(*table, path[i]);
@@ -1323,52 +1301,71 @@ bool ConfigService::mutateOverrides(
         return false;
       }
     }
-
     insertOverrideValue(*table, path.back(), value);
   }
 
-  // An override that now matches the merged config carries no information; drop it so the file only
-  // holds real deviations.
   for (const auto& [path, value] : overrides) {
-    if (!overridePresenceIsSemantic(path) && !overridePathEffectiveInTable(path, next)) {
+    // Keep already-authored settings so editing back to the default edits in place;
+    // omit brand-new entries that do not change effective Config to keep config sparse.
+    const bool alreadyPresent = hasOverride(path);
+    if (!alreadyPresent && !overridePresenceIsSemantic(path) && !pathEffectiveInUserTable(path, next)) {
       erasePath(next, path);
+      continue;
+    }
+    appendOverrideValueEdits(path, value, m_mergedUserTable, edits);
+  }
+
+  // Reconcile orphaned capsule_group entries if a bar lane was cleared without an
+  // explicit capsule_group update in the same mutation.
+  if (!clearedLanePaths.empty()) {
+    const auto hasGroupMutation = [&](const std::vector<std::string>& groupPath) {
+      return std::ranges::any_of(overrides, [&](const auto& entry) { return entry.first == groupPath; })
+          || std::ranges::any_of(clearPaths, [&](const auto& entry) { return entry == groupPath; });
+    };
+    const auto parsedAfterClear = parseMergedConfig(next);
+    if (parsedAfterClear.has_value()) {
+      for (const auto& lanePath : clearedLanePaths) {
+        const std::vector<std::string> groupPath = capsuleGroupPathForBarLanePath(lanePath);
+        if (hasGroupMutation(groupPath) || findNode(next, groupPath) == nullptr) {
+          continue;
+        }
+        const BarConfig* bar = findBarConfig(*parsedAfterClear, lanePath[1]);
+        if (bar == nullptr) {
+          continue;
+        }
+        const bool monitorScope = lanePath.size() == 5;
+        const BarMonitorOverride* ovr = monitorScope ? findBarMonitorOverride(*bar, lanePath[3]) : nullptr;
+        if (monitorScope && (ovr == nullptr || !ovr->widgetCapsuleGroups.has_value())) {
+          continue;
+        }
+        const std::vector<BarCapsuleGroupStyle>& current =
+            monitorScope ? *ovr->widgetCapsuleGroups : bar->widgetCapsuleGroups;
+        const std::set<std::string> remainingReferenced =
+            monitorScope ? capsuleGroupRefsForMonitorScope(*bar, *ovr) : capsuleGroupRefsForBarScope(*bar);
+        std::vector<BarCapsuleGroupStyle> reconciled;
+        for (const auto& group : current) {
+          if (remainingReferenced.contains(group.id)) {
+            reconciled.push_back(group);
+          }
+        }
+        if (reconciled == current) {
+          continue;
+        }
+        if (reconciled.empty()) {
+          erasePath(next, groupPath);
+          edits.push_back({groupPath, std::nullopt, std::nullopt});
+        } else {
+          appendOverrideValueEdits(groupPath, ConfigOverrideValue{reconciled}, m_mergedUserTable, edits);
+        }
+      }
     }
   }
 
-  if (overrides.empty() && !anyCleared) {
-    m_lastMutationError.clear();
+  if (edits.empty()) {
     return true;
   }
 
-  if (anyCleared) {
-    reconcileCapsuleGroupOverrides(next);
-  }
-
-  return commitOverrideTable(std::move(next), changed);
-}
-
-bool ConfigService::commitOverrideTable(toml::table next, bool* changed, const OverrideDiagnostics& known) {
-  if (next == m_overridesTable) {
-    m_lastMutationError.clear();
-    return true;
-  }
-
-  // writeOverridesToFile validates the new table and restores the persisted one on failure.
-  m_overridesTable = std::move(next);
-  if (!writeOverridesToFile(known)) {
-    if (m_lastMutationError.empty()) {
-      kLog.warn("failed to write {}", m_overridesPath);
-    }
-    return false;
-  }
-
-  m_ownOverridesWritePending = true;
-  if (changed != nullptr) {
-    *changed = true;
-  }
-  loadAll();
-  fireReloadCallbacks();
-  return true;
+  return persistDirectEdits(edits, changed);
 }
 
 bool ConfigService::clearOverride(const std::vector<std::string>& path) {
@@ -1387,139 +1384,113 @@ bool ConfigService::resetBarLaneOverride(const std::vector<std::string>& lanePat
   if (changed != nullptr) {
     *changed = false;
   }
-  if (m_overridesPath.empty() || !isBarLanePath(lanePath)) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty() || !isBarLanePath(lanePath)) {
     return false;
   }
 
-  toml::table next = m_overridesTable;
-  bool anyChanged = eraseOverridePath(next, lanePath, overridePreserveDepthForPath(lanePath));
+  std::vector<DirectEdit> edits;
+  if (findNode(m_mergedUserTable, lanePath) != nullptr) {
+    edits.push_back({lanePath, std::nullopt, std::nullopt});
+  }
 
-  // Restore the groups this lane holds. The scope's capsule_group array is shared with the other
-  // lanes, so it is rewritten rather than cleared: only ids this lane references go back to their
-  // config-file style, and GUI-created ones disappear with it.
   const std::vector<std::string> groupPath = capsuleGroupPathForBarLanePath(lanePath);
-  if (findOverrideNode(next, groupPath) != nullptr) {
-    toml::table baselineTable = next;
-    eraseOverridePath(baselineTable, groupPath, overridePreserveDepthForPath(groupPath));
-    const auto baseline = configForOverrides(baselineTable);
+  if (findNode(m_mergedUserTable, groupPath) != nullptr) {
+    toml::table withoutLane = m_mergedUserTable;
+    erasePathFromTable(withoutLane, lanePath, preserveDepthForPath(lanePath, withoutLane));
+    withoutLane.erase(nythera::config::kConfigVersionKey);
+    nythera::config::LegacyConfigIssues ignoredIssues;
+    nythera::config::normalizeLegacyConfig(withoutLane, ignoredIssues);
+    const auto baseline = parseMergedConfig(withoutLane);
     if (!baseline.has_value()) {
       return false;
     }
-    const std::vector<BarCapsuleGroupStyle>* baseGroups = barLaneCapsuleGroups(*baseline, lanePath);
-    // Current state comes from the live config: `next` already dropped the lane override, so its
-    // lane no longer names the groups that exist only because of it.
-    const std::vector<BarCapsuleGroupStyle>* currentGroups = barLaneCapsuleGroups(m_config, lanePath);
-    const std::vector<std::string>* baseLane = barLaneWidgets(*baseline, lanePath);
-    const std::vector<std::string>* currentLane = barLaneWidgets(m_config, lanePath);
-    if (baseGroups != nullptr && currentGroups != nullptr && baseLane != nullptr && currentLane != nullptr) {
-      std::set<std::string> owned;
-      collectLaneGroupIds(*baseLane, owned);
-      collectLaneGroupIds(*currentLane, owned);
 
-      std::vector<BarCapsuleGroupStyle> restored;
-      restored.reserve(currentGroups->size());
+    const BarConfig* baselineBar = findBarConfig(*baseline, lanePath[1]);
+    const std::vector<BarCapsuleGroupStyle>* currentGroups = barLaneCapsuleGroups(m_config, lanePath);
+    const std::vector<std::string>* currentLane = barLaneWidgets(m_config, lanePath);
+    if (baselineBar != nullptr && currentGroups != nullptr && currentLane != nullptr) {
+      std::set<std::string> laneOwned;
+      collectLaneGroupIds(*currentLane, laneOwned);
+
+      const bool monitorScope = lanePath.size() == 5;
+      const BarMonitorOverride* baselineOvr =
+          monitorScope ? findBarMonitorOverride(*baselineBar, lanePath[3]) : nullptr;
+      const std::set<std::string> remainingReferenced = monitorScope
+          ? (baselineOvr != nullptr ? capsuleGroupRefsForMonitorScope(*baselineBar, *baselineOvr)
+                                    : std::set<std::string>{})
+          : capsuleGroupRefsForBarScope(*baselineBar);
+
+      std::vector<BarCapsuleGroupStyle> remaining;
+      remaining.reserve(currentGroups->size());
       for (const auto& group : *currentGroups) {
-        if (!owned.contains(group.id)) {
-          restored.push_back(group);
+        if (laneOwned.contains(group.id) && !remainingReferenced.contains(group.id)) {
           continue;
         }
-        const auto it = std::ranges::find(*baseGroups, group.id, &BarCapsuleGroupStyle::id);
-        if (it != baseGroups->end()) {
-          restored.push_back(*it);
-        }
-      }
-      for (const auto& group : *baseGroups) {
-        if (owned.contains(group.id) && !std::ranges::contains(restored, group.id, &BarCapsuleGroupStyle::id)) {
-          restored.push_back(group);
-        }
+        remaining.push_back(group);
       }
 
-      if (restored != *currentGroups) {
-        toml::table* scope = &next;
-        for (std::size_t i = 0; i + 1 < groupPath.size() && scope != nullptr; ++i) {
-          scope = scope->get_as<toml::table>(groupPath[i]);
-        }
-        if (scope != nullptr) {
-          insertOverrideValue(*scope, groupPath.back(), restored);
-          anyChanged = true;
+      if (remaining != *currentGroups) {
+        if (remaining.empty()) {
+          edits.push_back({groupPath, std::nullopt, std::nullopt});
+        } else {
+          appendOverrideValueEdits(groupPath, ConfigOverrideValue{remaining}, m_mergedUserTable, edits);
         }
       }
     }
   }
 
-  if (!anyChanged) {
+  if (edits.empty()) {
     m_lastMutationError.clear();
     return true;
   }
 
-  reconcileCapsuleGroupOverrides(next);
-  return commitOverrideTable(std::move(next), changed);
+  return persistDirectEdits(edits, changed);
 }
 
 bool ConfigService::renameOverrideTable(
     const std::vector<std::string>& oldPath, const std::vector<std::string>& newPath
 ) {
-  if (m_overridesPath.empty() || oldPath.empty() || newPath.empty() || oldPath == newPath) {
+  return renameOverrideTable(oldPath, newPath, {});
+}
+
+bool ConfigService::renameOverrideTable(
+    const std::vector<std::string>& oldPath, const std::vector<std::string>& newPath,
+    const std::vector<std::pair<std::vector<std::string>, ConfigOverrideValue>>& extraOverrides
+) {
+  m_lastMutationError.clear();
+  if (m_settingsAccess != SettingsAccess::ReadWrite
+      || m_configDir.empty()
+      || oldPath.empty()
+      || newPath.empty()
+      || oldPath == newPath) {
     return false;
   }
 
-  toml::table* oldParent = &m_overridesTable;
-  for (std::size_t i = 0; i + 1 < oldPath.size(); ++i) {
-    auto* next = oldParent->get_as<toml::table>(oldPath[i]);
-    if (next == nullptr) {
-      return false;
-    }
-    oldParent = next;
+  const toml::node* oldNode = findNode(m_mergedUserTable, oldPath);
+  if (oldNode == nullptr || !oldNode->is_table()) {
+    return false;
   }
-
-  toml::node* oldNode = oldParent->get(oldPath.back());
-  if (oldNode == nullptr || oldNode->as_table() == nullptr) {
+  if (findNode(m_mergedUserTable, newPath) != nullptr) {
     return false;
   }
 
-  toml::table* newParent = &m_overridesTable;
-  for (std::size_t i = 0; i + 1 < newPath.size(); ++i) {
-    newParent = ensureTable(*newParent, newPath[i]);
-    if (newParent == nullptr) {
-      return false;
-    }
-  }
-
-  if (newParent->get(newPath.back()) != nullptr) {
-    return false;
-  }
-
-  if (oldParent == newParent) {
-    std::vector<std::pair<std::string, const toml::node*>> entries;
-    entries.reserve(oldParent->size());
-    for (const auto& [key, node] : *oldParent) {
-      std::string entryKey(key.str());
-      if (entryKey == oldPath.back()) {
-        entryKey = newPath.back();
-      }
-      entries.emplace_back(std::move(entryKey), &node);
-    }
-
-    toml::table renamed;
-    for (const auto& [key, node] : entries) {
-      renamed.insert_or_assign(key, *node);
-    }
-    *oldParent = std::move(renamed);
+  std::optional<std::filesystem::path> dest;
+  if (const auto* winner = m_sourceMap.winner(oldPath)) {
+    dest = std::filesystem::path(winner->origin.file);
   } else {
-    newParent->insert_or_assign(newPath.back(), *oldNode);
-    oldParent->erase(oldPath.back());
-    pruneEmptyOverrideTables(m_overridesTable, oldPath);
+    dest = defaultDestinationForPath(newPath);
   }
 
-  if (!writeOverridesToFile()) {
-    kLog.warn("failed to write {}", m_overridesPath);
-    return false;
+  std::vector<DirectEdit> edits;
+  edits.push_back({oldPath, std::nullopt, std::nullopt});
+  emitSubtreeEdits(newPath, *oldNode->as_table(), edits, dest);
+  for (const auto& [path, value] : extraOverrides) {
+    if (path.empty()) {
+      return false;
+    }
+    appendOverrideValueEdits(path, value, m_mergedUserTable, edits);
   }
-
-  m_ownOverridesWritePending = true;
-  loadAll();
-  fireReloadCallbacks();
-  return true;
+  return persistDirectEdits(edits);
 }
 
 std::string ConfigService::getWallpaperPath(const std::string& connectorName) const {
@@ -1565,57 +1536,45 @@ void ConfigService::setWallpaperChangeCallback(ChangeCallback callback) {
 }
 
 void ConfigService::setWallpaperPath(const std::optional<std::string>& connectorName, const std::string& path) {
-  if (m_overridesPath.empty()) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_stateStore.path().empty()) {
     return;
   }
 
-  bool changed = false;
-  if (connectorName.has_value()) {
+  const std::string expandedPath = FileUtils::expandUserPath(path).string();
+  std::vector<std::pair<std::string_view, std::string_view>> stringEntries;
+  std::vector<std::pair<std::string_view, std::string_view>> mapEntries;
+
+  const bool monitorScoped = connectorName.has_value() && !connectorName->empty();
+  if (monitorScoped) {
     auto it = m_monitorWallpaperPaths.find(*connectorName);
-    if (it == m_monitorWallpaperPaths.end() || it->second != path) {
-      m_monitorWallpaperPaths[*connectorName] = path;
-      changed = true;
+    if (it == m_monitorWallpaperPaths.end() || it->second != expandedPath) {
+      mapEntries.emplace_back(*connectorName, path);
     }
-  } else {
-    if (m_defaultWallpaperPath != path) {
-      m_defaultWallpaperPath = path;
-      changed = true;
-    }
+  } else if (m_defaultWallpaperPath != expandedPath) {
+    stringEntries.emplace_back("default", path);
   }
 
-  // Track the most recently applied wallpaper so palette generation still has a usable image
-  // when wallpaper management is only used on a subset of displays (no default path set).
-  const bool lastChanged = (m_lastWallpaperPath != path);
-  if (lastChanged) {
-    m_lastWallpaperPath = path;
-    changed = true;
+  if (m_lastWallpaperPath != expandedPath) {
+    stringEntries.emplace_back("last", path);
   }
 
-  if (!changed) {
+  if (stringEntries.empty() && mapEntries.empty()) {
     return;
   }
 
-  // Mirror the change into the overrides table so writeOverridesToFile() serializes it.
-  auto* wallpaperTbl = ensureTable(m_overridesTable, "wallpaper");
-  if (connectorName.has_value()) {
-    auto* monitorsTbl = ensureTable(*wallpaperTbl, "monitors");
-    auto* monTbl = ensureTable(*monitorsTbl, *connectorName);
-    monTbl->insert_or_assign("path", path);
-  } else {
-    auto* defaultTbl = ensureTable(*wallpaperTbl, "default");
-    defaultTbl->insert_or_assign("path", path);
-  }
-  if (lastChanged) {
-    auto* lastTbl = ensureTable(*wallpaperTbl, "last");
-    lastTbl->insert_or_assign("path", path);
-  }
-
-  if (!writeOverridesToFile()) {
-    kLog.warn("failed to write {}", m_overridesPath);
+  if (!m_stateStore.setValues(
+          "wallpaper", stringEntries, mapEntries.empty() ? std::string_view{} : std::string_view{"monitors"}, mapEntries
+      )) {
     return;
   }
 
-  m_ownOverridesWritePending = true;
+  if (monitorScoped) {
+    m_monitorWallpaperPaths[*connectorName] = expandedPath;
+  } else if (m_defaultWallpaperPath != expandedPath) {
+    m_defaultWallpaperPath = expandedPath;
+  }
+  m_lastWallpaperPath = expandedPath;
+
   if (m_wallpaperBatchDepth > 0) {
     m_wallpaperBatchDirty = true;
     return;
@@ -1625,53 +1584,8 @@ void ConfigService::setWallpaperPath(const std::optional<std::string>& connector
   }
 }
 
-void ConfigService::syncWallpaperFavoritesToOverridesTable() {
-  auto* wallpaperTbl = ensureTable(m_overridesTable, "wallpaper");
-  if (m_wallpaperFavorites.empty()) {
-    wallpaperTbl->erase("favorite");
-    return;
-  }
-
-  toml::array favoritesArray;
-  favoritesArray.reserve(m_wallpaperFavorites.size());
-  for (const auto& favorite : m_wallpaperFavorites) {
-    toml::table entry;
-    entry.insert("path", favorite.path);
-    if (favorite.themeMode.has_value()) {
-      entry.insert("theme_mode", std::string(enumToKey(kThemeModes, *favorite.themeMode)));
-    }
-    if (favorite.paletteSource.has_value()) {
-      entry.insert("palette_source", std::string(enumToKey(kPaletteSources, *favorite.paletteSource)));
-      switch (*favorite.paletteSource) {
-      case PaletteSource::Builtin:
-        if (!favorite.builtinPalette.empty()) {
-          entry.insert("builtin_palette", favorite.builtinPalette);
-        }
-        break;
-      case PaletteSource::Wallpaper:
-        if (!favorite.wallpaperScheme.empty()) {
-          entry.insert("wallpaper_scheme", favorite.wallpaperScheme);
-        }
-        break;
-      case PaletteSource::Community:
-        if (!favorite.communityPalette.empty()) {
-          entry.insert("community_palette", favorite.communityPalette);
-        }
-        break;
-      case PaletteSource::Custom:
-        if (!favorite.customPalette.empty()) {
-          entry.insert("custom_palette", favorite.customPalette);
-        }
-        break;
-      }
-    }
-    favoritesArray.push_back(std::move(entry));
-  }
-  wallpaperTbl->insert_or_assign("favorite", std::move(favoritesArray));
-}
-
 void ConfigService::addWallpaperFavorite(std::string path, const std::optional<WallpaperFavorite>& preset) {
-  if (m_overridesPath.empty()) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty()) {
     return;
   }
 
@@ -1680,47 +1594,51 @@ void ConfigService::addWallpaperFavorite(std::string path, const std::optional<W
     return;
   }
 
-  std::erase_if(m_wallpaperFavorites, [&](const WallpaperFavorite& favorite) { return favorite.path == path; });
+  std::vector<WallpaperFavorite> nextFavorites = m_wallpaperFavorites;
+  std::erase_if(nextFavorites, [&](const WallpaperFavorite& favorite) { return favorite.path == path; });
   WallpaperFavorite favorite = preset.value_or(WallpaperFavorite{});
   favorite.path = std::move(path);
-  m_wallpaperFavorites.push_back(std::move(favorite));
+  nextFavorites.push_back(std::move(favorite));
 
-  syncWallpaperFavoritesToOverridesTable();
-  if (!writeOverridesToFile()) {
-    kLog.warn("failed to write {}", m_overridesPath);
-    return;
-  }
-  m_ownOverridesWritePending = true;
+  const std::vector<DirectEdit> edits{
+      {{"wallpaper", "favorite"}, formatTomlValue(serializeWallpaperFavorites(nextFavorites)), std::nullopt}
+  };
+  (void)persistDirectEdits(edits, nullptr, false, /*reloadOnSuccess=*/false);
 }
 
 void ConfigService::removeWallpaperFavorite(std::string_view path) {
-  if (m_overridesPath.empty()) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty()) {
     return;
   }
 
   const std::string normalized = FileUtils::normalizeWallpaperPath(path);
-  const auto before = m_wallpaperFavorites.size();
-  std::erase_if(m_wallpaperFavorites, [&](const WallpaperFavorite& favorite) { return favorite.path == normalized; });
-  if (m_wallpaperFavorites.size() == before) {
+  std::vector<WallpaperFavorite> nextFavorites = m_wallpaperFavorites;
+  const auto before = nextFavorites.size();
+  std::erase_if(nextFavorites, [&](const WallpaperFavorite& favorite) { return favorite.path == normalized; });
+  if (nextFavorites.size() == before) {
     return;
   }
 
-  syncWallpaperFavoritesToOverridesTable();
-  if (!writeOverridesToFile()) {
-    kLog.warn("failed to write {}", m_overridesPath);
-    return;
+  std::vector<DirectEdit> edits;
+  if (nextFavorites.empty()) {
+    edits.push_back({{"wallpaper", "favorite"}, std::nullopt, std::nullopt});
+  } else {
+    edits.push_back(
+        {{"wallpaper", "favorite"}, formatTomlValue(serializeWallpaperFavorites(nextFavorites)), std::nullopt}
+    );
   }
-  m_ownOverridesWritePending = true;
+  (void)persistDirectEdits(edits, nullptr, false, /*reloadOnSuccess=*/false);
 }
 
 void ConfigService::setWallpaperFavoriteThemeMode(std::string_view path, ThemeMode themeMode) {
-  if (m_overridesPath.empty()) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty()) {
     return;
   }
 
   const std::string normalized = FileUtils::normalizeWallpaperPath(path);
+  std::vector<WallpaperFavorite> nextFavorites = m_wallpaperFavorites;
   bool changed = false;
-  for (auto& favorite : m_wallpaperFavorites) {
+  for (auto& favorite : nextFavorites) {
     if (favorite.path != normalized) {
       continue;
     }
@@ -1734,22 +1652,21 @@ void ConfigService::setWallpaperFavoriteThemeMode(std::string_view path, ThemeMo
     return;
   }
 
-  syncWallpaperFavoritesToOverridesTable();
-  if (!writeOverridesToFile()) {
-    kLog.warn("failed to write {}", m_overridesPath);
-    return;
-  }
-  m_ownOverridesWritePending = true;
+  const std::vector<DirectEdit> edits{
+      {{"wallpaper", "favorite"}, formatTomlValue(serializeWallpaperFavorites(nextFavorites)), std::nullopt}
+  };
+  (void)persistDirectEdits(edits, nullptr, false, /*reloadOnSuccess=*/false);
 }
 
 void ConfigService::setWallpaperFavoritePaletteSource(std::string_view path, std::optional<PaletteSource> source) {
-  if (m_overridesPath.empty()) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty()) {
     return;
   }
 
   const std::string normalized = FileUtils::normalizeWallpaperPath(path);
+  std::vector<WallpaperFavorite> nextFavorites = m_wallpaperFavorites;
   bool changed = false;
-  for (auto& favorite : m_wallpaperFavorites) {
+  for (auto& favorite : nextFavorites) {
     if (favorite.path != normalized) {
       continue;
     }
@@ -1791,23 +1708,22 @@ void ConfigService::setWallpaperFavoritePaletteSource(std::string_view path, std
     return;
   }
 
-  syncWallpaperFavoritesToOverridesTable();
-  if (!writeOverridesToFile()) {
-    kLog.warn("failed to write {}", m_overridesPath);
-    return;
-  }
-  m_ownOverridesWritePending = true;
+  const std::vector<DirectEdit> edits{
+      {{"wallpaper", "favorite"}, formatTomlValue(serializeWallpaperFavorites(nextFavorites)), std::nullopt}
+  };
+  (void)persistDirectEdits(edits, nullptr, false, /*reloadOnSuccess=*/false);
 }
 
 void ConfigService::setWallpaperFavoritePaletteSelection(std::string_view path, std::string_view value) {
-  if (m_overridesPath.empty()) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite || m_configDir.empty()) {
     return;
   }
 
   const std::string normalized = FileUtils::normalizeWallpaperPath(path);
   const std::string selection(value);
+  std::vector<WallpaperFavorite> nextFavorites = m_wallpaperFavorites;
   bool changed = false;
-  for (auto& favorite : m_wallpaperFavorites) {
+  for (auto& favorite : nextFavorites) {
     if (favorite.path != normalized || !favorite.paletteSource.has_value()) {
       continue;
     }
@@ -1843,119 +1759,135 @@ void ConfigService::setWallpaperFavoritePaletteSelection(std::string_view path, 
     return;
   }
 
-  syncWallpaperFavoritesToOverridesTable();
-  if (!writeOverridesToFile()) {
-    kLog.warn("failed to write {}", m_overridesPath);
-    return;
-  }
-  m_ownOverridesWritePending = true;
+  const std::vector<DirectEdit> edits{
+      {{"wallpaper", "favorite"}, formatTomlValue(serializeWallpaperFavorites(nextFavorites)), std::nullopt}
+  };
+  (void)persistDirectEdits(edits, nullptr, false, /*reloadOnSuccess=*/false);
 }
 
 void ConfigService::applyWallpaperSelection(
     const std::optional<std::string>& connectorName, const std::string& path, const WallpaperFavorite* applyTheme,
     const std::vector<std::string>& allConnectors
 ) {
-  if (m_overridesPath.empty()) {
+  if (m_settingsAccess != SettingsAccess::ReadWrite) {
     return;
   }
 
-  bool changed = false;
+  std::vector<DirectEdit> themeEdits;
 
   if (applyTheme != nullptr) {
-    auto* themeTbl = ensureTable(m_overridesTable, "theme");
     if (applyTheme->themeMode.has_value() && m_config.theme.mode != *applyTheme->themeMode) {
-      themeTbl->insert_or_assign("mode", std::string(enumToKey(kThemeModes, *applyTheme->themeMode)));
-      changed = true;
+      themeEdits.push_back(
+          {{"theme", "mode"}, formatStringValue(enumToKey(kThemeModes, *applyTheme->themeMode)), std::nullopt}
+      );
     }
 
     if (applyTheme->paletteSource.has_value()) {
       const PaletteSource source = *applyTheme->paletteSource;
       if (m_config.theme.source != source) {
-        themeTbl->insert_or_assign("source", std::string(enumToKey(kPaletteSources, source)));
-        changed = true;
+        themeEdits.push_back(
+            {{"theme", "source"}, formatStringValue(enumToKey(kPaletteSources, source)), std::nullopt}
+        );
       }
       switch (source) {
       case PaletteSource::Builtin:
         if (!applyTheme->builtinPalette.empty() && m_config.theme.builtinPalette != applyTheme->builtinPalette) {
-          themeTbl->insert_or_assign("builtin", applyTheme->builtinPalette);
-          changed = true;
+          themeEdits.push_back({{"theme", "builtin"}, formatStringValue(applyTheme->builtinPalette), std::nullopt});
         }
         break;
       case PaletteSource::Wallpaper:
         if (!applyTheme->wallpaperScheme.empty() && m_config.theme.wallpaperScheme != applyTheme->wallpaperScheme) {
-          themeTbl->insert_or_assign("wallpaper_scheme", applyTheme->wallpaperScheme);
-          changed = true;
+          themeEdits.push_back(
+              {{"theme", "wallpaper_scheme"}, formatStringValue(applyTheme->wallpaperScheme), std::nullopt}
+          );
         }
         break;
       case PaletteSource::Community:
         if (!applyTheme->communityPalette.empty() && m_config.theme.communityPalette != applyTheme->communityPalette) {
-          themeTbl->insert_or_assign("community_palette", applyTheme->communityPalette);
-          changed = true;
+          themeEdits.push_back(
+              {{"theme", "community_palette"}, formatStringValue(applyTheme->communityPalette), std::nullopt}
+          );
         }
         break;
       case PaletteSource::Custom:
         if (!applyTheme->customPalette.empty() && m_config.theme.customPalette != applyTheme->customPalette) {
-          themeTbl->insert_or_assign("custom_palette", applyTheme->customPalette);
-          changed = true;
+          themeEdits.push_back(
+              {{"theme", "custom_palette"}, formatStringValue(applyTheme->customPalette), std::nullopt}
+          );
         }
         break;
       }
     }
   }
 
-  auto* wallpaperTbl = ensureTable(m_overridesTable, "wallpaper");
+  const std::string expandedPath = FileUtils::expandUserPath(path).string();
+  std::vector<std::pair<std::string_view, std::string_view>> stringEntries;
+  std::vector<std::pair<std::string_view, std::string_view>> mapEntries;
+  const bool monitorScoped = connectorName.has_value() && !connectorName->empty();
 
-  if (connectorName.has_value() && !connectorName->empty()) {
+  if (monitorScoped) {
     auto it = m_monitorWallpaperPaths.find(*connectorName);
-    if (it == m_monitorWallpaperPaths.end() || it->second != path) {
-      m_monitorWallpaperPaths[*connectorName] = path;
-      changed = true;
+    if (it == m_monitorWallpaperPaths.end() || it->second != expandedPath) {
+      mapEntries.emplace_back(*connectorName, path);
     }
-    auto* monitorsTbl = ensureTable(*wallpaperTbl, "monitors");
-    auto* monTbl = ensureTable(*monitorsTbl, *connectorName);
-    monTbl->insert_or_assign("path", path);
   } else {
     for (const auto& connector : allConnectors) {
       if (connector.empty()) {
         continue;
       }
       auto it = m_monitorWallpaperPaths.find(connector);
-      if (it == m_monitorWallpaperPaths.end() || it->second != path) {
-        m_monitorWallpaperPaths[connector] = path;
-        changed = true;
+      if (it == m_monitorWallpaperPaths.end() || it->second != expandedPath) {
+        mapEntries.emplace_back(connector, path);
       }
-      auto* monitorsTbl = ensureTable(*wallpaperTbl, "monitors");
-      auto* monTbl = ensureTable(*monitorsTbl, connector);
-      monTbl->insert_or_assign("path", path);
     }
-    if (m_defaultWallpaperPath != path) {
-      m_defaultWallpaperPath = path;
-      changed = true;
+    if (m_defaultWallpaperPath != expandedPath) {
+      stringEntries.emplace_back("default", path);
     }
-    auto* defaultTbl = ensureTable(*wallpaperTbl, "default");
-    defaultTbl->insert_or_assign("path", path);
   }
 
-  if (m_lastWallpaperPath != path) {
-    m_lastWallpaperPath = path;
-    changed = true;
-    auto* lastTbl = ensureTable(*wallpaperTbl, "last");
-    lastTbl->insert_or_assign("path", path);
+  if (m_lastWallpaperPath != expandedPath) {
+    stringEntries.emplace_back("last", path);
   }
 
-  if (!changed) {
+  if (themeEdits.empty() && stringEntries.empty() && mapEntries.empty()) {
     return;
   }
 
-  if (!writeOverridesToFile()) {
-    kLog.warn("failed to write {}", m_overridesPath);
-    return;
+  bool themePersisted = false;
+  if (!themeEdits.empty()) {
+    if (m_configDir.empty() || !persistDirectEdits(themeEdits, &themePersisted, false, /*reloadOnSuccess=*/false)) {
+      return;
+    }
   }
 
-  m_ownOverridesWritePending = true;
-  loadAll();
-  fireReloadCallbacks();
-  if (m_wallpaperChangeCallback) {
+  bool wallpaperPersisted = false;
+  if (!stringEntries.empty() || !mapEntries.empty()) {
+    if (!m_stateStore.path().empty()
+        && m_stateStore.setValues(
+            "wallpaper", stringEntries, mapEntries.empty() ? std::string_view{} : std::string_view{"monitors"},
+            mapEntries
+        )) {
+      if (monitorScoped) {
+        m_monitorWallpaperPaths[*connectorName] = expandedPath;
+      } else {
+        for (const auto& [connector, _] : mapEntries) {
+          m_monitorWallpaperPaths[std::string(connector)] = expandedPath;
+        }
+        if (m_defaultWallpaperPath != expandedPath) {
+          m_defaultWallpaperPath = expandedPath;
+        }
+      }
+      m_lastWallpaperPath = expandedPath;
+      wallpaperPersisted = true;
+    }
+  }
+
+  if (themePersisted) {
+    loadAll();
+    fireReloadCallbacks();
+  }
+
+  if ((themePersisted || wallpaperPersisted) && m_wallpaperChangeCallback) {
     m_wallpaperChangeCallback();
   }
 }

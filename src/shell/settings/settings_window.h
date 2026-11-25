@@ -10,6 +10,7 @@
 #include "shell/settings/settings_control_factory.h"
 #include "shell/settings/settings_modal_host.h"
 #include "shell/settings/settings_registry.h"
+#include "shell/settings/settings_reload_gate.h"
 #include "shell/settings/settings_sheet_modal.h"
 #include "shell/settings/widget_add_popup.h"
 #include "ui/controls/context_menu_popup.h"
@@ -243,6 +244,13 @@ private:
       std::string oldName, std::string newName,
       std::vector<std::pair<std::vector<std::string>, ConfigOverrideValue>> referenceOverrides
   );
+  void deleteWidgetInstance(
+      std::string widgetName, std::vector<std::pair<std::vector<std::string>, ConfigOverrideValue>> referenceRemovals
+  );
+  [[nodiscard]] bool hasActiveUserEdit() const noexcept;
+  void onConfigReloaded();
+  void applyExternalConfigReload();
+  void flushPendingExternalConfigReload();
   void createBar(std::string name);
   void renameBar(std::string oldName, std::string newName);
   void deleteBar(std::string name);
@@ -395,6 +403,7 @@ private:
   bool m_showOverriddenOnly = false;
   bool m_statusIsError = false;
   bool m_pendingEncryptedStorageReset = false;
+  nythera::settings::ExternalReloadGate m_externalReloadGate;
   std::function<void()> m_openDesktopWidgetEditor;
   std::function<void()> m_openLockscreenWidgetEditor;
   std::function<void()> m_openWallpaperPanel;

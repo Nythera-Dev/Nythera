@@ -49,10 +49,14 @@ namespace nythera::config {
     // merging continues with what parsed. `originsOut` collects each key's source
     // position in the same precedence order.
     toml::table mergeSources(
-        std::string_view configDir, std::string_view settingsTomlPath, schema::Diagnostics& diag,
-        std::vector<std::filesystem::path>& loadedFilesOut, ConfigOriginIndex& originsOut
+        std::string_view configDir, std::string_view settingsTomlPath, std::string_view sharedThemePath,
+        schema::Diagnostics& diag, std::vector<std::filesystem::path>& loadedFilesOut, ConfigOriginIndex& originsOut
     ) {
-      auto mergeResult = mergeConfigWithIncludes(configDir);
+      std::vector<std::filesystem::path> baseFiles;
+      if (!sharedThemePath.empty()) {
+        baseFiles.emplace_back(sharedThemePath);
+      }
+      auto mergeResult = mergeConfigWithIncludes(configDir, baseFiles);
       toml::table merged = std::move(mergeResult.merged);
       loadedFilesOut = std::move(mergeResult.loadedFiles);
       originsOut = std::move(mergeResult.origins);
@@ -852,11 +856,13 @@ namespace nythera::config {
 
   } // namespace
 
-  schema::Diagnostics validateConfigSources(std::string_view configDir, std::string_view settingsTomlPath) {
+  schema::Diagnostics validateConfigSources(
+      std::string_view configDir, std::string_view settingsTomlPath, std::string_view sharedThemePath
+  ) {
     schema::Diagnostics diag;
     std::vector<std::filesystem::path> loadedFiles;
     ConfigOriginIndex origins;
-    const toml::table merged = mergeSources(configDir, settingsTomlPath, diag, loadedFiles, origins);
+    const toml::table merged = mergeSources(configDir, settingsTomlPath, sharedThemePath, diag, loadedFiles, origins);
     // [include] is stripped from the merged table, so validate each loaded file's
     // raw [include] shape directly (covers root and subdirectory includes).
     for (const auto& file : loadedFiles) {

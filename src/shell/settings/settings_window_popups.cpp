@@ -1312,7 +1312,11 @@ void SettingsWindow::openCalendarAccountEditor(std::optional<std::string> accoun
       }
       draft->credentialOperationInFlight = true;
       m_calendarService->deleteAccount(
-          accountId, [this, accountId] { return m_config->deleteCalendarAccountOverride(accountId); },
+          accountId,
+          [this, accountId] {
+            const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+            return m_config->deleteCalendarAccountOverride(accountId);
+          },
           [this, draft, accountId](CalendarService::CredentialOperationResult result) {
             draft->credentialOperationInFlight = false;
             if (result != CalendarService::CredentialOperationResult::Success) {
@@ -1865,7 +1869,12 @@ void SettingsWindow::openCalendarAccountEditor(std::optional<std::string> accoun
       }
 
       if (!caldav) {
-        if (!m_config->mutateOverrides(overrides, staleKeys, nullptr)) {
+        bool mutated = false;
+        {
+          const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+          mutated = m_config->mutateOverrides(overrides, staleKeys, nullptr);
+        }
+        if (!mutated) {
           markSettingsWriteError(i18n::tr("settings.calendar-accounts.save-error"));
           return;
         }
@@ -1894,6 +1903,7 @@ void SettingsWindow::openCalendarAccountEditor(std::optional<std::string> accoun
       m_calendarService->saveCalDavAccount(
           draft->id, draft->credentialSource, draft->passwordFile, std::move(password),
           [this, overrides = std::move(overrides), staleKeys = std::move(staleKeys)] mutable {
+            const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
             return m_config->mutateOverrides(overrides, staleKeys, nullptr);
           },
           [this, draft, closeAfter](CalendarService::CredentialOperationResult result) {

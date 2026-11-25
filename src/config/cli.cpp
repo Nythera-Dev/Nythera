@@ -4,12 +4,12 @@
 #include "cli/parse.h"
 #include "cli/schema_config.h"
 #include "config/config_service.h"
-#include "shell/config/config_validation_hooks.h"
 #include "config/config_validate.h"
 #include "config/legacy_profile_migration.h"
 #include "core/log.h"
 #include "core/toml.h" // IWYU pragma: keep
 #include "security/secret_store.h"
+#include "shell/config/config_validation_hooks.h"
 #include "shell/settings/settings_registry.h"
 #include "util/file_utils.h"
 #include "util/string_utils.h"
@@ -348,12 +348,8 @@ namespace nythera::config {
       schema::Diagnostics diagnostics;
 
       if (pathArg.empty()) {
-        const std::string configDir = FileUtils::configDir();
-        std::string settingsPath;
-        if (const std::string stateDir = FileUtils::stateDir(); !stateDir.empty()) {
-          settingsPath = stateDir + "/settings.toml";
-        }
-        diagnostics = validateConfigSources(configDir, settingsPath);
+        const auto location = ConfigService::resolveActiveConfigLocation();
+        diagnostics = validateConfigSources(location.configDir, location.legacySettingsPath, location.sharedThemePath);
       } else {
         std::error_code ec;
         const std::filesystem::path inputPath(pathArg);
@@ -424,18 +420,18 @@ namespace nythera::config {
         return 1;
       }
 
-      const std::string configDir = FileUtils::configDir();
-      std::string settingsPath;
-      if (const std::string stateDir = FileUtils::stateDir(); !stateDir.empty()) {
-        settingsPath = stateDir + "/settings.toml";
-      }
+      const auto location = ConfigService::resolveActiveConfigLocation();
 
       std::string error;
       std::string content;
       if (mode == "merged") {
-        content = ConfigService::buildMergedUserConfigFromSources(configDir, settingsPath, &error, *credentials);
+        content = ConfigService::buildMergedUserConfigFromSources(
+            location.configDir, location.legacySettingsPath, &error, *credentials, location.sharedThemePath
+        );
       } else if (mode == "full") {
-        content = ConfigService::buildEffectiveConfigFromSources(configDir, settingsPath, &error, *credentials);
+        content = ConfigService::buildEffectiveConfigFromSources(
+            location.configDir, location.legacySettingsPath, &error, *credentials, location.sharedThemePath
+        );
       } else {
         std::println(stderr, "error: expected merged or full");
         return 1;

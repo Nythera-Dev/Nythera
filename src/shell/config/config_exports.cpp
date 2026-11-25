@@ -1,39 +1,46 @@
-#include "config/config_service.h"
-
 #include "compositors/compositor_detect.h"
 #include "config/config_credentials.h"
 #include "config/config_export.h"
 #include "config/config_merge.h"
 #include "config/config_migrations.h"
 #include "config/config_origins.h"
-#include "config/widget_config.h"
+#include "config/config_service.h"
 #include "config/schema/config_schema.h"
 #include "config/schema/diagnostics.h"
+#include "config/widget_config.h"
 #include "core/build_info.h"
 #include "core/log.h"
+#include "core/toml.h"
 #include "system/distro_info.h"
 #include "system/hardware_info.h"
 #include "util/string_utils.h"
-#include <filesystem>
-#include <fstream>
-#include <sstream>
-#include <format>
-#include "core/toml.h"
 
 #include <algorithm>
 #include <ctime>
 #include <exception>
+#include <filesystem>
+#include <format>
+#include <fstream>
 #include <iomanip>
+#include <sstream>
 #include <string>
 
 namespace {
   constexpr Logger kLog("config");
   namespace schema = nythera::config::schema;
-  std::string formatToml(const toml::table& table) { std::ostringstream out; out << toml::toml_formatter{table, toml::toml_formatter::default_flags & ~toml::format_flags::allow_literal_strings}; return out.str(); }
+  std::string formatToml(const toml::table& table) {
+    std::ostringstream out;
+    out << toml::toml_formatter{
+        table, toml::toml_formatter::default_flags & ~toml::format_flags::allow_literal_strings
+    };
+    return out.str();
+  }
   void seedLegacyDockAllowListEnabled(toml::table& sidecar, const toml::table& baseConfig) {
     auto* dock = sidecar["dock"].as_table();
-    if (dock == nullptr || (*dock)["monitors"].as_array() == nullptr || dock->contains("enabled")) return;
-    if (baseConfig["dock"]["enabled"].value_or(false)) dock->insert("enabled", true);
+    if (dock == nullptr || (*dock)["monitors"].as_array() == nullptr || dock->contains("enabled"))
+      return;
+    if (baseConfig["dock"]["enabled"].value_or(false))
+      dock->insert("enabled", true);
   }
 
   struct MergedUserConfigSources {
@@ -41,9 +48,15 @@ namespace {
     toml::table sidecar; // migrated settings.toml overlay already merged into `merged`
   };
 
-  std::optional<MergedUserConfigSources>
-  mergeUserConfigSources(std::string_view configDir, std::string_view settingsPath, std::string* error) {
-    auto mergeResult = nythera::config::mergeConfigWithIncludes(configDir);
+  std::optional<MergedUserConfigSources> mergeUserConfigSources(
+      std::string_view configDir, std::string_view settingsPath, std::string* error,
+      std::string_view sharedThemePath = {}
+  ) {
+    std::vector<std::filesystem::path> baseFiles;
+    if (!sharedThemePath.empty()) {
+      baseFiles.emplace_back(sharedThemePath);
+    }
+    auto mergeResult = nythera::config::mergeConfigWithIncludes(configDir, baseFiles);
     toml::table merged = std::move(mergeResult.merged);
     if (!mergeResult.firstError.empty()) {
       const std::string located = mergeResult.firstErrorOrigin.prefixed(mergeResult.firstError);
@@ -93,7 +106,6 @@ namespace {
     }
     return MergedUserConfigSources{.merged = std::move(merged), .sidecar = std::move(sidecar)};
   }
-
 
   std::vector<std::filesystem::path> sortedConfigTomlFiles(std::string_view configDir) {
     std::vector<std::filesystem::path> files;
@@ -187,10 +199,13 @@ namespace {
     return compositor;
   }
 
-}
+} // namespace
 
 std::string ConfigService::buildMergedUserConfig(nythera::config::CredentialExportMode credentials) const {
-  return buildMergedUserConfigFromSources(m_configDir, m_overridesPath, nullptr, credentials);
+  return buildMergedUserConfigFromSources(
+      m_configDir, m_usingLegacyConfigDir ? m_legacySettingsPath : std::string_view{}, nullptr, credentials,
+      m_sharedThemePath
+  );
 }
 
 std::string ConfigService::buildEffectiveConfig(nythera::config::CredentialExportMode credentials) const {
@@ -204,9 +219,9 @@ std::string ConfigService::buildEffectiveConfig(nythera::config::CredentialExpor
 
 std::string ConfigService::buildMergedUserConfigFromSources(
     std::string_view configDir, std::string_view settingsPath, std::string* error,
-    nythera::config::CredentialExportMode credentials
+    nythera::config::CredentialExportMode credentials, std::string_view sharedThemePath
 ) {
-  const auto sources = mergeUserConfigSources(configDir, settingsPath, error);
+  const auto sources = mergeUserConfigSources(configDir, settingsPath, error, sharedThemePath);
   if (!sources.has_value()) {
     return {};
   }
@@ -220,9 +235,9 @@ std::string ConfigService::buildMergedUserConfigFromSources(
 
 std::string ConfigService::buildEffectiveConfigFromSources(
     std::string_view configDir, std::string_view settingsPath, std::string* error,
-    nythera::config::CredentialExportMode credentials
+    nythera::config::CredentialExportMode credentials, std::string_view sharedThemePath
 ) {
-  const auto sources = mergeUserConfigSources(configDir, settingsPath, error);
+  const auto sources = mergeUserConfigSources(configDir, settingsPath, error, sharedThemePath);
   if (!sources.has_value()) {
     return {};
   }
@@ -271,15 +286,27 @@ std::string ConfigService::buildSupportReport() const {
   system.insert_or_assign("compositor", buildCompositorReport());
   root.insert_or_assign("system", std::move(system));
 
+  const std::string legacySettingsPath = m_usingLegacyConfigDir ? m_legacySettingsPath : std::string{};
+
   toml::table paths;
   paths.insert_or_assign("config_dir", m_configDir);
-  paths.insert_or_assign("settings_path", m_overridesPath);
+  paths.insert_or_assign("theme_path", m_sharedThemePath);
+  paths.insert_or_assign("settings_path", legacySettingsPath);
   paths.insert_or_assign("state_path", m_stateStore.path().string());
   root.insert_or_assign("paths", std::move(paths));
 
   toml::table merged;
   toml::array sources;
-  const auto configFiles = sortedConfigTomlFiles(m_configDir);
+  std::vector<std::filesystem::path> configFiles;
+  if (!m_sharedThemePath.empty()) {
+    const std::filesystem::path themePath(m_sharedThemePath);
+    std::error_code ec;
+    if (std::filesystem::exists(themePath, ec) && !ec) {
+      configFiles.push_back(themePath);
+    }
+  }
+  const auto dirFiles = sortedConfigTomlFiles(m_configDir);
+  configFiles.insert(configFiles.end(), dirFiles.begin(), dirFiles.end());
   for (std::size_t i = 0; i < configFiles.size(); ++i) {
     const auto& path = configFiles[i];
 
@@ -309,18 +336,18 @@ std::string ConfigService::buildSupportReport() const {
   toml::table state;
   state.insert_or_assign("kind", "state");
   state.insert_or_assign("relative_path", "settings.toml");
-  state.insert_or_assign("path", m_overridesPath);
+  state.insert_or_assign("path", legacySettingsPath);
 
-  const bool settingsExists = !m_overridesPath.empty() && std::filesystem::exists(m_overridesPath);
+  const bool settingsExists = !legacySettingsPath.empty() && std::filesystem::exists(legacySettingsPath);
   state.insert_or_assign("exists", settingsExists);
   if (settingsExists) {
     std::string readError;
-    state.insert_or_assign("content", readTextFile(m_overridesPath, &readError));
+    state.insert_or_assign("content", readTextFile(legacySettingsPath, &readError));
     if (!readError.empty()) {
       state.insert_or_assign("read_error", readError);
     } else {
       try {
-        auto table = toml::parse_file(m_overridesPath);
+        auto table = toml::parse_file(legacySettingsPath);
         deepMerge(merged, table);
       } catch (const toml::parse_error& e) {
         state.insert_or_assign("parse_error", e.what());

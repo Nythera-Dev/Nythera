@@ -49,16 +49,14 @@ namespace {
 int main() {
   nythera::test::ScopedTestEnv env({.prefix = "nythera-override-mutation"});
   const auto& root = env.root();
-  writeFile(root / "config" / "nythera" / "config.toml", "[dock]\nenabled = true\nmonitors = [\"legacy\"]\n");
+  writeFile(root / "config" / "nythera" / "shell" / "config.toml", "[dock]\nenabled = true\nmonitors = [\"legacy\"]\n");
 
   const std::vector<std::string> typePath{"calendar", "account", "feed", "type"};
   const std::vector<std::string> serverUrlPath{"calendar", "account", "feed", "server_url"};
   const std::vector<std::string> vdirPath{"calendar", "account", "feed", "path"};
 
   {
-    ConfigService config{
-        nythera::config::shell::validator(), nythera::config::shell::overrideEffectivenessChecker()
-    };
+    ConfigService config{nythera::config::shell::validator(), nythera::config::shell::overrideEffectivenessChecker()};
 
     const DockMonitorOverride* legacyDockOverride = findDockMonitorOverride(config.config(), "legacy");
     expect(legacyDockOverride != nullptr, "legacy dock monitor allow-list is loaded as an override");
@@ -148,32 +146,28 @@ int main() {
     expect(settings["dock"]["monitors"].is_array(), "read-only load preserves the legacy override on disk");
   }
   {
-    ConfigService config{
-        nythera::config::shell::validator(), nythera::config::shell::overrideEffectivenessChecker()
-    };
+    ConfigService config{nythera::config::shell::validator(), nythera::config::shell::overrideEffectivenessChecker()};
     const DockMonitorOverride* migrated = findDockMonitorOverride(config.config(), "DP-1");
-    expect(!config.config().dock.enabled, "sidecar monitor allow-list disabled the inherited global dock");
-    expect(migrated != nullptr && migrated->enabled == true, "sidecar monitor allow-list became an enabled override");
-    expect(!config.hasOverride({"dock", "monitors"}), "sidecar migration removed the legacy monitors key");
+    expect(!config.config().dock.enabled, "legacy sidecar monitor allow-list disabled the inherited global dock");
     expect(
-        config.hasOverride({"dock", "monitor", "DP-1", "enabled"}),
-        "sidecar migration persisted the enabled monitor override"
+        migrated != nullptr && migrated->enabled == true, "legacy sidecar monitor allow-list became an enabled override"
     );
+    const auto settings = toml::parse_file((overlayRoot / "state" / "nythera" / "settings.toml").string());
+    expect(settings["config_version"].value_or(0) == 14, "legacy settings.toml stays untouched on disk");
+    expect(settings["dock"]["monitors"].is_array(), "legacy settings.toml monitors key stays untouched on disk");
   }
 
   // A bar-inherited widget setting resolves an unset value from the bar, so an explicit value equal to the
   // widget schema default is a real override and must survive the no-op override pruning.
   const std::filesystem::path inheritRoot = root / "bar-inherit-case";
   writeFile(
-      inheritRoot / "config" / "nythera" / "config.toml",
+      inheritRoot / "config" / "nythera" / "shell" / "config.toml",
       "[bar.default]\nshow_tooltip = false\n\n[widget.clock]\ntype = \"clock\"\n"
   );
   ::setenv("NYTHERA_CONFIG_HOME", (inheritRoot / "config").c_str(), 1);
   ::setenv("NYTHERA_STATE_HOME", (inheritRoot / "state").c_str(), 1);
   {
-    ConfigService config{
-        nythera::config::shell::validator(), nythera::config::shell::overrideEffectivenessChecker()
-    };
+    ConfigService config{nythera::config::shell::validator(), nythera::config::shell::overrideEffectivenessChecker()};
     const std::vector<std::string> tooltipPath{"widget", "clock", "show_tooltip"};
     expect(config.setOverride(tooltipPath, true), "explicit widget show_tooltip = true was accepted");
     expect(config.hasOverride(tooltipPath), "explicit widget show_tooltip = true survived pruning");
@@ -184,13 +178,11 @@ int main() {
   // shell.panel_anchor_bar names a bar: renaming that bar in Settings must carry the key along, or every
   // panel open without a source bar (IPC, shortcuts) fails on the stale name. Deleting it clears the key.
   const std::filesystem::path anchorRoot = root / "anchor-bar-case";
-  writeFile(anchorRoot / "config" / "nythera" / "config.toml", "");
+  writeFile(anchorRoot / "config" / "nythera" / "shell" / "config.toml", "");
   ::setenv("NYTHERA_CONFIG_HOME", (anchorRoot / "config").c_str(), 1);
   ::setenv("NYTHERA_STATE_HOME", (anchorRoot / "state").c_str(), 1);
   {
-    ConfigService config{
-        nythera::config::shell::validator(), nythera::config::shell::overrideEffectivenessChecker()
-    };
+    ConfigService config{nythera::config::shell::validator(), nythera::config::shell::overrideEffectivenessChecker()};
     expect(config.createBarOverride("second"), "second bar was created");
     expect(config.setOverride({"shell", "panel_anchor_bar"}, std::string("default")), "anchor bar was set");
     expect(config.renameBarOverride("default", "topbar"), "anchor bar was renamed");
@@ -207,15 +199,13 @@ int main() {
   // drops the key again and the legacy-config warning will be back.
   const std::filesystem::path customScheduleRoot = root / "custom-schedule-case";
   writeFile(
-      customScheduleRoot / "config" / "nythera" / "config.toml",
+      customScheduleRoot / "config" / "nythera" / "shell" / "config.toml",
       "[location]\nsunset = \"20:30\"\nsunrise = \"07:30\"\n"
   );
   ::setenv("NYTHERA_CONFIG_HOME", (customScheduleRoot / "config").c_str(), 1);
   ::setenv("NYTHERA_STATE_HOME", (customScheduleRoot / "state").c_str(), 1);
   {
-    ConfigService config{
-        nythera::config::shell::validator(), nythera::config::shell::overrideEffectivenessChecker()
-    };
+    ConfigService config{nythera::config::shell::validator(), nythera::config::shell::overrideEffectivenessChecker()};
     const std::vector<std::string> customSchedulePath{"location", "custom_schedule"};
 
     expect(config.setOverride(customSchedulePath, true), "custom_schedule = true was accepted");
@@ -227,9 +217,7 @@ int main() {
     expect(!config.config().location.customSchedule, "custom_schedule = false is active");
 
     expect(config.setOverride(customSchedulePath, true), "custom_schedule back to true was accepted");
-    expect(
-        config.hasOverride(customSchedulePath), "toggling custom_schedule back on kept the override in settings.toml"
-    );
+    expect(config.hasOverride(customSchedulePath), "toggling custom_schedule back on kept custom_schedule in config");
     expect(config.config().location.customSchedule, "custom_schedule is active again");
   }
 

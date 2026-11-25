@@ -1,6 +1,7 @@
 #include "app/main_loop.h"
 #include "application.h"
 #include "application_internal.h"
+#include "app/config_monitor_ipc.h"
 #include "cli/schema_msg.h"
 #include "config/config_types.h"
 #include "core/log.h"
@@ -534,6 +535,7 @@ void Application::initIpc() {
   }
 
   m_osdOverlay.registerIpc(m_ipcService);
+  registerConfigMonitorStatusIpc(m_ipcService, m_appConfigMonitors);
 
   if (m_brightnessService != nullptr) {
     m_brightnessService->registerIpc(m_ipcService, [this](BrightnessService::BatchChangePhase phase) {

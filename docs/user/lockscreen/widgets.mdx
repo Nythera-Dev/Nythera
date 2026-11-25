@@ -1,6 +1,6 @@
 ---
 title: Lockscreen widgets
-description: Configurable widgets on the session lock screen, layout editor, and settings.toml overrides.
+description: Configurable widgets on the session lock screen, layout editor, and TOML persistence.
 sidebar:
   order: 6
 ---
@@ -9,8 +9,8 @@ sidebar:
 
 Lockscreen widgets use the same widget types and per-type settings as [desktop widgets](/nythera/desktop/widgets/). Layout is stored in a dedicated `[lockscreen_widgets]` section (not shared with `[desktop_widgets]` or `[lockscreen]` backdrop keys).
 
-- Declarative config: `[lockscreen_widgets]` in `~/.config/nythera/*.toml`
-- GUI/editor overrides: `settings.toml` under your Nythera state directory (same as desktop widgets)
+- Configuration: `[lockscreen_widgets]` in `~/.config/nythera/shell/*.toml`
+- GUI/editor changes are saved directly to the owning Shell TOML.
 
 ```toml
 [lockscreen_widgets]

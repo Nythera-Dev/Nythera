@@ -478,7 +478,7 @@ namespace settings {
       return cfg.widgets.contains(std::string(widgetName)) && !isBuiltInWidgetType(widgetName);
     }
 
-    bool isGuiManagedNamedWidgetInstance(const BarWidgetEditorContext& ctx, std::string_view widgetName) {
+    bool isConfiguredNamedWidgetInstance(const BarWidgetEditorContext& ctx, std::string_view widgetName) {
       return isNamedWidgetInstance(ctx.config, widgetName)
           && ctx.configService != nullptr
           && ctx.configService->hasOverride({"widget", std::string(widgetName)});
@@ -1799,7 +1799,7 @@ namespace settings {
 
       {
         const std::string widgetName = ctx.editingWidgetName;
-        const bool guiManaged = isGuiManagedNamedWidgetInstance(ctx, widgetName);
+        const bool guiManaged = isConfiguredNamedWidgetInstance(ctx, widgetName);
 
         std::string currentLaneKey;
         std::vector<std::string> currentLanePath;
@@ -2065,15 +2065,16 @@ namespace settings {
                       .radius = Style::scaledRadiusSm(ctx.scale),
                       .onClick = [&pendingDeleteWidgetName = ctx.pendingDeleteWidgetName,
                                   &selectedLaneWidgets = ctx.selectedLaneWidgets, config = ctx.config, widgetName,
-                                  clearOverride = ctx.clearOverride, setOverrides = ctx.setOverrides,
+                                  deleteWidgetInstance = ctx.deleteWidgetInstance,
                                   closeHostedEditor = ctx.closeHostedEditor] {
                         pendingDeleteWidgetName.clear();
                         auto referenceRemovals = widgetReferenceRemovalOverrides(config, widgetName);
                         if (!referenceRemovals.empty()) {
                           selectedLaneWidgets.clear();
-                          setOverrides(std::move(referenceRemovals));
                         }
-                        clearOverride({"widget", widgetName});
+                        if (deleteWidgetInstance) {
+                          deleteWidgetInstance(widgetName, std::move(referenceRemovals));
+                        }
                         if (closeHostedEditor) {
                           closeHostedEditor();
                         }
@@ -3518,16 +3519,17 @@ namespace settings {
         if (!inherited) {
           auto items = laneItems;
           items.erase(items.begin() + static_cast<std::ptrdiff_t>(i));
-          const bool removeInstance = isGuiManagedNamedWidgetInstance(ctx, entryName)
+          const bool removeInstance = isConfiguredNamedWidgetInstance(ctx, entryName)
               && !widgetHasPlacementAfterLaneEdit(ctx.config, lanePath, items, entryName);
           removeClose = [&selectedLaneWidgets = ctx.selectedLaneWidgets, setOverride = ctx.setOverride,
-                         clearOverride = ctx.clearOverride, items = std::move(items), lanePath, entryName,
+                         deleteWidgetInstance = ctx.deleteWidgetInstance, items = std::move(items), lanePath, entryName,
                          removeInstance, laneKey, i] {
             reindexLaneSelectionAfterRemoval(selectedLaneWidgets, laneKey, i);
-            setOverride(lanePath, items);
-            if (removeInstance) {
-              clearOverride({"widget", entryName});
+            if (removeInstance && deleteWidgetInstance) {
+              deleteWidgetInstance(entryName, {{lanePath, items}});
+              return;
             }
+            setOverride(lanePath, items);
           };
         }
         std::function<void()> toggleSelect;

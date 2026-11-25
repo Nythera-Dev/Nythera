@@ -4,11 +4,11 @@
 #include "render/core/renderer.h"
 #include "render/scene/input_area.h"
 #include "render/scene/input_dispatcher.h"
-#include "ui/tooltip/tooltip_manager.h"
 #include "ui/builders.h"
 #include "ui/controls/box.h"
 #include "ui/palette.h"
 #include "ui/style.h"
+#include "ui/tooltip/tooltip_manager.h"
 #include "wayland/wayland_seat.h"
 
 #include <algorithm>
@@ -178,6 +178,7 @@ namespace settings {
     InputDispatcher* input = nullptr;
     std::function<void()> requestLayout;
     std::function<void()> requestUpdateOnly;
+    std::function<void()> onModalClosed;
     Node* sceneRoot = nullptr;
     Node* settingsContent = nullptr;
     ModalStackNode* stackRoot = nullptr;
@@ -219,6 +220,10 @@ namespace settings {
     m_impl->requestLayout = std::move(requestLayout);
     m_impl->requestUpdateOnly = std::move(requestUpdateOnly);
     m_impl->ensureStack();
+  }
+
+  void SettingsModalHost::setOnModalClosed(std::function<void()> onModalClosed) {
+    m_impl->onModalClosed = std::move(onModalClosed);
   }
 
   void
@@ -327,6 +332,9 @@ namespace settings {
     }
     if (m_impl->requestLayout) {
       m_impl->requestLayout();
+    }
+    if (const auto onModalClosed = m_impl->onModalClosed) {
+      onModalClosed();
     }
   }
 

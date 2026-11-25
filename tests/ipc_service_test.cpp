@@ -1,3 +1,4 @@
+#include "app/config_monitor_ipc.h"
 #include "ipc/ipc_service.h"
 #include "shell/osd/osd_overlay.h"
 #include "tests/test_check.h"
@@ -214,5 +215,16 @@ int main() {
   TEST_CHECK(!receivedOsd->hideDelayMs);
   TEST_CHECK(sendRaw(ipc, socketPath, R"(osd-show {"icon":"wifi","hide_delay_ms":1.5})").starts_with("error: "));
   TEST_CHECK(sendRaw(ipc, socketPath, R"(osd-show {"icon":"wifi","hide_delay_ms":-1000})").starts_with("error: "));
+
+  // Applications ask Shell who owns their configuration alerts before notifying.
+  nythera::config::ApplicationConfigMonitorRegistry monitors;
+  registerConfigMonitorStatusIpc(ipc, monitors);
+  TEST_CHECK(ipc.hasHandler("config-monitor-status"));
+  TEST_CHECK(sendRaw(ipc, socketPath, "config-monitor-status files") == "unmonitored\n");
+  monitors.addMonitor({.appId = "files", .displayName = "Nythera Files"});
+  TEST_CHECK(sendRaw(ipc, socketPath, "config-monitor-status files") == "monitored\n");
+  TEST_CHECK(sendRaw(ipc, socketPath, "config-monitor-status other") == "unmonitored\n");
+  TEST_CHECK(sendRaw(ipc, socketPath, "config-monitor-status").starts_with("error: "));
+  TEST_CHECK(sendRaw(ipc, socketPath, "config-monitor-status files extra").starts_with("error: "));
   return 0;
 }

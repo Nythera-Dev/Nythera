@@ -21,7 +21,7 @@ namespace {
   constexpr Logger kLog("telemetry");
 
   std::string instanceIdPath() {
-    const std::string dir = FileUtils::stateDir();
+    const std::string dir = ConfigService::resolveActiveStateDir();
     if (dir.empty()) {
       return {};
     }

@@ -18,8 +18,9 @@ namespace nythera::config {
   // schema. Returns every issue found: syntax errors, unknown sections/keys, and
   // type/enum/range/color problems. Errors mean the config is invalid; warnings
   // are advisory (e.g. clamped ranges). Does not construct a ConfigService.
-  [[nodiscard]] schema::Diagnostics
-  validateConfigSources(std::string_view configDir, std::string_view settingsTomlPath);
+  [[nodiscard]] schema::Diagnostics validateConfigSources(
+      std::string_view configDir, std::string_view settingsTomlPath, std::string_view sharedThemePath = {}
+  );
 
   // Validates exactly one TOML file. No config directory is scanned and no
   // settings.toml override layer is read.

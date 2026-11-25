@@ -86,6 +86,8 @@ namespace settings {
     std::function<void(std::vector<std::vector<std::string>>)> requestResetConfirmation;
     std::function<void(std::string, std::string, std::vector<std::pair<std::vector<std::string>, ConfigOverrideValue>>)>
         renameWidgetInstance;
+    std::function<void(std::string, std::vector<std::pair<std::vector<std::string>, ConfigOverrideValue>>)>
+        deleteWidgetInstance;
 
     std::function<void(std::size_t)> openSessionActionEntryEditor;
     std::function<void(std::size_t)> openIdleBehaviorEntryEditor;

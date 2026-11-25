@@ -5,7 +5,7 @@ sidebar:
   order: 8
 ---
 
-Controls the active palette source and the dark/light modes used by Nythera and by your apps.
+Put shared theme settings under `[theme]` in `~/.config/nythera/theme.toml`. Shell and Files both read this file. Wallpaper-derived colours use Shell's active wallpaper. See [App Theming](/nythera/theming/app-theming/) for `[theme.templates]` and [Files settings](/nythera/configuration/files/) for the existing Files transparency override.
 
 ```toml
 [theme]
@@ -20,7 +20,7 @@ pure_black_dark   = false         # replace dark-mode backgrounds with pure blac
 sync_color_scheme = true          # sync the GNOME color-scheme preference with mode
 ```
 
-Palette changes apply live when the resolved config changes, whether through Settings or edits to `~/.config/nythera/*.toml`. Wallpaper-derived themes re-resolve automatically when the default wallpaper changes. See [Palette](/nythera/theming/palette/) for color roles, custom palette files, and terminal colors.
+In the example, `"MyPalette"` is a placeholder for a custom palette name. The built-in default for `custom_palette` is an empty string. Palette changes apply live through Settings and manual edits. Wallpaper-derived themes re-resolve when the default wallpaper changes. See [Palette](/nythera/theming/palette/) for color roles, custom palette files, and terminal colors.
 
 ---
 
@@ -34,8 +34,8 @@ This is the mode your apps run in: it selects the palette variant written by [te
 
 Nythera's own mode: bars, panels, the launcher, wallpaper directory selection, and the greeter appearance.
 
-| Value            | Description                                                            |
-| ---------------- | ---------------------------------------------------------------------- |
+| Value            | Description                                                           |
+| ---------------- | --------------------------------------------------------------------- |
 | `follow`         | Track `mode`, so Nythera and your apps switch together (default).     |
 | `dark` / `light` | Pin Nythera to that variant while `mode` keeps driving apps.          |
 | `auto`           | Switch Nythera on the `[location]` schedule, independently of `mode`. |
@@ -58,11 +58,11 @@ For theme mode and palette commands, see [Media & UI → Theme](/nythera/ipc/med
 
 ## `source`
 
-| Value       | Description                                                                       |
-| ----------- | --------------------------------------------------------------------------------- |
-| `builtin`   | Use one of the palettes compiled into the binary.                                 |
-| `wallpaper` | Generate a palette from the current default wallpaper each time it changes.       |
-| `community` | Fetch a palette by name from `https://api.noctalia.dev/palette/<name>`.           |
+| Value       | Description                                                                      |
+| ----------- | -------------------------------------------------------------------------------- |
+| `builtin`   | Use one of the palettes compiled into the binary.                                |
+| `wallpaper` | Generate a palette from the current default wallpaper each time it changes.      |
+| `community` | Fetch a palette by name from `https://api.noctalia.dev/palette/<name>`.          |
 | `custom`    | Load a palette JSON file from the Nythera config directory's `palettes/` folder. |
 
 ---

@@ -1,11 +1,11 @@
 #include "scripting/plugin_file_cache.h"
 
+#include "config/config_service.h"
 #include "config/config_types.h"
 #include "core/deferred_call.h"
 #include "scripting/plugin_git.h"
 #include "scripting/plugin_id.h"
 #include "scripting/plugin_source_paths.h"
-#include "util/file_utils.h"
 
 #include <filesystem>
 #include <fstream>
@@ -22,7 +22,7 @@ namespace scripting {
   std::string PluginFileCache::cacheFilePath(
       const std::string& sourceName, const std::string& pluginSubdir, const std::string& filename
   ) {
-    const std::string base = FileUtils::stateDir();
+    const std::string base = ConfigService::resolveActiveStateDir();
     if (base.empty()) {
       return {};
     }
@@ -41,7 +41,7 @@ namespace scripting {
     // Drop the git-fetched on-disk copies too: cacheFilePath() is keyed only by source
     // name and filename, not revision, so a source that advanced HEAD would keep serving
     // its previous thumbnail/README until the cache file is removed.
-    const std::string base = FileUtils::stateDir();
+    const std::string base = ConfigService::resolveActiveStateDir();
     if (!base.empty()) {
       const std::filesystem::path cacheRoot = std::filesystem::path(base) / "plugin-cache";
       (void)plugin_paths::removeTreeUnder(cacheRoot / sourceName, cacheRoot);

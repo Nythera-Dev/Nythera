@@ -326,7 +326,7 @@ namespace {
 } // namespace
 
 Wallpaper::Wallpaper() {
-  const std::string stateDir = FileUtils::stateDir();
+  const std::string stateDir = ConfigService::resolveActiveStateDir();
   if (!stateDir.empty()) {
     m_shuffleState.setStatePath(std::filesystem::path(stateDir) / "wallpaper_shuffle.json");
   }
@@ -362,18 +362,24 @@ TextureHandle Wallpaper::currentTexture() const {
 
 std::optional<WallpaperDrawParams> Wallpaper::backingSource(wl_output* output) const {
   for (const auto& inst : m_instances) {
-    if (inst->output != output || !inst->wallpaperNode) continue;
+    if (inst->output != output || !inst->wallpaperNode)
+      continue;
     const auto* node = inst->wallpaperNode;
     const auto texture = inst->currentImage.texture();
-    if (inst->currentSourceKind == WallpaperSourceKind::Image && !texture.valid()) return std::nullopt;
+    if (inst->currentSourceKind == WallpaperSourceKind::Image && !texture.valid())
+      return std::nullopt;
     WallpaperDrawParams source;
-    source.from = {inst->currentSourceKind, texture.id, inst->currentColor,
-                   static_cast<float>(texture.width), static_cast<float>(texture.height)};
+    source.from = {
+        inst->currentSourceKind, texture.id, inst->currentColor, static_cast<float>(texture.width),
+        static_cast<float>(texture.height)
+    };
     source.to = source.from;
     if (inst->transitioning) {
       const auto next = inst->nextImage.texture();
-      source.to = {inst->nextSourceKind, next.id, inst->nextColor,
-                   static_cast<float>(next.width), static_cast<float>(next.height)};
+      source.to = {
+          inst->nextSourceKind, next.id, inst->nextColor, static_cast<float>(next.width),
+          static_cast<float>(next.height)
+      };
       source.transition = inst->activeTransition;
       source.progress = transitionProgressForTime(inst->transitionTime);
       source.params = inst->transitionParams;
@@ -1562,7 +1568,8 @@ void Wallpaper::startTransitionAnimation(
   // motion system: animateTimer ignores both the animation-speed multiplier and the
   // animations-enabled toggle (disabling animations must not skip the crossfade).
   instance.transitionAnimId = instance.animations.animateTimer(
-      fromTime, toTime, durationMs, Easing::Linear, [this, inst](float time) {
+      fromTime, toTime, durationMs, Easing::Linear,
+      [this, inst](float time) {
         setTransitionTime(*inst, time);
         m_backingTransitionChanged.emit(inst->output);
       },

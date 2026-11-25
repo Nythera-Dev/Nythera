@@ -18,6 +18,7 @@
 #include "net/url_open.h"
 #include "render/core/async_texture_cache.h"
 #include "render/render_context.h"
+#include "render/scene/input_area.h"
 #include "render/text/font_weight_catalog.h"
 #include "scripting/plugin_registry.h"
 #include "shell/settings/settings_content_plugins.h"
@@ -167,6 +168,17 @@ namespace {
     }
   }
 
+  template <typename Fn> struct ScopedExit {
+    bool armed;
+    Fn fn;
+    ~ScopedExit() {
+      if (armed) {
+        fn();
+      }
+    }
+  };
+  template <typename Fn> ScopedExit(bool, Fn) -> ScopedExit<Fn>;
+
 } // namespace
 
 SettingsWindow::SettingsWindow() = default;
@@ -226,6 +238,11 @@ void SettingsWindow::initialize(
         }
       }
   );
+  m_modalHost.setOnModalClosed([this] { flushPendingExternalConfigReload(); });
+  m_inputDispatcher.setFocusChangeCallback([this](InputArea*, InputArea*) { flushPendingExternalConfigReload(); });
+  if (m_config != nullptr) {
+    m_config->addReloadCallback([this] { onConfigReloaded(); }, "settings");
+  }
 }
 
 void SettingsWindow::initializeDialogPresenter(
@@ -604,6 +621,7 @@ void SettingsWindow::dismissOpenSelectDropdown() {
 }
 
 void SettingsWindow::destroyWindow() {
+  m_externalReloadGate.reset();
   m_modalHost.closeAll();
   m_configExportDialogModal.reset();
   m_editorSheetModal.reset();
@@ -971,6 +989,11 @@ bool SettingsWindow::onPointerEvent(const PointerEvent& event) {
     return false;
   }
 
+  const ScopedExit flushGuard{
+      event.type == PointerEvent::Type::Button,
+      [this] { flushPendingExternalConfigReload(); },
+  };
+
   if (m_widgetAddPopup != nullptr && m_widgetAddPopup->onPointerEvent(event)) {
     return true;
   }
@@ -1105,6 +1128,8 @@ void SettingsWindow::onKeyboardEvent(const KeyboardEvent& event) {
   if (!isOpen()) {
     return;
   }
+
+  const ScopedExit flushGuard{true, [this] { flushPendingExternalConfigReload(); }};
 
   if (m_widgetAddPopup != nullptr && m_widgetAddPopup->isOpen() && !m_widgetAddPopup->isInitializing()) {
     if (event.pressed && KeybindMatcher::matches(KeybindAction::Cancel, event.sym, event.modifiers)) {
@@ -1276,7 +1301,74 @@ void SettingsWindow::onFontChanged() {
   }
 }
 
-void SettingsWindow::onExternalOptionsChanged() { requestSceneRebuild(); }
+bool SettingsWindow::hasActiveUserEdit() const noexcept {
+  if (m_inputDispatcher.pointerCaptured()) {
+    return true;
+  }
+  if (const InputArea* focused = m_inputDispatcher.focusedArea();
+      focused != nullptr && (focused->capturesAllKeys() || focused->textInputClient() != nullptr)) {
+    return true;
+  }
+  if (!m_creatingBarName.empty()
+      || !m_renamingBarName.empty()
+      || !m_renamingMonitorOverrideBarName.empty()
+      || !m_renamingDockMonitorOverride.empty()
+      || !m_renamingWidgetName.empty()
+      || !m_pendingGestureKey.empty()) {
+    return true;
+  }
+  if (m_modalHost.isOpen()) {
+    return true;
+  }
+  if (m_configExportDialogModal != nullptr && m_configExportDialogModal->isOpen()) {
+    return true;
+  }
+  if (m_widgetAddPopup != nullptr && m_widgetAddPopup->isOpen()) {
+    return true;
+  }
+  if (m_searchPickerPopup != nullptr && m_searchPickerPopup->isOpen()) {
+    return true;
+  }
+  if (m_selectPopup != nullptr && m_selectPopup->isSelectDropdownOpen()) {
+    return true;
+  }
+  if (m_actionsMenuPopup != nullptr && m_actionsMenuPopup->isOpen()) {
+    return true;
+  }
+  return false;
+}
+
+void SettingsWindow::onConfigReloaded() {
+  if (m_externalReloadGate.onExternalReload(isOpen(), hasActiveUserEdit())) {
+    applyExternalConfigReload();
+  }
+}
+
+void SettingsWindow::applyExternalConfigReload() {
+  if (m_config != nullptr) {
+    const Config& cfg = m_config->config();
+    m_showAdvanced = cfg.shell.settingsShowAdvanced;
+    syncSelectedBarState(cfg, settings::barNames(cfg));
+  }
+  m_pendingResetPageScope.clear();
+  m_pendingResetSettingPaths.clear();
+  m_pendingDeleteBarName.clear();
+  m_pendingDeleteMonitorOverrideBarName.clear();
+  m_pendingDeleteMonitorOverrideMatch.clear();
+  m_pendingDeleteDockMonitorOverride.clear();
+  m_pendingDeleteWidgetName.clear();
+  m_pendingDeleteWidgetSettingPath.clear();
+  m_pendingDeletePluginId.clear();
+  requestSceneRebuild();
+}
+
+void SettingsWindow::flushPendingExternalConfigReload() {
+  if (m_externalReloadGate.flushIfReady(isOpen(), hasActiveUserEdit())) {
+    applyExternalConfigReload();
+  }
+}
+
+void SettingsWindow::onExternalOptionsChanged() { onConfigReloaded(); }
 
 void SettingsWindow::onPluginsChanged() {
   markPluginListDirty();

@@ -1134,7 +1134,7 @@
       "inherited": "Inherited",
       "monitor": "Monitor",
       "official": "Official",
-      "override": "Override"
+      "override": "Modified"
     },
     "calendar-accounts": {
       "add-title": "Add Calendar Account",
@@ -1205,7 +1205,7 @@
       "bar": {
         "create": "Create",
         "delete": "Delete",
-        "delete-confirm-desc": "This GUI-created bar will be removed from settings.toml.",
+        "delete-confirm-desc": "This bar will be removed from your configuration.",
         "delete-confirm-title": "Delete \"{name}\"?",
         "id-placeholder": "Bar ID",
         "management": "Bar",
@@ -1219,7 +1219,7 @@
         "create": "Create",
         "custom": "Custom",
         "delete": "Delete",
-        "delete-confirm-desc": "This GUI-created monitor override will be removed from settings.toml.",
+        "delete-confirm-desc": "This monitor override will be removed from your configuration.",
         "delete-confirm-title": "Delete \"{name}\"?",
         "exists": "An override for this monitor already exists.",
         "label": "Monitor: {name}",
@@ -1397,7 +1397,7 @@
       "full-effective-description": "Exports every active setting, including built-in defaults. Useful for inspection or sharing a snapshot, but pins current defaults explicitly.",
       "full-effective-save-title": "Save Full Effective Config",
       "full-effective-title": "Full Effective Config",
-      "merged-user-description": "Combines config files and GUI overrides into one TOML file. Built-in defaults stay implicit.",
+      "merged-user-description": "Combines active configuration files into one TOML file. Built-in defaults stay implicit.",
       "merged-user-save-title": "Save Merged User Config",
       "merged-user-title": "Merged User Config (Recommended)",
       "privacy-warning-description": "Credentials are calendar server URLs, git plugin source URLs, and plugin settings the plugin marks as secret. Anything else you typed into your config, such as a token in a command, is always exported. Review the file before sharing it.",
@@ -4016,6 +4016,10 @@
             "description": "Read a shell configuration value by its path.",
             "label": "Read configuration value"
           },
+          "config-monitor-status": {
+            "description": "Report whether the shell monitors an application's configuration",
+            "label": "Configuration monitor status"
+          },
           "config-set": {
             "description": "Change a shell configuration value by its path.",
             "label": "Set configuration value"
@@ -5193,7 +5197,7 @@
     "window": {
       "export-config": "Export Config…",
       "export-config-saved": "Config export saved.",
-      "filter-overridden": "Overridden",
+      "filter-overridden": "Modified",
       "legacy-config-warning": "Legacy setting: {issue}. Edit this source entry; Nythera is applying the replacement only temporarily. Run nythera config validate to list every required change.",
       "native-title": "Nythera Settings",
       "no-results": "No settings found",

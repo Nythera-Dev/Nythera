@@ -1,14 +1,15 @@
 #include "config/config_service.h"
 #include "config/config_types.h"
+#include "core/toml.h"
+#include "test_isolation.h"
 
-#include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <optional>
 #include <print>
 #include <string>
 #include <string_view>
-#include <unistd.h>
 
 namespace {
 
@@ -21,127 +22,106 @@ namespace {
     }
   }
 
-  // Check that wallpaper setting from config.toml isn't dropped when state/settings.toml
-  // is written for the first time.
-  void checkConfigSurvivesFirstSidecarWrite() {
-    const std::filesystem::path root =
-        std::filesystem::temp_directory_path() / ("nythera-wallpaper-config-file-" + std::to_string(::getpid()));
-    std::filesystem::remove_all(root);
-    std::filesystem::create_directories(root / "config" / "nythera");
-    std::filesystem::create_directories(root / "state" / "nythera");
-    std::filesystem::create_directories(root / "data");
-    ::setenv("NYTHERA_CONFIG_HOME", (root / "config").c_str(), 1);
-    ::setenv("NYTHERA_STATE_HOME", (root / "state").c_str(), 1);
-    ::setenv("NYTHERA_DATA_HOME", (root / "data").c_str(), 1);
-
-    {
-      std::ofstream out(root / "config" / "nythera" / "config.toml", std::ios::trunc);
-      out << "[wallpaper]\nenabled = true\n\n[wallpaper.default]\npath = \"/tmp/from-config.png\"\n";
-    }
-    const auto sidecar = root / "state" / "nythera" / "settings.toml";
-    expect(!std::filesystem::exists(sidecar), "state dir should start without settings.toml");
-
-    ConfigService config;
-    expect(config.getDefaultWallpaperPath() == "/tmp/from-config.png", "path was not read from config.toml");
-
-    expect(config.setOverride({"accessibility", "ui_scale"}, 1.25), "setOverride failed");
-    expect(std::filesystem::exists(sidecar), "setOverride did not create settings.toml");
-
-    expect(
-        config.getDefaultWallpaperPath() == "/tmp/from-config.png",
-        "config.toml path was dropped by the first sidecar write"
-    );
-
-    ::unsetenv("NYTHERA_CONFIG_HOME");
-    ::unsetenv("NYTHERA_STATE_HOME");
-    ::unsetenv("NYTHERA_DATA_HOME");
-    std::filesystem::remove_all(root);
+  void writeFile(const std::filesystem::path& path, std::string_view content) {
+    std::filesystem::create_directories(path.parent_path());
+    std::ofstream out(path, std::ios::binary | std::ios::trunc);
+    out << content;
   }
 
-  // State settings loads last, so it should outranks config.toml
-  void checkSidecarPathOutranksConfigFilePath() {
-    const std::filesystem::path root =
-        std::filesystem::temp_directory_path() / ("nythera-wallpaper-sidecar-" + std::to_string(::getpid()));
-    std::filesystem::remove_all(root);
-    std::filesystem::create_directories(root / "config" / "nythera");
-    std::filesystem::create_directories(root / "state" / "nythera");
-    std::filesystem::create_directories(root / "data");
-    ::setenv("NYTHERA_CONFIG_HOME", (root / "config").c_str(), 1);
-    ::setenv("NYTHERA_STATE_HOME", (root / "state").c_str(), 1);
-    ::setenv("NYTHERA_DATA_HOME", (root / "data").c_str(), 1);
+  std::string readFile(const std::filesystem::path& path) {
+    std::ifstream in(path, std::ios::binary);
+    return {std::istreambuf_iterator<char>(in), {}};
+  }
 
-    {
-      std::ofstream out(root / "config" / "nythera" / "config.toml", std::ios::trunc);
-      out << "[wallpaper]\nenabled = true\n\n[wallpaper.default]\npath = \"/tmp/from-config.png\"\n";
-    }
+  // Check that wallpaper setting from shell/config.toml isn't dropped when another setting
+  // is written directly, and that state/settings.toml is never created.
+  void checkConfigSurvivesDirectWrite() {
+    const nythera::test::ScopedTestEnv env({.prefix = "nythera-wallpaper-config-file"});
+    const auto configPath = env.config() / "nythera" / "shell" / "config.toml";
+    const auto legacySidecar = env.state() / "nythera" / "settings.toml";
+
+    writeFile(
+        configPath,
+        "# Wallpaper selection\n[wallpaper]\nenabled = true\n\n[wallpaper.default]\npath = \"/tmp/from-config.png\"\n"
+    );
+    expect(!std::filesystem::exists(legacySidecar), "state dir should start without settings.toml");
+
+    ConfigService config;
+    expect(config.getDefaultWallpaperPath() == "/tmp/from-config.png", "path was not read from shell/config.toml");
+
+    expect(config.setOverride({"accessibility", "ui_scale"}, 1.25), "setOverride failed");
+    expect(!std::filesystem::exists(legacySidecar), "setOverride must not create legacy settings.toml");
+    expect(readFile(configPath).contains("# Wallpaper selection"), "comment was lost during direct write");
+    expect(
+        config.getDefaultWallpaperPath() == "/tmp/from-config.png",
+        "shell/config.toml wallpaper path was dropped by direct write"
+    );
+  }
+
+  void checkDirectWallpaperUpdateAndFallback() {
+    const nythera::test::ScopedTestEnv env({.prefix = "nythera-wallpaper-direct"});
+    const auto configPath = env.config() / "nythera" / "shell" / "config.toml";
+    const auto shellStatePath = env.state() / "nythera" / "shell" / "state.toml";
+    const auto legacyStatePath = env.state() / "nythera" / "state.toml";
+    const auto legacySidecar = env.state() / "nythera" / "settings.toml";
+
+    writeFile(configPath, "[wallpaper]\nenabled = true\n\n[wallpaper.default]\npath = \"/tmp/from-config.png\"\n");
+
     ConfigService config;
     config.setWallpaperPath(std::nullopt, "/tmp/picked.png");
-    expect(config.getDefaultWallpaperPath() == "/tmp/picked.png", "sidecar path did not win once set");
+    expect(!std::filesystem::exists(legacySidecar), "setWallpaperPath must not create settings.toml");
+    expect(!std::filesystem::exists(legacyStatePath), "setWallpaperPath must write under state/nythera/shell/");
+    expect(std::filesystem::exists(shellStatePath), "setWallpaperPath did not write shell/state.toml");
+    expect(
+        toml::parse_file(configPath.string())["wallpaper"]["default"]["path"].value<std::string>()
+            == "/tmp/from-config.png",
+        "setWallpaperPath modified shell/config.toml instead of state.toml"
+    );
+    expect(
+        toml::parse_file(shellStatePath.string())["wallpaper"]["default"].value<std::string>() == "/tmp/picked.png",
+        "shell/state.toml did not persist default wallpaper path"
+    );
+    expect(config.getDefaultWallpaperPath() == "/tmp/picked.png", "updated wallpaper path did not take effect");
 
     config.forceReload();
-    expect(config.getDefaultWallpaperPath() == "/tmp/picked.png", "sidecar path did not survive a reload");
+    expect(config.getDefaultWallpaperPath() == "/tmp/picked.png", "updated wallpaper path did not survive reload");
 
     config.setWallpaperPath("DP-9", "/tmp/dp9.png");
     config.forceReload();
     expect(config.getWallpaperPath("DP-9") == "/tmp/dp9.png", "per-monitor path did not survive a reload");
     expect(config.getWallpaperPath("DP-8") == "/tmp/picked.png", "unconfigured monitor did not fall back to default");
-
-    ::unsetenv("NYTHERA_CONFIG_HOME");
-    ::unsetenv("NYTHERA_STATE_HOME");
-    ::unsetenv("NYTHERA_DATA_HOME");
-    std::filesystem::remove_all(root);
   }
 
   // Path fields document that ~ and $VARS expand on read (see field.h
   // pathStringField). Regression guard: wallpaper.directory must expand $VARS.
   void checkDirectoryExpandsEnvVars() {
-    const std::filesystem::path root =
-        std::filesystem::temp_directory_path() / ("nythera-wallpaper-envvar-" + std::to_string(::getpid()));
-    std::filesystem::remove_all(root);
-    std::filesystem::create_directories(root / "config" / "nythera");
-    std::filesystem::create_directories(root / "state" / "nythera");
-    std::filesystem::create_directories(root / "data");
-    ::setenv("NYTHERA_CONFIG_HOME", (root / "config").c_str(), 1);
-    ::setenv("NYTHERA_STATE_HOME", (root / "state").c_str(), 1);
-    ::setenv("NYTHERA_DATA_HOME", (root / "data").c_str(), 1);
-    ::setenv("NYTHERA_WP_TEST", "/tmp/wp-root", 1);
+    const nythera::test::ScopedTestEnv env({.prefix = "nythera-wallpaper-envvar"});
+    const nythera::test::ScopedEnvVar wpEnv("NYTHERA_WP_TEST", "/tmp/wp-root");
 
-    {
-      std::ofstream out(root / "config" / "nythera" / "config.toml", std::ios::trunc);
-      out << "[wallpaper]\nenabled = true\ndirectory = \"$NYTHERA_WP_TEST/pics\"\n";
-    }
+    writeFile(
+        env.config() / "nythera" / "shell" / "config.toml",
+        "[wallpaper]\nenabled = true\ndirectory = \"$NYTHERA_WP_TEST/pics\"\n"
+    );
 
     ConfigService config;
     expect(
         config.config().wallpaper.directory == "/tmp/wp-root/pics",
         "wallpaper.directory did not expand $NYTHERA_WP_TEST"
     );
-
-    ::unsetenv("NYTHERA_WP_TEST");
-    ::unsetenv("NYTHERA_CONFIG_HOME");
-    ::unsetenv("NYTHERA_STATE_HOME");
-    ::unsetenv("NYTHERA_DATA_HOME");
-    std::filesystem::remove_all(root);
   }
 
   // A favorite starred without a preset must not touch the global theme mode when applied;
   // one with an explicit theme_mode must restore it.
   void checkFavoriteThemeModeOverride() {
-    const std::filesystem::path root =
-        std::filesystem::temp_directory_path() / ("nythera-wallpaper-favorite-" + std::to_string(::getpid()));
-    std::filesystem::remove_all(root);
-    std::filesystem::create_directories(root / "config" / "nythera");
-    std::filesystem::create_directories(root / "state" / "nythera");
-    std::filesystem::create_directories(root / "data");
-    ::setenv("NYTHERA_CONFIG_HOME", (root / "config").c_str(), 1);
-    ::setenv("NYTHERA_STATE_HOME", (root / "state").c_str(), 1);
-    ::setenv("NYTHERA_DATA_HOME", (root / "data").c_str(), 1);
+    const nythera::test::ScopedTestEnv env({.prefix = "nythera-wallpaper-favorite"});
+    const auto configPath = env.config() / "nythera" / "shell" / "config.toml";
+    const auto shellStatePath = env.state() / "nythera" / "shell" / "state.toml";
+    writeFile(
+        configPath,
+        "[theme]\nmode = \"dark\"\n\n"
+        "[[wallpaper.favorite]]\npath = \"/tmp/explicit.png\"\ntheme_mode = \"light\"\n"
+    );
 
-    {
-      std::ofstream out(root / "state" / "nythera" / "settings.toml", std::ios::trunc);
-      out << "[theme]\nmode = \"dark\"\n\n"
-             "[[wallpaper.favorite]]\npath = \"/tmp/explicit.png\"\ntheme_mode = \"light\"\n";
-    }
     ConfigService config;
     expect(config.config().theme.mode == ThemeMode::Dark, "global theme mode was not read");
 
@@ -152,23 +132,30 @@ namespace {
 
     config.applyWallpaperSelection(std::nullopt, "/tmp/bookmark.png", bookmark, {});
     expect(config.config().theme.mode == ThemeMode::Dark, "path-only favorite changed the global theme mode");
+    expect(config.getDefaultWallpaperPath() == "/tmp/bookmark.png", "bookmark wallpaper did not persist to state");
 
     config.applyWallpaperSelection(
         std::nullopt, "/tmp/explicit.png", config.wallpaperFavorite("/tmp/explicit.png"), {}
     );
     expect(config.config().theme.mode == ThemeMode::Light, "favorite theme_mode was not applied");
-
-    ::unsetenv("NYTHERA_CONFIG_HOME");
-    ::unsetenv("NYTHERA_STATE_HOME");
-    ::unsetenv("NYTHERA_DATA_HOME");
-    std::filesystem::remove_all(root);
+    expect(
+        toml::parse_file(shellStatePath.string())["wallpaper"]["default"].value<std::string>() == "/tmp/explicit.png",
+        "applyWallpaperSelection did not persist default wallpaper in shell/state.toml"
+    );
+    expect(
+        !toml::parse_file(configPath.string())["wallpaper"]["default"],
+        "applyWallpaperSelection leaked wallpaper.default into shell/config.toml"
+    );
+    expect(
+        !std::filesystem::exists(env.state() / "nythera" / "settings.toml"), "favorites must not create settings.toml"
+    );
   }
 
 } // namespace
 
 int main() {
-  checkConfigSurvivesFirstSidecarWrite();
-  checkSidecarPathOutranksConfigFilePath();
+  checkConfigSurvivesDirectWrite();
+  checkDirectWallpaperUpdateAndFallback();
   checkDirectoryExpandsEnvVars();
   checkFavoriteThemeModeOverride();
 

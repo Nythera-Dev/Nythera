@@ -9,6 +9,7 @@
 #include "capture/screenshot_service.h"
 #include "compositors/compositor_platform.h"
 #include "compositors/workspace_alert_service.h"
+#include "config/config_monitor.h"
 #include "config/config_poll_source.h"
 #include "config/config_service.h"
 #include "shell/config/config_validation_hooks.h"
@@ -248,6 +249,7 @@ private:
   void onNetworkStateChangedForEvents(const NetworkState& state, NetworkChangeOrigin origin);
   void onBluetoothStateChangedForEvents(const BluetoothState& state, BluetoothStateChangeOrigin origin);
   void onPowerProfileChangedForEvents(const PowerProfilesState& state, PowerProfilesChangeOrigin origin);
+  void deliverAppConfigurationNotice(std::string_view appName, const nythera::config::ConfigurationNotice& notice);
   [[nodiscard]] std::vector<PollSource*> currentPollSources();
   [[nodiscard]] std::vector<PollSource*> buildPollSources();
 
@@ -412,6 +414,7 @@ private:
   DeferredCallPollSource m_deferredCallPollSource;
   TimePollSource m_timePollSource{m_timeService};
   ConfigPollSource m_configPollSource{m_configService};
+  nythera::config::ApplicationConfigMonitorRegistry m_appConfigMonitors;
   DesktopEntryPollSource m_desktopEntryPollSource;
   IconThemePollSource m_iconThemePollSource;
   ClipboardPollSource m_clipboardPollSource{m_clipboardService};

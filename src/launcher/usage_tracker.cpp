@@ -1,6 +1,6 @@
 #include "launcher/usage_tracker.h"
 
-#include "util/file_utils.h"
+#include "config/config_service.h"
 
 #include <filesystem>
 #include <fstream>
@@ -11,7 +11,7 @@ namespace {
 }
 
 UsageTracker::UsageTracker() {
-  const std::string dir = FileUtils::stateDir();
+  const std::string dir = ConfigService::resolveActiveStateDir();
   m_usageCountsPath = (dir.empty() ? "." : dir) + "/usage_counts.json";
   m_recentlyUsedPath = (dir.empty() ? "." : dir) + "/recently_used.json";
 }

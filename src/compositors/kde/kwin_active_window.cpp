@@ -1,5 +1,6 @@
 #include "compositors/kde/kwin_active_window.h"
 
+#include "config/config_service.h"
 #include "core/log.h"
 #include "dbus/session_bus.h"
 #include "system/app_identity.h"
@@ -588,7 +589,7 @@ for (const window of workspace.windowList()) {{
   }
 
   bool KwinActiveWindow::ensureScriptFile(std::string& scriptPath) const {
-    const std::string stateDir = FileUtils::stateDir();
+    const std::string stateDir = ConfigService::resolveActiveStateDir();
     if (stateDir.empty()) {
       kLog.warn("state directory unavailable; cannot install kwin active-window script");
       return false;
@@ -668,7 +669,7 @@ for (const window of workspace.windowList()) {{
   }
 
   bool KwinActiveWindow::runTransientScript(const std::string& source, std::string_view label) {
-    const std::string stateDir = FileUtils::stateDir();
+    const std::string stateDir = ConfigService::resolveActiveStateDir();
     if (stateDir.empty()) {
       return false;
     }

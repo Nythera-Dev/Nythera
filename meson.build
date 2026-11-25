@@ -1012,6 +1012,7 @@ if build_tests
     'dynamic_island',
     'secret_store',
     'security_primitives',
+    'shell_config_persistence',
     'sway_workspace_backend',
     'system_monitor_service',
     'taskbar_widget',

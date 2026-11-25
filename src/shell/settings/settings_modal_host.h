@@ -50,6 +50,7 @@ namespace settings {
     void initialize(
         InputDispatcher& inputDispatcher, std::function<void()> requestLayout, std::function<void()> requestUpdateOnly
     );
+    void setOnModalClosed(std::function<void()> onModalClosed);
     void attach(Node& sceneRoot, Node* settingsContent, Renderer& renderer, float width, float height);
     void detach();
     void resize(float width, float height);

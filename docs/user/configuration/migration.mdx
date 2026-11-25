@@ -1,0 +1,66 @@
+---
+title: Development cutover and recovery
+description: Stage 6 migration procedure for the existing Nythera development profile.
+sidebar:
+  order: 3
+---
+
+This runbook applies to the Stage 6 development cutover from a legacy Shell profile whose Shell settings are all in `settings.toml`, with no flat Shell TOML or Shell includes. The migration refuses other profiles. Shell and Files continue to support [configuration includes](/nythera/configuration/#including-extra-files). The script leaves the existing Files config and state, palettes, and legacy Shell files in place.
+
+## Before the cutover
+
+1. Verify the private backup and rollback bundle with `sha256sum -c MANIFEST.sha256` from each directory. Identify the rollback executables, their matching library, and the original profile roots. Keep both the pre-deployment backup and earlier staged attempts.
+2. Confirm the Shell and Files dev launchers point to the intended checkout binaries. In the order below, refresh only when needed and authorised: build and test NytheraLib, install it with `just install debug` into `~/.local/opt/nythera-lib`, then rebuild and test both consumers against that prefix. Keep the system Files binary and Polkit helpers in place.
+3. Use the same environment as the dev launchers. The script resolves each root through its `NYTHERA_CONFIG_HOME` or `NYTHERA_STATE_HOME` override, then the corresponding XDG variable, then the default under home. Put the private migration work outside both live roots.
+4. Optionally run `stage` with `--source-config` and `--source-state` pointing to backup copies. It creates a separate attempt directory and leaves the live profile untouched.
+
+## Authorised promotion
+
+When the session is unlocked, close Files and stop Shell cleanly with the dev `nythera stop` command. Wait until both processes have exited so recent clipboard, screen-time, and other state writes are included. Keep the apps stopped until promotion succeeds.
+
+```sh
+python3 tools/migrate-config-layout.py apply \
+  --nythera /path/to/nythera-shell/build-debug/nythera \
+  --work /path/to/private-cutover-work --confirm-authorised
+```
+
+Keep the printed attempt path. The script copies fresh legacy config and state into that private attempt, validates both layouts in isolation, compares full effective settings, and separately checks the current, last, and per-monitor wallpaper paths. It stages `theme.toml` and `shell/config.toml` privately. Only after verification does it promote Shell state, the shared theme, and the Shell config directory, in that order. Each promotion uses an atomic rename on the destination filesystem. The journal ties the three operations together for recovery.
+
+After success, start Shell through the dev launcher, then open Files through its dev desktop entry. When running the cutover from a short-lived command runner on Umbriel, use `umbriel msg spawn /usr/bin/gtk-launch dev.nythera.Files.Dev` so Files runs in the compositor's session and stays open after the command exits.
+
+Check the executables and `libnythera_lib.so.0` in both process mappings, then run acceptance. Keep the attempt directory, its journal and holding directories, and the legacy profile and backup until acceptance is complete.
+
+## Recovery
+
+If promotion returns an error, inspect the attempt's `promotion.json`. A failure before that journal exists leaves the live destinations untouched. With a journal, and with both apps stopped, recover using the **specific attempt directory** printed during promotion:
+
+```sh
+python3 tools/migrate-config-layout.py rollback \
+  --work /path/to/private-cutover-work/stage6-attempt --confirm-authorised
+```
+
+This works after an interrupted promotion and after a completed cutover. It moves the new entries back into private holding directories, preserving any changes made after cutover and exposing the untouched legacy profile again. If it reports a conflicting or replaced destination, leave both copies in place and inspect the paths in the journal before retrying.
+
+If the new binaries also need rolling back, launch the archived Shell and Files from the verified rollback bundle, with its `lib` directory selected via `LD_LIBRARY_PATH` for **both** processes. Use `NYTHERA_LIB_ASSETS_DIR` for the bundle's shared assets and `NYTHERA_ASSETS_DIR` for each program's corresponding assets. For example, from the bundle directory `/path/to/rollback`:
+
+```sh
+env LD_LIBRARY_PATH=/path/to/rollback/lib \
+  NYTHERA_LIB_ASSETS_DIR=/path/to/rollback/assets/library \
+  NYTHERA_ASSETS_DIR=/path/to/rollback/assets/shell \
+  /path/to/rollback/bin/nythera --daemon
+
+env LD_LIBRARY_PATH=/path/to/rollback/lib \
+  NYTHERA_LIB_ASSETS_DIR=/path/to/rollback/assets/library \
+  NYTHERA_ASSETS_DIR=/path/to/rollback/assets/files \
+  /path/to/rollback/bin/nythera-file-manager
+```
+
+Verify both process mappings. Keep the profile paths the same. A backed-up executable requires the compatible library in the bundle.
+
+## Wayland acceptance
+
+- Compare Shell settings, Files preferences and Saved Places, palettes, and Shell runtime state with the backup.
+- Change a setting in Settings and in TOML. Check write-back and comment preservation, open Settings live updates, Modified indicators, and reset to default. Try a structural edit such as renaming and deleting a configured entity.
+- Change the shared theme and verify Files inheritance and an enabled external template. Select a wallpaper on one output and verify the new path in Shell state.
+- Save invalid TOML and then repair it with Files open and closed. Check the last valid config, one error alert, recovery, and no manual-reload alert on a GUI save. Test the desktop-notification fallback with Shell stopped and Files running.
+- Restart both apps and confirm the edited settings, Saved Places, and wallpapers persist.

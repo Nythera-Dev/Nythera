@@ -105,11 +105,11 @@ Find answers to common setup and troubleshooting questions for Nythera.
 ## Configuration
 
 <FaqItem question="Where should I put my config, and why is my setting ignored?">
-  If you only use Settings, you normally do not need to edit config files. Settings writes your changes to `~/.local/state/nythera/settings.toml`.
+  If you only use Settings, you normally do not need to edit config files. Settings writes changes to the winning TOML definition, or to the appropriate primary config file for a new setting.
 
   If you write config by hand, put it in `~/.config/nythera/`. Nythera reads every `*.toml` file in that directory, sorted alphabetically, and merges them.
 
-  Settings changes load after hand-written config, so they win when both layers define the same setting. If a value in your file looks ignored, check Settings first, or inspect `~/.local/state/nythera/settings.toml`.
+  Settings and your editor change the same files. If a setting appears ignored, check the configuration and includes for a later definition.
 
   See [How configuration works](/nythera/configuration/) for the full load order and export options.
 </FaqItem>

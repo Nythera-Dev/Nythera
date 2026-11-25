@@ -435,15 +435,15 @@ namespace settings {
           && ctx.selectedMonitorOverride == nullptr
           && ctx.configService != nullptr) {
         const std::string barName = ctx.selectedBar->name;
-        const bool overrideOnly = ctx.configService->isOverrideOnlyBar(barName);
+        const bool configuredBar = ctx.configService->isOverrideOnlyBar(barName);
         const bool canMoveUp = ctx.configService->canMoveBarOverride(barName, -1);
         const bool canMoveDown = ctx.configService->canMoveBarOverride(barName, 1);
-        if (!overrideOnly && !canMoveUp && !canMoveDown) {
+        if (!configuredBar && !canMoveUp && !canMoveDown) {
           return;
         }
 
-        const bool pendingDelete = overrideOnly && ctx.pendingDeleteBarName == barName;
-        const bool renaming = overrideOnly && ctx.renamingBarName == barName;
+        const bool pendingDelete = configuredBar && ctx.pendingDeleteBarName == barName;
+        const bool renaming = configuredBar && ctx.renamingBarName == barName;
         auto* management = makeSection(content, i18n::tr("settings.entities.bar.management"), ctx.scale);
 
         if (renaming) {
@@ -552,7 +552,7 @@ namespace settings {
             ));
           }
 
-          if (overrideOnly) {
+          if (configuredBar) {
             actionRow->addChild(makeManagementButton(
                 i18n::tr("settings.entities.bar.rename"), ButtonVariant::Ghost, ctx.scale,
                 [&renamingBarName = ctx.renamingBarName, &pendingDeleteBarName = ctx.pendingDeleteBarName, barName,

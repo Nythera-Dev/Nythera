@@ -7,10 +7,10 @@ sidebar:
 
 # Desktop Widgets
 
-Desktop widgets are configured through the normal Nythera config stack. Declare layouts in `~/.config/nythera/*.toml`; the interactive editor writes its layout overrides to `settings.toml`.
+Desktop widgets are configured through the normal Nythera config stack. Declare layouts in `~/.config/nythera/shell/*.toml`. The interactive editor updates the files defining those layouts.
 
-- Declarative config: `[desktop_widgets]` in `~/.config/nythera/*.toml`
-- GUI/editor overrides: `$NYTHERA_STATE_HOME/nythera/settings.toml`, `$XDG_STATE_HOME/nythera/settings.toml`, or `~/.local/state/nythera/settings.toml`
+- Declarative config: `[desktop_widgets]` in `~/.config/nythera/shell/*.toml`
+- New layouts: `shell/config.toml` within the [active config root](/nythera/configuration/).
 
 ```toml
 [desktop_widgets]
@@ -75,7 +75,7 @@ Primary-colored center guides are always shown in edit mode. Dragging a widget s
 
 ## Config Format
 
-Widget definitions are named tables under `[desktop_widgets.widget.<id>]`. This makes them friendly to split config files and deep-merge overrides. Edit mode writes the same schema into `settings.toml`; use Settings -> Export Config... -> Merged User Config to promote GUI-edited layouts back into declarative config. When `widget_order` is present, it is the authoritative widget list and order; unlisted widget tables are ignored.
+Widget definitions are named tables under `[desktop_widgets.widget.<id>]`. This makes them friendly to split config files and deep-merge overrides. Edit mode writes this schema directly to the active Shell configuration. When `widget_order` is present, it is the authoritative widget list and order; unlisted widget tables are ignored.
 
 ```toml
 [desktop_widgets]
@@ -190,14 +190,14 @@ circle = true
 show_seconds = true
 ```
 
-| Setting        | Type   | Default      | Description                                                                                                                                                                                               |
-| -------------- | ------ | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `clock_style`  | string | `"digital"`  | `"digital"` renders a formatted text clock; `"analog"` renders a circular clock with hands.                                                                                                               |
+| Setting        | Type   | Default      | Description                                                                                                                                                                                              |
+| -------------- | ------ | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `clock_style`  | string | `"digital"`  | `"digital"` renders a formatted text clock; `"analog"` renders a circular clock with hands.                                                                                                              |
 | `format`       | string | `"{:%H:%M}"` | Digital clock format string. Ignored when `clock_style = "analog"`. Supports the same syntax and tokens as the bar clock `format`; see [Date format tokens](/nythera/configuration/date-format-tokens/). |
-| `center_text`  | bool   | `false`      | Digital only. Center-aligns the formatted time inside the clock box. When `false`, the clock keeps the leading edge stable as digits change width.                                                        |
-| `circle`       | bool   | `true`       | Analog only. Shows the outer ring and minute tick marks around the dial. When disabled, only the hands are drawn.                                                                                         |
-| `show_seconds` | bool   | `true`       | Analog only. Shows the second hand. Disable it for a clock that updates once per minute.                                                                                                                  |
-| `timezone`     | string | `""`         | Optional timezone identifier (e.g. `Europe/Berlin`, `UTC`) to use for this clock. If empty, uses the system's local time.                                                                                 |
+| `center_text`  | bool   | `false`      | Digital only. Center-aligns the formatted time inside the clock box. When `false`, the clock keeps the leading edge stable as digits change width.                                                       |
+| `circle`       | bool   | `true`       | Analog only. Shows the outer ring and minute tick marks around the dial. When disabled, only the hands are drawn.                                                                                        |
+| `show_seconds` | bool   | `true`       | Analog only. Shows the second hand. Disable it for a clock that updates once per minute.                                                                                                                 |
+| `timezone`     | string | `""`         | Optional timezone identifier (e.g. `Europe/Berlin`, `UTC`) to use for this clock. If empty, uses the system's local time.                                                                                |
 
 ---
 
@@ -451,7 +451,7 @@ rotation = 0.0
 
 [desktop_widgets.widget.note_main.settings]
 title       = "Welcome"
-description = "Edit this in the widget inspector or settings.toml."
+description = "Edit this in the widget inspector or the widget's configuration file."
 color       = "on_surface"
 opacity     = 1.0
 shadow      = true
@@ -540,7 +540,7 @@ background     = true
 | Setting                        | Type   | Default        | Description                                                                                                                                        |
 | ------------------------------ | ------ | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `display`                      | string | `"graph"`      | `"graph"` shows a scrolling history chart; `"gauge"` shows a compact pill gauge like the bar sysmon widget                                         |
-| `stat`                         | string | `"cpu_usage"`  | Primary stat. See [Available stats](/nythera/services/system-monitor/#available-stats)                                                            |
+| `stat`                         | string | `"cpu_usage"`  | Primary stat. See [Available stats](/nythera/services/system-monitor/#available-stats)                                                             |
 | `stat2`                        | string | -              | Graph mode only. Optional secondary stat (same values as `stat`). Omit for single curve.                                                           |
 | `gauge_layout`                 | string | `"horizontal"` | Gauge mode only. `"horizontal"` lays out icon, vertical pill gauge, and value in a row; `"vertical"` stacks icon, horizontal pill gauge, and value |
 | `interface`                    | string | `""`           | Network interface to monitor for `net_rx`/`net_tx`; empty uses the total across all non-loopback interfaces                                        |

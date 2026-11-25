@@ -2,7 +2,9 @@
 #include "application.h"
 #include "application_internal.h"
 #include "compositors/compositor_detect.h"
+#include "config/application_paths.h"
 #include "config/config_types.h"
+#include "config/files_config_validator.h"
 #include "core/deferred_call.h"
 #include "core/log.h"
 #include "dbus/idle/screensaver_service.h"
@@ -188,6 +190,28 @@ void Application::initUiRenderSurfacesAndSettings() {
         i18n::tr("notifications.internal.wallpaper-palette-export-success", "name", paletteName)
     );
   });
+}
+
+void Application::deliverAppConfigurationNotice(
+    std::string_view appName, const nythera::config::ConfigurationNotice& notice
+) {
+  if (m_osdOverlay.isEnabled() && m_configService.config().osd.kinds.custom) {
+    std::string value = notice.title;
+    if (!notice.body.empty()) {
+      value += '\n';
+      value += notice.body;
+    }
+    auto content = customOsdContent(notice.osdIcon, std::move(value), std::nullopt, false);
+    content.hideDelayMs = notice.osdHideDelayMs;
+    m_osdOverlay.show(content);
+    return;
+  }
+
+  if (notice.isError) {
+    notify::error(std::string(appName), notice.title, notice.body);
+  } else {
+    notify::info(std::string(appName), notice.title, notice.body);
+  }
 }
 
 void Application::performGreeterSync(bool quiet) {
@@ -816,6 +840,25 @@ void Application::initNotificationAndOsd() {
         m_osdOverlay.show(customOsdContent(icon, value, progress, inactive));
       }
   );
+  {
+    auto& filesMonitor = m_appConfigMonitors.addMonitor({
+        .appId = "files",
+        .displayName = "Nythera Files",
+        .configDir = FileUtils::applicationConfigDir(FileUtils::Application::Files),
+        .validator = nythera::config::validateFilesConfiguration,
+    });
+    const std::string displayName = filesMonitor.displayName();
+    filesMonitor.setProblemCallback(
+        [this, displayName](const nythera::config::ConfigurationProblem& problem, const std::filesystem::path& dir) {
+          deliverAppConfigurationNotice(displayName, nythera::config::invalidConfigurationNotice(problem, dir));
+        }
+    );
+    filesMonitor.setReloadCallback([this, displayName](const nythera::config::SourcedMergeResult&, bool manualReload) {
+      if (manualReload) {
+        deliverAppConfigurationNotice(displayName, nythera::config::reloadedConfigurationNotice());
+      }
+    });
+  }
   m_idleGraceOverlay.initialize(m_wayland, &m_renderContext);
   m_pluginIdleWatches.initialize(m_wayland);
   m_wayland.setIdleCapabilitiesReadyCallback([this] {

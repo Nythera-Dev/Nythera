@@ -65,8 +65,14 @@ void SettingsWindow::markSettingsWriteSuccess(bool requestRebuild) {
   m_pendingResetPageScope.clear();
   m_pendingResetSettingPaths.clear();
   if (requestRebuild) {
-    requestSceneRebuild();
+    if (!m_externalReloadGate.flushIfReady(isOpen(), hasActiveUserEdit())) {
+      requestSceneRebuild();
+      return;
+    }
+    applyExternalConfigReload();
+    return;
   }
+  flushPendingExternalConfigReload();
 }
 
 void SettingsWindow::markSettingsWriteError(std::string message) {
@@ -93,6 +99,7 @@ void SettingsWindow::finishSettingsWrite(
         changed ? !registryAlreadyCurrent : true, pageResetPathsChanged || rebuildWhenUnchanged, true
     );
   }
+  flushPendingExternalConfigReload();
 }
 
 void SettingsWindow::showTransientStatus(std::string message, bool isError) {
@@ -116,7 +123,11 @@ void SettingsWindow::setSettingOverride(std::vector<std::string> path, ConfigOve
         markSettingsWriteError(i18n::tr("settings.errors.write"));
         return;
       }
-      const auto result = shell::applyAvatarPath(m_accounts, m_config, *avatarPath);
+      shell::AvatarApplyResult result;
+      {
+        const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+        result = shell::applyAvatarPath(m_accounts, m_config, *avatarPath);
+      }
       if (result.success()) {
         markSettingsWriteSuccess();
         return;
@@ -128,7 +139,12 @@ void SettingsWindow::setSettingOverride(std::vector<std::string> path, ConfigOve
     const bool needsSceneRebuild = settingPathNeedsSceneRebuild(path);
     const ConfigOverrideValue patchValue = value;
     const auto previousResetPaths = currentPageResetPaths();
-    if (m_config->setOverride(path, std::move(value), &changed)) {
+    bool wrote = false;
+    {
+      const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+      wrote = m_config->setOverride(path, std::move(value), &changed);
+    }
+    if (wrote) {
       const bool registryPatched = changed && !needsSceneRebuild && tryPatchSettingsRegistryValue(path, patchValue);
       finishSettingsWrite(changed, needsSceneRebuild, previousResetPaths != currentPageResetPaths(), registryPatched);
       warnOnUnusableCustomSchedule(path);
@@ -155,7 +171,12 @@ void SettingsWindow::setSettingOverrides(
     });
     const auto patchOverrides = overrides;
     const auto previousResetPaths = currentPageResetPaths();
-    if (m_config->setOverrides(overrides, &changed)) {
+    bool wrote = false;
+    {
+      const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+      wrote = m_config->setOverrides(overrides, &changed);
+    }
+    if (wrote) {
       const bool registryPatched = changed && !needsSceneRebuild && tryPatchSettingsRegistryOverrides(patchOverrides);
       finishSettingsWrite(changed, needsSceneRebuild, previousResetPaths != currentPageResetPaths(), registryPatched);
       return;
@@ -172,8 +193,13 @@ void SettingsWindow::clearSettingOverride(std::vector<std::string> path) {
     bool changed = false;
     const bool needsSceneRebuild = settingPathNeedsSceneRebuild(path);
     const auto previousResetPaths = currentPageResetPaths();
-    if (!m_config->clearOverrides({path}, &changed)) {
-      markSettingsWriteError(i18n::tr("settings.errors.write"));
+    bool cleared = false;
+    {
+      const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+      cleared = m_config->clearOverrides({path}, &changed);
+    }
+    if (!cleared) {
+      markSettingsWriteError(settingsMutationError(*m_config, i18n::tr("settings.errors.write")));
       return;
     }
 
@@ -194,10 +220,14 @@ void SettingsWindow::clearSettingOverrides(std::vector<std::vector<std::string>>
     bool changed = false;
     const bool needsSceneRebuild = settingPathsNeedSceneRebuild(paths);
     const auto previousResetPaths = currentPageResetPaths();
-    const bool success = m_config->clearOverrides(paths, &changed);
+    bool success = false;
+    {
+      const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+      success = m_config->clearOverrides(paths, &changed);
+    }
     m_pendingResetPageScope.clear();
     if (!success) {
-      markSettingsWriteError(i18n::tr("settings.errors.reset-page"));
+      markSettingsWriteError(settingsMutationError(*m_config, i18n::tr("settings.errors.reset-page")));
       return;
     }
 
@@ -216,8 +246,13 @@ void SettingsWindow::resetBarLane(std::vector<std::string> lanePath) {
     bool changed = false;
     const bool needsSceneRebuild = settingPathNeedsSceneRebuild(lanePath);
     const auto previousResetPaths = currentPageResetPaths();
-    if (!m_config->resetBarLaneOverride(lanePath, &changed)) {
-      markSettingsWriteError(i18n::tr("settings.errors.write"));
+    bool reset = false;
+    {
+      const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+      reset = m_config->resetBarLaneOverride(lanePath, &changed);
+    }
+    if (!reset) {
+      markSettingsWriteError(settingsMutationError(*m_config, i18n::tr("settings.errors.write")));
       return;
     }
 
@@ -239,24 +274,45 @@ void SettingsWindow::renameWidgetInstance(
       return;
     }
 
-    bool changed = m_config->renameOverrideTable({"widget", oldName}, {"widget", newName});
+    bool changed = false;
+    {
+      const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+      changed = m_config->renameOverrideTable({"widget", oldName}, {"widget", newName}, referenceOverrides);
+    }
     if (!changed) {
-      markSettingsWriteError(i18n::tr("settings.errors.widget.rename"));
+      markSettingsWriteError(settingsMutationError(*m_config, i18n::tr("settings.errors.widget.rename")));
       return;
     }
-    bool failed = false;
-    for (auto& [path, value] : referenceOverrides) {
-      if (m_config->setOverride(path, std::move(value))) {
-        changed = true;
-      } else {
-        failed = true;
-      }
-    }
-    if (failed) {
-      markSettingsWriteError(i18n::tr("settings.errors.batch-write"));
+    markSettingsWriteSuccess(true);
+  });
+}
+
+void SettingsWindow::deleteWidgetInstance(
+    std::string widgetName, std::vector<std::pair<std::vector<std::string>, ConfigOverrideValue>> referenceRemovals
+) {
+  DeferredCall::callLater([this, widgetName = std::move(widgetName),
+                           referenceRemovals = std::move(referenceRemovals)] mutable {
+    if (m_config == nullptr) {
       return;
     }
-    markSettingsWriteSuccess(changed);
+
+    bool changed = false;
+    bool mutated = false;
+    {
+      const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+      mutated = m_config->mutateOverrides(referenceRemovals, {{"widget", widgetName}}, &changed);
+    }
+    if (!mutated) {
+      markSettingsWriteError(settingsMutationError(*m_config, i18n::tr("settings.errors.write")));
+      return;
+    }
+    if (m_editingWidgetName == widgetName) {
+      m_editingWidgetName.clear();
+      m_renamingWidgetName.clear();
+      m_pendingDeleteWidgetName.clear();
+      m_pendingDeleteWidgetSettingPath.clear();
+    }
+    markSettingsWriteSuccess(true);
   });
 }
 
@@ -265,7 +321,12 @@ void SettingsWindow::createBar(std::string name) {
     if (m_config == nullptr) {
       return;
     }
-    if (m_config->createBarOverride(name)) {
+    bool created = false;
+    {
+      const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+      created = m_config->createBarOverride(name);
+    }
+    if (created) {
       m_selectedSection = "bar";
       m_selectedBarName = name;
       m_selectedMonitorOverride.clear();
@@ -280,7 +341,7 @@ void SettingsWindow::createBar(std::string name) {
       markSettingsWriteSuccess();
       return;
     }
-    markSettingsWriteError(i18n::tr("settings.errors.bar.create"));
+    markSettingsWriteError(settingsMutationError(*m_config, i18n::tr("settings.errors.bar.create")));
   });
 }
 
@@ -289,7 +350,12 @@ void SettingsWindow::renameBar(std::string oldName, std::string newName) {
     if (m_config == nullptr) {
       return;
     }
-    if (m_config->renameBarOverride(oldName, newName)) {
+    bool renamed = false;
+    {
+      const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+      renamed = m_config->renameBarOverride(oldName, newName);
+    }
+    if (renamed) {
       if (m_selectedBarName == oldName) {
         m_selectedBarName = newName;
       }
@@ -304,7 +370,7 @@ void SettingsWindow::renameBar(std::string oldName, std::string newName) {
       markSettingsWriteSuccess();
       return;
     }
-    markSettingsWriteError(i18n::tr("settings.errors.bar.rename"));
+    markSettingsWriteError(settingsMutationError(*m_config, i18n::tr("settings.errors.bar.rename")));
   });
 }
 
@@ -313,7 +379,12 @@ void SettingsWindow::deleteBar(std::string name) {
     if (m_config == nullptr) {
       return;
     }
-    if (m_config->deleteBarOverride(name)) {
+    bool deleted = false;
+    {
+      const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+      deleted = m_config->deleteBarOverride(name);
+    }
+    if (deleted) {
       if (m_selectedBarName == name) {
         m_selectedBarName.clear();
         m_selectedMonitorOverride.clear();
@@ -328,7 +399,7 @@ void SettingsWindow::deleteBar(std::string name) {
       markSettingsWriteSuccess();
       return;
     }
-    markSettingsWriteError(i18n::tr("settings.errors.bar.delete"));
+    markSettingsWriteError(settingsMutationError(*m_config, i18n::tr("settings.errors.bar.delete")));
   });
 }
 
@@ -337,11 +408,16 @@ void SettingsWindow::moveBar(std::string name, int direction) {
     if (m_config == nullptr) {
       return;
     }
-    if (m_config->moveBarOverride(name, direction)) {
+    bool moved = false;
+    {
+      const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+      moved = m_config->moveBarOverride(name, direction);
+    }
+    if (moved) {
       markSettingsWriteSuccess();
       return;
     }
-    markSettingsWriteError(i18n::tr("settings.errors.bar.move"));
+    markSettingsWriteError(settingsMutationError(*m_config, i18n::tr("settings.errors.bar.move")));
   });
 }
 
@@ -350,7 +426,12 @@ void SettingsWindow::createMonitorOverride(std::string barName, std::string matc
     if (m_config == nullptr) {
       return;
     }
-    if (m_config->createMonitorOverride(barName, match)) {
+    bool created = false;
+    {
+      const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+      created = m_config->createMonitorOverride(barName, match);
+    }
+    if (created) {
       m_selectedSection = "bar";
       m_selectedBarName = barName;
       m_selectedMonitorOverride = match;
@@ -362,7 +443,7 @@ void SettingsWindow::createMonitorOverride(std::string barName, std::string matc
       markSettingsWriteSuccess();
       return;
     }
-    markSettingsWriteError(i18n::tr("settings.errors.monitor-override.create"));
+    markSettingsWriteError(settingsMutationError(*m_config, i18n::tr("settings.errors.monitor-override.create")));
   });
 }
 
@@ -372,7 +453,12 @@ void SettingsWindow::renameMonitorOverride(std::string barName, std::string oldM
     if (m_config == nullptr) {
       return;
     }
-    if (m_config->renameMonitorOverride(barName, oldMatch, newMatch)) {
+    bool renamed = false;
+    {
+      const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+      renamed = m_config->renameMonitorOverride(barName, oldMatch, newMatch);
+    }
+    if (renamed) {
       if (m_selectedBarName == barName && m_selectedMonitorOverride == oldMatch) {
         m_selectedMonitorOverride = newMatch;
       }
@@ -384,7 +470,7 @@ void SettingsWindow::renameMonitorOverride(std::string barName, std::string oldM
       markSettingsWriteSuccess();
       return;
     }
-    markSettingsWriteError(i18n::tr("settings.errors.monitor-override.rename"));
+    markSettingsWriteError(settingsMutationError(*m_config, i18n::tr("settings.errors.monitor-override.rename")));
   });
 }
 
@@ -393,7 +479,12 @@ void SettingsWindow::deleteMonitorOverride(std::string barName, std::string matc
     if (m_config == nullptr) {
       return;
     }
-    if (m_config->deleteMonitorOverride(barName, match)) {
+    bool deleted = false;
+    {
+      const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+      deleted = m_config->deleteMonitorOverride(barName, match);
+    }
+    if (deleted) {
       if (m_selectedBarName == barName && m_selectedMonitorOverride == match) {
         m_selectedMonitorOverride.clear();
         m_contentScrollState.offset = 0.0F;
@@ -405,7 +496,7 @@ void SettingsWindow::deleteMonitorOverride(std::string barName, std::string matc
       markSettingsWriteSuccess();
       return;
     }
-    markSettingsWriteError(i18n::tr("settings.errors.monitor-override.delete"));
+    markSettingsWriteError(settingsMutationError(*m_config, i18n::tr("settings.errors.monitor-override.delete")));
   });
 }
 
@@ -414,7 +505,12 @@ void SettingsWindow::createDockMonitorOverride(std::string match) {
     if (m_config == nullptr) {
       return;
     }
-    if (m_config->createDockMonitorOverride(match)) {
+    bool created = false;
+    {
+      const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+      created = m_config->createDockMonitorOverride(match);
+    }
+    if (created) {
       m_selectedSection = "dock";
       m_selectedMonitorOverride = match;
       m_renamingDockMonitorOverride.clear();
@@ -423,7 +519,7 @@ void SettingsWindow::createDockMonitorOverride(std::string match) {
       markSettingsWriteSuccess();
       return;
     }
-    markSettingsWriteError(i18n::tr("settings.errors.monitor-override.create"));
+    markSettingsWriteError(settingsMutationError(*m_config, i18n::tr("settings.errors.monitor-override.create")));
   });
 }
 
@@ -432,7 +528,12 @@ void SettingsWindow::renameDockMonitorOverride(std::string oldTableName, std::st
     if (m_config == nullptr) {
       return;
     }
-    if (m_config->renameDockMonitorOverride(oldTableName, newMatch)) {
+    bool renamed = false;
+    {
+      const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+      renamed = m_config->renameDockMonitorOverride(oldTableName, newMatch);
+    }
+    if (renamed) {
       if (m_selectedSection == "dock" && m_selectedMonitorOverride == oldTableName) {
         m_selectedMonitorOverride = newMatch;
       }
@@ -442,7 +543,7 @@ void SettingsWindow::renameDockMonitorOverride(std::string oldTableName, std::st
       markSettingsWriteSuccess();
       return;
     }
-    markSettingsWriteError(i18n::tr("settings.errors.monitor-override.rename"));
+    markSettingsWriteError(settingsMutationError(*m_config, i18n::tr("settings.errors.monitor-override.rename")));
   });
 }
 
@@ -451,7 +552,12 @@ void SettingsWindow::deleteDockMonitorOverride(std::string tableName) {
     if (m_config == nullptr) {
       return;
     }
-    if (m_config->deleteDockMonitorOverride(tableName)) {
+    bool deleted = false;
+    {
+      const auto ownMutation = m_externalReloadGate.scopedOwnMutation();
+      deleted = m_config->deleteDockMonitorOverride(tableName);
+    }
+    if (deleted) {
       if (m_selectedSection == "dock" && m_selectedMonitorOverride == tableName) {
         m_selectedMonitorOverride.clear();
         m_contentScrollState.offset = 0.0F;
@@ -461,6 +567,6 @@ void SettingsWindow::deleteDockMonitorOverride(std::string tableName) {
       markSettingsWriteSuccess();
       return;
     }
-    markSettingsWriteError(i18n::tr("settings.errors.monitor-override.delete"));
+    markSettingsWriteError(settingsMutationError(*m_config, i18n::tr("settings.errors.monitor-override.delete")));
   });
 }

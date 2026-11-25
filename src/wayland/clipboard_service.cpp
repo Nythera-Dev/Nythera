@@ -2,6 +2,7 @@
 
 #include "config/atomic_file.h"
 #include "config/config_limits.h"
+#include "config/config_service.h"
 #include "core/log.h"
 #include "ext-data-control-v1-client-protocol.h"
 #include "security/encrypted_file_store.h"
@@ -1989,7 +1990,7 @@ void ClipboardService::evictPayloadData(ClipboardEntry& entry) {
 }
 
 std::string ClipboardService::stateDirectory() {
-  const std::string dir = FileUtils::stateDir();
+  const std::string dir = ConfigService::resolveActiveStateDir();
   if (!dir.empty()) {
     return dir + "/clipboard";
   }

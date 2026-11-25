@@ -1,0 +1,48 @@
+---
+title: Files settings reference
+description: Supported Nythera Files preferences, defaults, and where they are stored.
+sidebar:
+  order: 2
+---
+
+Put preferences in `~/.config/nythera/files/config.toml` under `[files]`. The [configuration roots and include rules](/nythera/configuration/#including-extra-files) also apply to Files. New preferences are saved to the owning table's file when there is one, or to the primary config file. Existing keys are edited at their winning definition. Reset removes explicit definitions so the default or inherited value applies.
+
+| Key                                | TOML type        | Allowed values                                                                                                  | Default                                                             |
+| ---------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `grid_view`                        | Boolean          | Grid (`true`) or list (`false`)                                                                                 | `false`                                                             |
+| `show_hidden`                      | Boolean          | Show hidden entries                                                                                             | `false`                                                             |
+| `folders_first`                    | Boolean          | Group folders ahead of files                                                                                    | `true`                                                              |
+| `hidden_last`                      | Boolean          | Group hidden entries last                                                                                       | `true`                                                              |
+| `sort_field`                       | Integer          | `0` name, `1` size, `2` modified, `3` created, `4` accessed, `5` type                                           | `0`                                                                 |
+| `sort_descending`                  | Boolean          | Descending (`true`) or ascending (`false`)                                                                      | `false`                                                             |
+| `show_menu_bar`                    | Boolean          | Show the application menu bar                                                                                   | `true`                                                              |
+| `always_show_tab_bar`              | Boolean          | Show the tab bar even with one tab                                                                              | `false`                                                             |
+| `open_tabs_in_background`          | Boolean          | Open new tabs without switching to them                                                                         | `false`                                                             |
+| `readline_shortcuts`               | Boolean          | Enable readline editing shortcuts                                                                               | Inherit `shell.readline_shortcuts`, whose built-in value is `false` |
+| `admin_inactivity_timeout_seconds` | Integer          | `60`–`3600` seconds                                                                                             | `600`                                                               |
+| `view_scale`                       | Number           | `0.8`–`1.8`                                                                                                     | `1.0`                                                               |
+| `list_column_widths`               | String           | CSV of three or six widths in logical pixels, up to `10000`, with `0` permitted only for a flexible Name column | `"0,96,152,144,152,152"`                                            |
+| `list_column_layout`               | String           | CSV naming each column once, in display order. Prefix a hidden column with `-`. Name must remain visible.       | `"Name,Size,Modified,-Type,-Created,-Accessed"`                     |
+| `place_order`                      | Array of strings | Sidebar place identifiers in the preferred order                                                                | `[]`                                                                |
+| `hidden_mounts`                    | Array of strings | Mount identifiers hidden in the sidebar                                                                         | `[]`                                                                |
+| `saved_places`                     | Table            | Named place records, described below                                                                            | Empty                                                               |
+
+The fixed width positions are Name, Size, Modified, Type, Created, Accessed. Use the GUI to set widths, column order, and mount visibility if you want Files to write the serialized values.
+
+Each `[files.saved_places.<id>]` record has a nonempty key, an absolute path string, a label string, and an optional nonnegative integer `order` (default `0`). For example:
+
+```toml
+[files]
+show_hidden = true
+sort_field = 2
+sort_descending = true
+
+[files.saved_places.projects]
+path = "/home/me/Projects"
+label = "Projects"
+order = 1
+```
+
+Files reads the shared `~/.config/nythera/theme.toml` for its palette and mode. The existing Files transparency override can go in `~/.config/nythera/files/theme.toml` under `[theme]`. `transparency_mode` is a string with values `"solid"`, `"soft"`, or `"glass"`. Omitting it inherits `shell.panel.transparency_mode`, whose built-in value is `"solid"`. You can also define `[theme]` in an active Files TOML file. Files uses built-in fallbacks when shared settings are unavailable.
+
+Window and pane sizes and sidebar expansion are [runtime state](/nythera/configuration/#runtime-state). Valid manual edits reload live, and invalid edits leave the last valid config active.

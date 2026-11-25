@@ -95,6 +95,7 @@ namespace settings {
         .clearOverrides = ctx.clearOverrides,
         .resetBarLane = ctx.resetBarLane,
         .renameWidgetInstance = ctx.renameWidgetInstance,
+        .deleteWidgetInstance = ctx.deleteWidgetInstance,
         .closeHostedEditor = ctx.closeHostedEditor,
         .openWidgetInspector = ctx.openWidgetInspectorEditor,
         .openCapsuleGroupInspector = ctx.openCapsuleGroupEditor,
@@ -1418,9 +1419,8 @@ namespace settings {
                 }
             );
           } else if (!entry.group.empty()) {
-            activeGroupBody = addSettingsCard(
-                *activeSection, groupLabel(entry.group), scale, settingsHazeEnabled(ctx.config)
-            );
+            activeGroupBody =
+                addSettingsCard(*activeSection, groupLabel(entry.group), scale, settingsHazeEnabled(ctx.config));
           } else {
             addGroupLabel(*activeSection, groupLabel(entry.group), isFirstGroup);
             activeGroupBody = activeSection;

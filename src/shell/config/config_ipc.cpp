@@ -1,5 +1,4 @@
 #include "config/config_service.h"
-
 #include "ipc/ipc_service.h"
 #include "util/string_utils.h"
 
@@ -39,42 +38,36 @@ void ConfigService::registerIpc(IpcService& ipc) {
 
     const std::string deltaString = path + "=" + value;
     toml::table delta;
-    toml::table candidateOverrides = m_overridesTable;
     try {
       delta = toml::parse(deltaString);
     } catch (const toml::parse_error& e) {
       return std::format("error: invalid TOML value: {}: {}\n", deltaString, e.description());
     }
-    deepMerge(candidateOverrides, delta);
 
-    if (candidateOverrides == m_overridesTable) {
+    std::vector<DirectEdit> edits;
+    const auto collect = [&](auto&& self, std::vector<std::string>& keyPath, const toml::table& tbl) -> void {
+      if (tbl.empty() && !keyPath.empty()) {
+        edits.push_back({keyPath, "{}", std::nullopt});
+        return;
+      }
+      for (const auto& [k, v] : tbl) {
+        keyPath.emplace_back(k.str());
+        if (const auto* subTbl = v.as_table()) {
+          self(self, keyPath, *subTbl);
+        } else {
+          edits.push_back({keyPath, formatTomlValue(v), std::nullopt});
+        }
+        keyPath.pop_back();
+      }
+    };
+    std::vector<std::string> keyPath;
+    collect(collect, keyPath, delta);
+
+    if (edits.empty()) {
       return "ok\n";
     }
-
-    const auto baselineDiagnostics = diagnosticsForOverrides(m_persistedOverridesTable);
-    const auto candidateDiagnostics = diagnosticsForOverrides(candidateOverrides);
-    const auto introduced = candidateDiagnostics.introducedDiagnosticsComparedTo(baselineDiagnostics);
-    if (!introduced.entries.empty()) {
-      std::ostringstream oss;
-      oss << "error: ";
-      bool first = true;
-      for (const auto& entry : introduced.entries) {
-        if (!first) {
-          oss << "; ";
-        }
-        first = false;
-        oss << entry.describe();
-      }
-      oss << "\n";
-      return oss.str();
-    }
-    if (!commitOverrideTable(
-            std::move(candidateOverrides), nullptr,
-            {.baseline = &baselineDiagnostics, .candidate = &candidateDiagnostics}
-        )) {
-      return std::format(
-          "error: {}\n", m_lastMutationError.empty() ? "failed to write config overrides" : m_lastMutationError
-      );
+    if (!persistDirectEdits(edits, nullptr, /*rejectWarnings=*/true, /*reloadOnSuccess=*/true)) {
+      return std::format("error: {}\n", m_lastMutationError.empty() ? "failed to write config" : m_lastMutationError);
     }
     return "ok\n";
   });

@@ -27,7 +27,7 @@ Open **Settings → Plugins**. Use **Add source** to add a git repo or local dir
 
 Plugins that expose **plugin-level settings** show a **gear** on their row - open it to configure options shared across all of the plugin's parts (for example the screen recorder's codec, quality, and output folder). Settings persist to the state dir, so a read-only config directory is fine. Bar-widget entries can also declare widget settings, edited where that widget is configured.
 
-If a plugin is enabled in `config.toml` and you disable it in Settings, Nythera writes an app-owned `[plugins].enabled` override to `settings.toml`. That override wins until you remove or edit it.
+Enabling or disabling a plugin in Settings updates the winning `[plugins].enabled` definition. New settings are saved to the active Shell TOML.
 
 ### From the command line
 

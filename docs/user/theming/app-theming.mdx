@@ -49,16 +49,16 @@ If the primary user config is absent, the generated theme is still available. A 
 
 The examples below use the default config directory and an example home directory. Replace `/home/you/.config` with your resolved `$XDG_CONFIG_HOME`, or `$HOME/.config` when it is unset. Config files do not necessarily expand environment variables; use the resolved path. Absolute paths also avoid resolving an include beside a system or custom config instead of beside the generated theme.
 
-| Compositor          | Primary user config, relative to the config directory | Generated theme, relative to the config directory | Manual integration                                            |
-| ------------------- | ----------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------- |
-| Umbriel             | `umbriel/config.toml`                                 | `umbriel/nythera.toml`                           | Add the path to `[include.optional].files`, as shown below.   |
-| Niri                | `niri/config.kdl`                                     | `niri/nythera.kdl`                               | `include "/home/you/.config/niri/nythera.kdl"`               |
-| Sway                | `sway/config`                                         | `sway/nythera`                                   | `include "/home/you/.config/sway/nythera"`                   |
-| Scroll              | `scroll/config`                                       | `scroll/nythera`                                 | `include "/home/you/.config/scroll/nythera"`                 |
-| Mango               | `mango/config.conf`                                   | `mango/nythera.conf`                             | `source=/home/you/.config/mango/nythera.conf`                |
-| Hyprland (Hyprlang) | `hypr/hyprland.conf`                                  | `hypr/nythera.conf`                              | `source = /home/you/.config/hypr/nythera.conf`               |
-| Hyprland (Lua)      | `hypr/hyprland.lua`                                   | `hypr/nythera.lua`                               | `dofile("/home/you/.config/hypr/nythera.lua").apply_theme()` |
-| Labwc               | `labwc/rc.xml`                                        | `labwc/nythera.conf`                             | Select the `nythera` theme as shown below.                   |
+| Compositor          | Primary user config, relative to the config directory | Generated theme, relative to the config directory | Manual integration                                           |
+| ------------------- | ----------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------ |
+| Umbriel             | `umbriel/config.toml`                                 | `umbriel/nythera.toml`                            | Add the path to `[include.optional].files`, as shown below.  |
+| Niri                | `niri/config.kdl`                                     | `niri/nythera.kdl`                                | `include "/home/you/.config/niri/nythera.kdl"`               |
+| Sway                | `sway/config`                                         | `sway/nythera`                                    | `include "/home/you/.config/sway/nythera"`                   |
+| Scroll              | `scroll/config`                                       | `scroll/nythera`                                  | `include "/home/you/.config/scroll/nythera"`                 |
+| Mango               | `mango/config.conf`                                   | `mango/nythera.conf`                              | `source=/home/you/.config/mango/nythera.conf`                |
+| Hyprland (Hyprlang) | `hypr/hyprland.conf`                                  | `hypr/nythera.conf`                               | `source = /home/you/.config/hypr/nythera.conf`               |
+| Hyprland (Lua)      | `hypr/hyprland.lua`                                   | `hypr/nythera.lua`                                | `dofile("/home/you/.config/hypr/nythera.lua").apply_theme()` |
+| Labwc               | `labwc/rc.xml`                                        | `labwc/nythera.conf`                              | Select the `nythera` theme as shown below.                   |
 
 For Umbriel, append the generated path to the existing `files` array, or add this section if it is absent:
 
@@ -188,10 +188,10 @@ The hook only recolors terminals that are already open. To color new terminals t
 
 ## Config Location
 
-Put dotfile-managed templates in `~/.config/nythera/*.toml`:
+Configure templates in the shared `~/.config/nythera/theme.toml`:
 
 ```toml
-# ~/.config/nythera/templates.toml
+# ~/.config/nythera/theme.toml
 [theme.templates]
 enable_builtin_templates   = true
 enable_community_templates = true
@@ -203,7 +203,7 @@ input_path  = "$XDG_CONFIG_HOME/nythera/templates/my-app.css"
 output_path = "$XDG_CONFIG_HOME/my-app/theme.css"
 ```
 
-The same tables are valid in `settings.toml` because it is the final config overlay, but that file is managed by the GUI and runtime actions. Use `~/.config/nythera/` for templates you want to keep in dotfiles.
+Settings edits the same authoritative template configuration. Enabled templates use the shared palette and app-facing theme mode.
 
 ## Template Reference
 

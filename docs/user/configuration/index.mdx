@@ -1,58 +1,100 @@
 ---
 title: How configuration works
-description: Where Nythera reads config from, how files are merged, and when GUI settings win.
+description: Where Nythera reads configuration and state, and how Settings writes back to TOML.
 sidebar:
   order: 0
 ---
 
-Nythera can be configured in two ways: files you write yourself, and settings the app saves for you.
+Nythera is configured through plain TOML files that you can edit by hand and that Settings edits for you. When several files define a key, merge precedence determines which value wins. Settings writes into those same files.
 
-For most people, the important rule is simple: put your own configuration in `~/.config/nythera/`. If something changed in the GUI and now seems to ignore your file, check `~/.local/state/nythera/settings.toml`.
+For most people the rule is simple: put your own configuration in `~/.config/nythera/`, and let Settings and your editor both work on those same files.
 
-## The two layers
+## The layout
 
-Your hand-written config lives in:
+```text
+~/.config/nythera/
+├── theme.toml        # shared theme: [theme] - used by Shell and Files
+├── shell/
+│   └── config.toml   # every other Nythera Shell setting
+├── files/
+│   ├── config.toml   # Nythera Files preferences
+│   └── theme.toml    # optional Files transparency override
+└── palettes/         # your own colour palettes (*.json)
 
-- `$NYTHERA_CONFIG_HOME/nythera/`
-- `$XDG_CONFIG_HOME/nythera/`
-- or `~/.config/nythera/`
+~/.local/state/nythera/
+├── shell/            # Shell runtime state (never configuration)
+│   ├── state.toml    # last-used values, UI sizes, active wallpaper paths
+│   └── ...           # clipboard, notification history, screen time, ...
+└── files/
+    └── state.toml    # Files window geometry and expanded sections
+```
 
-Nythera reads every `*.toml` file in that folder, sorts them alphabetically, and merges them into one config. A single `config.toml` is the easiest setup:
+The roots honour `NYTHERA_CONFIG_HOME`, `XDG_CONFIG_HOME`, and `NYTHERA_STATE_HOME` / `XDG_STATE_HOME` (in that order) and fall back to `~/.config` and `~/.local/state`. `NYTHERA_*_HOME` has the same "home root" shape as the XDG variables: `NYTHERA_CONFIG_HOME=/tmp/profile` reads `/tmp/profile/nythera/`. Use the Nythera-specific variables to run a separate profile without changing the environment inherited by apps launched from Nythera.
+
+- **`theme.toml`** holds the shared `[theme]` settings, including the mode, palette source, and template configuration. Shell and Files both read it. See [Theme](/nythera/theming/) and [App Theming](/nythera/theming/app-theming/) for the supported settings.
+- **`shell/config.toml`** holds everything else. Nythera Shell reads every `*.toml` file directly inside `shell/` (sorted alphabetically) plus anything pulled in with `[include]`. A single `config.toml` is the easiest setup; split files are fine if you prefer tidy dotfiles.
+- **Defaults** are built in. Settings writes sparse configuration. Hand-written files can explicitly declare a default or an empty collection when that value is intentional. Run `nythera config export full` to inspect the effective settings, including defaults.
 
 ```toml
-# ~/.config/nythera/config.toml
+# ~/.config/nythera/theme.toml
 [theme]
 mode = "dark"
+source = "custom"
+custom_palette = "My-Palette"
+```
 
+```toml
+# ~/.config/nythera/shell/config.toml
 [bar.default]
 position = "top"
 ```
 
-You can also split things up if you like tidy dotfiles:
+## Settings and your files are the same thing
 
-```text
-~/.config/nythera/
-├── bar.toml
-├── theme.toml
-└── widgets.toml
-```
+When you change a setting in Settings (or through IPC, the setup wizard, or any control that persists), Nythera edits the TOML file directly and atomically:
 
-GUI-managed overrides live in:
+- Existing keys are edited at their winning definition. New keys use the file that owns the table where applicable. New shared theme settings use `theme.toml`, and the primary destination for other Shell settings is `shell/config.toml`.
+- Edits preserve comments and formatting where the TOML document supports it. Unwritable files fail with an error.
+- If the file is a symbolic link (for example managed by a dotfile tool), Nythera writes through to the link target and keeps the link in place.
+- A value that equals the built-in default is removed instead of being stored, so files stay sparse.
+- If a save would not change the merged result, for example because another file defines the same key later, Nythera refuses the edit and says so instead of silently writing a value that has no effect.
 
-- `$NYTHERA_STATE_HOME/nythera/settings.toml`
-- `$XDG_STATE_HOME/nythera/settings.toml`
-- or `~/.local/state/nythera/settings.toml`
+If a value appears to be ignored, check the other `*.toml` files in `shell/` and anything they include for a later definition.
 
-Nythera writes this file when you change settings through the UI, setup flows, IPC-backed controls, and other runtime actions that need to persist. If the file is a symbolic link, Nythera writes through to the link target and keeps the link in place.
+### Modified indicators and reset
 
-`NYTHERA_CONFIG_HOME` and `NYTHERA_STATE_HOME` have the same "home root" shape as the XDG variables. For example, `NYTHERA_CONFIG_HOME=/tmp/profile` reads `/tmp/profile/nythera/`. Use these Nythera-specific variables when you want a separate shell profile without changing the environment inherited by apps launched from Nythera.
+Settings marks a setting **Modified** when its value differs from the **built-in default**. The **Modified** filter lists them.
+
+- **Reset** on a setting removes its explicit definitions so the built-in default applies again.
+- **Reset Page** does the same for every setting on the page, after a confirmation.
+- Bars, monitor overrides, widgets, and accounts defined in TOML can be managed from Settings. Deletion removes the entity's definitions from its contributing files.
+
+Resets leave unrelated keys and runtime state such as the active wallpaper alone.
+
+## Live reload
+
+Nythera watches `theme.toml`, every `*.toml` in `shell/`, and every file they include. A save is applied about 150 ms after the file is written, so editors that save in several steps reload once. Removing, renaming, or re-linking a watched file also reloads.
+
+- If a file has an error, Nythera **keeps the last working configuration** and shows an *Invalid configuration* notification naming the file, line, and column. The same error is announced once, not on every save. Fixing the file shows *Config reloaded*.
+- Changes you make in Settings are applied immediately and are never announced as a manual reload.
+- If Settings is open when you edit a file by hand, the open controls update to match. While you are actively editing a control, the update waits until you finish so it does not overwrite what you are typing.
+
+### Nythera Files
+
+Nythera Shell also validates `~/.config/nythera/files/` (including its includes and the shared `theme.toml`) **even when Files is closed**, so a typo is reported as you save it. Files keeps its own watcher for live updates and when it runs without Shell. Only one of them alerts you:
+
+- While Shell is running it shows the alert as an on-screen message (OSD). If the OSD is disabled it sends a standard desktop notification.
+- Without Shell, Files sends a standard desktop notification.
+- Never both, and never twice.
+
+The invalid-configuration message stays on screen for 5 seconds and *Config reloaded* for 1 second. Files saving its own preferences is not announced as a reload.
 
 ## Including extra files
 
-Automatic loading only sees `*.toml` files sitting directly in the config folder. To pull in files from subdirectories, load a specific file, or control load order without renaming files, add an `[include]` table:
+Automatic loading only sees `*.toml` files sitting directly in `shell/`. To pull in files from subdirectories, load a specific file, or control load order without renaming files, add an `[include]` table:
 
 ```toml
-# ~/.config/nythera/config.toml
+# ~/.config/nythera/shell/config.toml
 [include]
 files = [
   "widgets/",                  # a directory: every *.toml inside it (sorted, non-recursive)
@@ -61,13 +103,13 @@ files = [
 ]
 
 # the rest of this file's settings go here as usual
-[theme]
-mode = "dark"
+[bar.default]
+position = "top"
 ```
 
 Each entry is either a directory (which loads every `*.toml` directly inside it, sorted alphabetically) or a single file. Relative paths resolve against the directory of the file doing the including, so a file in `profiles/work.toml` can reach a shared bundle with `"../widgets/"`. Paths starting with `~`, or containing `$VAR` / `${VAR}`, are expanded.
 
-**The including file wins.** Included files are merged first, as a reusable base, and then the file's own settings are layered on top. So a value you set directly in `config.toml` overrides the same value pulled in from an include:
+**The including file wins.** Included files are merged first, as a reusable base, and then the file's own settings are layered on top:
 
 ```toml
 [include]
@@ -77,48 +119,52 @@ files = ["bars/base.toml"]   # base.toml sets bar.top.thickness = 30
 thickness = 40               # this wins - the bar ends up 40
 ```
 
-Includes can nest (an included file can include more files), and each file is loaded at most once - if two files include the same file, it is merged once and a cycle is detected and skipped rather than looping forever.
+Includes can nest, and each file is loaded at most once; a cycle is detected and skipped rather than looping forever.
+
+When Settings changes a value that an included file defines, the edit is written to that included file, with its comments preserved, so Settings and your layout stay consistent. Includes you wrote are never rewritten or reordered.
 
 ### Switching profiles
 
-By default, every `*.toml` in the config folder still loads automatically alongside your includes. If you keep alternative setups in the root that should not all load at once - say `profile_a.toml` and `profile_b.toml` - set `autoload = false` in your entry file. Then **only** the file(s) that set it (plus whatever they include) load, and the other root files are ignored:
+By default every `*.toml` in `shell/` loads alongside your includes. If you keep alternatives in the folder that should not all load at once, set `autoload = false` in your entry file. Then **only** the file(s) that set it (plus whatever they include) load:
 
 ```toml
-# ~/.config/nythera/config.toml
+# ~/.config/nythera/shell/config.toml
 [include]
 autoload = false
 files = ["profiles/work.toml"]
 ```
 
-`autoload` only has an effect in a file loaded directly from the config folder; it is ignored in included files. `[include]` is honored in your config files only - it has no effect in the app-managed `settings.toml`.
+`autoload` only has an effect in a file loaded directly from the config folder; it is ignored in included files.
 
 ## Which value wins?
 
-Nythera loads configuration in this order:
-
 1. Built-in defaults
-2. Your `*.toml` files in the resolved config directory - for each file, anything it pulls in via `[include]` first, then the file's own settings on top
-3. GUI-managed overrides in the resolved state directory's `settings.toml`
+2. `theme.toml` (the shared `[theme]` base)
+3. The `*.toml` files in `shell/` - for each file, anything it pulls in via `[include]` first, then the file's own settings on top
 
-Because `settings.toml` loads last, it wins when it contains the same setting as your hand-written config layer. When Settings writes a value that matches the parsed value from the lower layers, Nythera removes that redundant key instead of keeping it as a GUI override.
+Later layers win. Because Settings writes into the same files, there is no extra layer that can override what you wrote.
 
-:::tip
-If you are confused about why a hand-written value is not taking effect, inspect or temporarily move `settings.toml` from the resolved state directory.
-:::
+## Theme inheritance and external applications
 
-## Where should I edit?
+`theme.toml` is the single place the theme is chosen. Nythera Shell and Nythera Files both read it. Files therefore follows the Shell theme, including live changes to mode, palette, and wallpaper-derived colours. Generated themes for other applications (the built-in and community templates listed in `[theme.templates]`) are rendered from the same theme and keep working unchanged. See [App Theming](/nythera/theming/app-theming/).
 
-Use `~/.config/nythera/` for curated config: the things you want to keep in dotfiles, copy to another machine, or manage declaratively.
+Custom palettes stay in `~/.config/nythera/palettes/`, shared by both apps. Downloaded community palettes stay in `~/.local/state/nythera/community-palettes/`.
 
-Treat `~/.local/state/nythera/settings.toml` as an app-managed override file. It is useful to inspect when debugging GUI changes, and safe to delete when you want to clear those overrides. Keeping it outside `~/.config` also lets the GUI save changes when your config directory is read-only, for example on NixOS. Support reports include config sources and `settings.toml`, but omit `state.toml` contents because they can contain private runtime data.
+## Runtime state
 
-Both layers are watched for changes and hot-reloaded. A save is applied about 150 ms after the file is written, so editors that save in several steps reload once; removing a config file also reloads. If neither layer exists, Nythera uses its built-in defaults.
+State is anything Nythera remembers that is not a setting you chose: the active wallpaper per monitor, window sizes, last-used values, history, and caches. It lives in `~/.local/state/nythera/shell/` and `~/.local/state/nythera/files/`, never in your config files, so wallpaper rotation does not dirty a version-controlled config.
+
+- The active wallpaper paths (`[wallpaper]` `default`, `last`, and per-monitor `[wallpaper.monitors]`) are stored in `shell/state.toml`. Your wallpaper *preferences* (folders, fill mode, shuffle, favourites) remain settings in `shell/config.toml`. A path in `state.toml` wins over a `wallpaper.default.path` in your config.
+- Shell and Files each have their own state file, so they can no longer overwrite each other's data.
+- Support reports omit state contents because they can contain private runtime data.
+
+## Upgrading from the old layout
+
+Older releases loaded hand-written TOML from `~/.config/nythera/` and GUI overrides from `~/.local/state/nythera/settings.toml`. The new Shell reads that legacy profile while there is no Shell TOML in the new location. The [cutover and recovery runbook](/nythera/configuration/migration/) covers the one-off migration for the profile with no flat Shell TOML or Shell includes. Normal [include support](#including-extra-files) continues in both applications.
 
 ## Automatic configuration migrations
 
-When a release changes the shape of a setting, Nythera migrates old values before parsing them so the running shell keeps the intended behavior. The app-owned `settings.toml` is upgraded once and stamped with an internal `config_version`; Nythera manages that marker and excludes it from exported user config.
-
-Files under `~/.config/nythera/` are never rewritten. Values that need migration are normalized temporarily on every load, and Settings keeps a warning visible until you update the source TOML. The warning and notification identify the source file, line, column, and exact legacy key to edit. Nythera sends the notification when it first finds an affected key, when a new affected key appears, and every three days while affected values remain.
+When a release changes the shape of a setting, Nythera migrates old values before parsing them so the running shell keeps the intended behaviour. Values that need migration are normalised on every load, and Settings keeps a warning visible until you update the source TOML. The warning and notification identify the source file, line, column, and exact legacy key to edit. Nythera sends the notification when it first finds an affected key, when a new affected key appears, and every three days while affected values remain.
 
 Run the validator to list every affected key, its source location, and its canonical replacement:
 
@@ -126,33 +172,36 @@ Run the validator to list every affected key, its source location, and its canon
 nythera config validate
 ```
 
-Nythera can keep using normalized values while you update a file, but migration warnings are intentionally not permanent compatibility promises. Treat them as required config maintenance.
+Nythera can keep using normalised values while you update a file, but migration warnings are intentionally not permanent compatibility promises. Treat them as required config maintenance.
 
 ## File locations
 
 Where Nythera keeps everything, by purpose:
 
-| What                           | Where                                                      | Purpose                                                        |
-| ------------------------------ | ---------------------------------------------------------- | -------------------------------------------------------------- |
-| Your config                    | `~/.config/nythera/config.toml`                           | hand-written / declarative - the base layer                    |
-| GUI overrides                  | `~/.local/state/nythera/settings.toml`                    | written by Settings; wins over your config                     |
-| Internal UI state              | `~/.local/state/nythera/state.toml`                       | app-managed non-secret state and last-used values              |
-| Calendar credentials           | Desktop Secret Service or an explicit CalDAV password file | CalDAV passwords and Google refresh tokens                     |
-| Encrypted storage key          | Desktop Secret Service or an explicit key file             | master key for encrypted clipboard history and calendar events |
-| Calendar event cache           | `$XDG_CACHE_HOME/nythera/calendar/events.enc`             | encrypted last-known-good events                               |
-| Custom palettes                | `~/.config/nythera/palettes/`                             | your own color palette files                                   |
-| Local plugins                  | `~/.local/share/nythera/plugins/`                         | plugins you install or place by hand                           |
-| Plugin source repos            | `~/.local/state/nythera/plugins/sources/`                 | git-source repo caches, re-fetchable                           |
-| Exported plugin files          | `~/.local/state/nythera/plugins/materialized/`            | runtime files exported from git sources                        |
-| Community palettes / templates | `~/.local/state/nythera/community-*/`                     | downloaded catalogs, re-fetchable                              |
+| What                  | Where                                                      | Purpose                                                        |
+| --------------------- | ---------------------------------------------------------- | -------------------------------------------------------------- |
+| Shared theme          | `~/.config/nythera/theme.toml`                             | `[theme]`, read by Shell and Files                             |
+| Shell config          | `~/.config/nythera/shell/config.toml`                      | every other Shell setting; edited by you and by Settings       |
+| Files config          | `~/.config/nythera/files/config.toml`                      | Nythera Files preferences                                      |
+| Shell runtime state   | `~/.local/state/nythera/shell/`                            | `state.toml` (wallpaper paths, UI state), clipboard, history   |
+| Files runtime state   | `~/.local/state/nythera/files/state.toml`                  | window geometry and expanded sections                          |
+| Calendar credentials  | Desktop Secret Service or an explicit CalDAV password file | CalDAV passwords and Google refresh tokens                     |
+| Encrypted storage key | Desktop Secret Service or an explicit key file             | master key for encrypted clipboard history and calendar events |
+| Calendar event cache  | `$XDG_CACHE_HOME/nythera/calendar/events.enc`              | encrypted last-known-good events                               |
+| Custom palettes       | `~/.config/nythera/palettes/`                              | your own colour palette files                                  |
+| Local plugins         | `~/.local/share/nythera/plugins/`                          | plugins you install or place by hand                           |
+| Plugin source repos   | `~/.local/state/nythera/plugins/sources/`                  | git-source repo caches, re-fetchable                           |
+| Exported plugin files | `~/.local/state/nythera/plugins/materialized/`             | runtime files exported from git sources                        |
+| Community palettes    | `~/.local/state/nythera/community-palettes/`               | downloaded catalogue, re-fetchable                             |
+| Community templates   | `~/.local/state/nythera/shell/community-templates/`        | downloaded catalogue, re-fetchable                             |
 
 It comes down to **three storage owners**:
 
-- **Yours** - `~/.config/nythera/` (settings you write) and `~/.local/share/nythera/` (plugins you install).
-- **Nythera's** - `~/.local/state/nythera/` (GUI overrides, UI state, plugin repo caches, exported plugin files, and downloaded catalogs).
+- **Yours** - `~/.config/nythera/` (settings you write, or let Settings write for you) and `~/.local/share/nythera/` (plugins you install).
+- **Nythera's** - `~/.local/state/nythera/` (runtime state, plugin repo caches, exported plugin files, and downloaded catalogues).
 - **Credential provider's** - durable calendar credentials and the encrypted storage master key managed by Secret Service, or explicit credential/key files managed by an external provisioner such as agenix. Deleting Nythera's state directory does not remove them.
 
-Every path honors the relevant standard `XDG_CONFIG_HOME` / `XDG_STATE_HOME` / `XDG_DATA_HOME` / `XDG_CACHE_HOME` variable (and the `NYTHERA_CONFIG_HOME` / `NYTHERA_STATE_HOME` / `NYTHERA_DATA_HOME` overrides where applicable).
+Every path honours the relevant standard `XDG_CONFIG_HOME` / `XDG_STATE_HOME` / `XDG_DATA_HOME` / `XDG_CACHE_HOME` variable (and the `NYTHERA_CONFIG_HOME` / `NYTHERA_STATE_HOME` / `NYTHERA_DATA_HOME` overrides where applicable).
 
 ## Exporting config
 
@@ -176,7 +225,7 @@ nythera config export --credentials omit > nythera-config.toml
 
 `--credentials` accepts `keep` (the default: print values as configured), `omit` (drop the keys), or `blank` (keep the keys with empty values, so you can see what to fill in). It covers calendar account `server_url` (ICS and CalDAV URLs often carry an access token), the `location` of git plugin sources (which may embed `user:token@`), and plugin settings whose manifest marks them `secret`. Nythera cannot recognize a credential you type into anything else, such as a hook or command string, so review the export before sharing it.
 
-Export stops with an error (and writes nothing) if a config file fails to parse or an `[include]` points at a file that does not exist, so a broken config never produces a misleading partial export. (The running shell is more forgiving: it loads what it can and surfaces the problem as a notification.)
+Export stops with an error if a config file fails to parse or an `[include]` points at a missing file. The running Shell reports the problem and keeps the last valid configuration.
 
 Because export writes TOML to stdout, you can pipe it into TOML-aware query tools. For example, with [`yq`](https://github.com/mikefarah/yq):
 
@@ -194,7 +243,7 @@ nythera config export full | yq -p toml -o json '.' | jq -r '.theme.mode'
 
 The Settings actions menu includes **Export Config...**. It opens a chooser with two export modes:
 
-- **Merged User Config** is recommended for dotfiles. It merges your explicit config files and GUI-managed overrides into one TOML file, while leaving built-in defaults implicit.
+- **Merged User Config** is recommended for dotfiles. It merges your active configuration files, including `theme.toml`, into one TOML file, while leaving built-in defaults implicit.
 - **Full Effective Config** exports the active config snapshot, including built-in defaults. Use it for inspection or sharing an exact state, but avoid treating it as your long-term curated config because it pins defaults that could otherwise evolve.
 
 The chooser also has a **Credentials** choice with the same `keep`, `omit`, and `blank` behavior as `--credentials` above, and warns that **both export modes may contain sensitive data** that Nythera cannot recognize, such as a token typed into a command. Treat exported files as private. Review their contents and remove sensitive data before sharing them or adding them to a public dotfiles repository.
@@ -207,13 +256,13 @@ Run the validator to catch problems before they silently take effect:
 nythera config validate
 ```
 
-With no argument it checks the merged configuration exactly as the shell loads it: every `*.toml` in `~/.config/nythera/` (or `$NYTHERA_CONFIG_HOME`), then the `settings.toml` overrides in `~/.local/state/nythera/`. Pass a directory to validate just that directory's `*.toml` files instead:
+With no argument it checks the merged configuration exactly as the shell loads it: the shared `theme.toml` and every `*.toml` in `~/.config/nythera/shell/` (or under `$NYTHERA_CONFIG_HOME`), including their includes. Pass a directory to validate just that directory's `*.toml` files instead:
 
 ```sh
 nythera config validate ./my-config-dir
 ```
 
-Pass a file to validate only that TOML file, without scanning default locations or merging `settings.toml`. This is useful for generated configs, including NixOS-managed config files:
+Pass a file to validate only that TOML file, without scanning default locations or merging other files. This is useful for generated configs, including NixOS-managed config files:
 
 ```sh
 nythera config validate ./config.toml
@@ -226,7 +275,7 @@ WARN  /home/you/.config/nythera/bar.toml:14:10: bar.main.foo: unknown setting
 ERROR /home/you/.config/nythera/widgets.toml:22:12: widget.clock.timezone: unknown timezone "Europe/Berln"
 ```
 
-With several config files in play (or `settings.toml` overriding one of them), the reported file is the one whose definition actually won the merge.
+With several config files in play (or a later file overriding an earlier one), the reported file is the one whose definition actually won the merge.
 
 It reports two severities:
 
@@ -242,10 +291,11 @@ config.toml:22:12
 Error: widget.clock.timezone: unknown timezone "Europe/Berln"
 ```
 
-There the file is shown relative to your config directory (or as a bare file name for `settings.toml`), so a bad value points straight at the line that set it. When the position cannot be determined, the notification falls back to a `Config error` title.
+There the file is shown relative to your config directory (or as a bare file name), so a bad value points straight at the line that set it. When the position cannot be determined, the notification falls back to a `Config error` title.
 
 ## Where next?
 
+- [Files settings reference](/nythera/configuration/files/) lists every supported Files preference with its type, allowed values, and default.
 - [Shell](/nythera/configuration/shell/) covers global behavior like fonts, scale, shadows, OSD, and keybinds.
 - [Hooks](/nythera/automation/hooks/) covers advanced event-driven automation.
 - [Bars](/nythera/bar/) and [Widgets](/nythera/bar/widgets/) cover the top or side bar and everything inside it.

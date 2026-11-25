@@ -1,5 +1,6 @@
 #include "theme/community_templates.h"
 
+#include "config/config_service.h"
 #include "core/deferred_call.h"
 #include "core/log.h"
 #include "core/toml.h" // IWYU pragma: keep
@@ -914,7 +915,7 @@ namespace nythera::theme {
   // Stored under the state dir (not XDG cache): app-managed, re-fetchable data that
   // should persist between sessions and not be auto-reclaimed by cache cleaners.
   std::filesystem::path communityTemplatesCacheDir() {
-    const std::string state = FileUtils::stateDir();
+    const std::string state = ConfigService::resolveActiveStateDir();
     if (!state.empty())
       return std::filesystem::path(state) / "community-templates";
     return std::filesystem::path("/tmp") / "nythera" / "community-templates";
