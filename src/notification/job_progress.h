@@ -29,6 +29,7 @@ struct JobProgress {
   bool terminated = false;
   std::uint32_t errorCode = 0;
   std::string errorMessage;
+  [[nodiscard]] std::optional<float> fraction() const;
   [[nodiscard]] std::optional<std::uint64_t> currentSpeed() const { return displaySpeed ? displaySpeed : speed; }
   [[nodiscard]] std::optional<std::uint64_t> remainingSeconds() const {
     const auto rate = etaSpeed ? etaSpeed : speed;

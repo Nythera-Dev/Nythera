@@ -39,6 +39,14 @@ namespace {
   }
 }
 
+std::optional<float> JobProgress::fraction() const {
+  if (percent)
+    return static_cast<float>(*percent) / 100.0F;
+  if (processedBytes && totalBytes && *totalBytes > 0)
+    return std::clamp(static_cast<float>(*processedBytes) / static_cast<float>(*totalBytes), 0.0F, 1.0F);
+  return std::nullopt;
+}
+
 JobProgress* JobProgressManager::find(std::uint32_t id) {
   const auto it = std::ranges::find(m_jobs, id, &JobProgress::id);
   return it == m_jobs.end() ? nullptr : &*it;

@@ -372,16 +372,13 @@ namespace {
   }
 
   std::string jobProgressDescription(const JobProgress& job) {
-    const float progress = job.percent ? static_cast<float>(*job.percent) / 100.0F
-        : job.totalBytes && *job.totalBytes > 0 && job.processedBytes
-            ? std::clamp(static_cast<float>(*job.processedBytes) / static_cast<float>(*job.totalBytes), 0.0F, 1.0F)
-            : 0.0F;
-    const auto percent = job.percent.value_or(static_cast<std::uint32_t>(std::lround(progress * 100.0F)));
     std::string status = job.suspended ? i18n::tr("notifications.internal.job-paused")
         : i18n::tr("notifications.internal.job-in-progress");
     if (job.suspensionPending) status = i18n::tr(*job.suspensionPending
             ? "notifications.internal.job-pausing" : "notifications.internal.job-resuming");
-    return status + " · " + std::to_string(percent) + "%";
+    if (const auto fraction = job.fraction())
+      status += " · " + std::to_string(static_cast<unsigned>(std::lround(*fraction * 100.0F))) + "%";
+    return status;
   }
 
   std::string jobEtaDescription(const JobProgress& job) {
@@ -942,13 +939,9 @@ void NotificationToast::onNotificationEvent(const Notification& n, NotificationE
           m_entries[i].displayDurationMs = newDuration;
           m_entries[i].remainingProgress = 1.0F;
           if (m_entries[i].job) {
-            const auto& job = *m_entries[i].job;
-            const float jobProgress = job.percent ? static_cast<float>(*job.percent) / 100.0F
-                : job.totalBytes && *job.totalBytes > 0 && job.processedBytes
-                    ? std::clamp(static_cast<float>(*job.processedBytes) / static_cast<float>(*job.totalBytes), 0.0F, 1.0F)
-                    : 0.0F;
-            cs.progressBar->setOpacity(1.0F);
-            cs.progressBar->setProgress(jobProgress);
+            const auto progress = m_entries[i].job->fraction();
+            cs.progressBar->setOpacity(progress ? 1.0F : 0.0F);
+            cs.progressBar->setProgress(progress.value_or(0.0F));
             cs.countdownAnimId = 0;
           } else if (newDuration < 0) {
             cs.progressBar->setOpacity(n.urgency == Urgency::Critical ? 1.0F : 0.0F);
@@ -1061,6 +1054,8 @@ void NotificationToast::onJobProgressEvent(const JobProgress& job, JobProgressEv
   const auto previous = entry->job;
   const auto title = job.title.empty() ? job.desktopEntry : job.title;
   const bool primaryChanged = entry->summary != title || entry->body != job.infoMessage;
+  const auto progress = job.fraction();
+  const bool progressVisibilityChanged = (previous && previous->fraction().has_value()) != progress.has_value();
   const bool controlStateChanged = !previous || previous->suspended != job.suspended
       || previous->suspensionPending != job.suspensionPending || previous->capabilities != job.capabilities;
   const bool chartVisible = entry->jobExpanded && job.speedHistory.size() >= 2;
@@ -1086,7 +1081,9 @@ void NotificationToast::onJobProgressEvent(const JobProgress& job, JobProgressEv
   entry->summary = title;
   entry->body = job.infoMessage;
 
-  if (controlStateChanged || (entry->jobExpanded && (detailsShapeChanged || pathValuesChanged))) {
+  if (controlStateChanged
+      || progressVisibilityChanged
+      || (entry->jobExpanded && (detailsShapeChanged || pathValuesChanged))) {
     rebuildJobCard(popupId);
     return;
   }
@@ -1108,13 +1105,10 @@ void NotificationToast::onJobProgressEvent(const JobProgress& job, JobProgressEv
       }
     }
   }
-  const float progress = job.percent ? static_cast<float>(*job.percent) / 100.0F
-      : job.totalBytes && *job.totalBytes > 0 && job.processedBytes
-          ? std::clamp(static_cast<float>(*job.processedBytes) / static_cast<float>(*job.totalBytes), 0.0F, 1.0F)
-          : 0.0F;
   for (auto& instance : m_instances) {
     if (auto* state = findCardState(*instance, popupId); state != nullptr) {
-      if (state->progressBar != nullptr) state->progressBar->setProgress(progress);
+      if (state->progressBar != nullptr && progress)
+        state->progressBar->setProgress(*progress);
       if (state->jobProgressLabel != nullptr) {
         state->jobProgressLabel->setText(jobProgressDescription(job));
       }
@@ -1424,12 +1418,9 @@ void NotificationToast::addCardToInstance(Instance& inst, std::size_t entryIndex
   // a single "driver" instance is unsafe because addCardToInstance skips instances
   // whose surface can't fit the card, so the nominal driver may never have a card at all.
   if (entry.job) {
-    const float value = entry.job->percent ? static_cast<float>(*entry.job->percent) / 100.0F
-        : entry.job->totalBytes && *entry.job->totalBytes > 0 && entry.job->processedBytes
-            ? std::clamp(static_cast<float>(*entry.job->processedBytes) / static_cast<float>(*entry.job->totalBytes), 0.0F, 1.0F)
-            : 0.0F;
-    cs.progressBar->setOpacity(1.0F);
-    cs.progressBar->setProgress(value);
+    const auto progress = entry.job->fraction();
+    cs.progressBar->setOpacity(progress ? 1.0F : 0.0F);
+    cs.progressBar->setProgress(progress.value_or(0.0F));
     cs.countdownAnimId = 0;
   } else if (entry.displayDurationMs < 0) {
     // Persistent — no countdown, no auto-dismiss
@@ -2845,6 +2836,9 @@ InputArea* NotificationToast::buildCard(
   const float bgAlpha = m_config != nullptr ? m_config->config().notification.backgroundOpacity : 0.97F;
   const float borderWidth = toastBorderWidth(m_config, entry.urgency, scale);
   const ColorSpec borderColor = toastBorderColor(m_config, entry.urgency);
+  const auto jobFraction = entry.job ? entry.job->fraction() : std::nullopt;
+  const bool showProgress =
+      entry.job ? jobFraction.has_value() : showToastProgressAccent(entry.urgency, entry.displayDurationMs);
   foreground->addChild(
       ui::progressBar({
           .out = outProgress,
@@ -2852,10 +2846,11 @@ InputArea* NotificationToast::buildCard(
           .track = clearColorSpec(),
           .radius = progressHeight(scale) * 0.5F,
           .orientation = ProgressBarOrientation::HorizontalCentered,
+          .progress = jobFraction,
           .width = std::max(0.0F, cardW - topProgressInset(scale) * 2.0F),
           .height = entry.job ? std::max(progressHeight(scale), 5.0F * scale) : progressHeight(scale),
-          .visible = entry.job.has_value() || showToastProgressAccent(entry.urgency, entry.displayDurationMs),
-          .participatesInLayout = entry.job.has_value() || showToastProgressAccent(entry.urgency, entry.displayDurationMs),
+          .visible = showProgress,
+          .participatesInLayout = showProgress,
           .configure = [scale](ProgressBar& progress) { progress.setPosition(topProgressInset(scale), 0.0F); },
       })
   );
