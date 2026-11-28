@@ -841,11 +841,19 @@ void Application::initNotificationAndOsd() {
       }
   );
   {
+    const std::string configDir = FileUtils::applicationConfigDir(FileUtils::Application::Files);
     auto& filesMonitor = m_appConfigMonitors.addMonitor({
         .appId = "files",
         .displayName = "Nythera Files",
-        .configDir = FileUtils::applicationConfigDir(FileUtils::Application::Files),
-        .validator = nythera::config::validateFilesConfiguration,
+        .configDir = configDir,
+        .validator = [configDir](const nythera::config::SourcedMergeResult& loaded) {
+          auto problem = nythera::config::validateFilesConfiguration(loaded);
+          // The running Shell may have an older schema than the Files writer.
+          // Trust only the exact merged configuration Files validated.
+          if (problem && nythera::config::matchesValidatedApplicationConfigWrite("files", configDir, loaded))
+            problem.reset();
+          return problem;
+        },
     });
     const std::string displayName = filesMonitor.displayName();
     filesMonitor.setProblemCallback(
