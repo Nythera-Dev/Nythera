@@ -178,6 +178,13 @@ int main() {
     TEST_CHECK(crossOwnerDenied);
     TEST_CHECK(jobs.find(id1)->percent == std::nullopt);
 
+    sendUpdate(
+        *client1, path1,
+        {{"processedItems", sdbus::Variant(std::uint64_t{2})}, {"processedBytes", sdbus::Variant(std::uint64_t{4096})}}
+    );
+    TEST_CHECK(waitFor([&] { return jobs.find(id1)->processedItems == 2; }));
+    TEST_CHECK(jobs.find(id1)->processedBytes == 4096 && !jobs.find(id1)->fraction());
+
     for (std::uint32_t percent = 0; percent <= 100; percent += 10) {
       sendUpdate(
           *client1, path1,

@@ -27,6 +27,16 @@ int main() {
   assert(job->elapsedTime == 12);
   assert(job->speedHistory == std::vector<std::uint64_t>{64});
   assert(manager.find(second)->title.empty());
+  assert(!manager.find(second)->fraction());
+  assert(manager.update(
+      second,
+      {{"processedItems", sdbus::Variant(std::uint64_t{8})}, {"processedBytes", sdbus::Variant(std::uint64_t{40})}}
+  ));
+  assert(!manager.find(second)->fraction() && !manager.find(second)->remainingSeconds());
+  assert(manager.update(second, {{"totalBytes", sdbus::Variant(std::uint64_t{100})}}));
+  assert(manager.find(second)->fraction() == 0.4F);
+  assert(manager.update(second, {{"percent", sdbus::Variant(std::uint32_t{0})}}));
+  assert(manager.find(second)->fraction() == 0.0F);
 
   // Separate byte-derived display/ETA rates must never enter the raw graph or average statistic.
   const auto rawHistory = manager.find(first)->speedHistory;
